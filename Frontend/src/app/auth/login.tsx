@@ -18,7 +18,7 @@ export default function Login() {
     >
       <View style={styles.overlay}>
         <Image
-          source={require("../../../assets/images/bola.png")}
+          source={require("../../../assets/images/brasil.png")}
           style={styles.logo}
         />
 
