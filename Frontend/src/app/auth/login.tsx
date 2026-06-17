@@ -125,8 +125,9 @@ const styles = StyleSheet.create({
     color: "#E9C94A",
     textAlign: "center",
     marginBottom: 24,
-    fontWeight: "600",
+    fontWeight: "500",
     fontSize: 14,
+    textDecorationLine: "underline",
   },
 
   loginButton: {
