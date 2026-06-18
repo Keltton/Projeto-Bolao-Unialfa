@@ -20,7 +20,7 @@ export default function ForgotPassword() {
         <Text style={styles.title}>Nova Senha</Text>
 
         <Text style={styles.subtitle}>
-          Informe seu e-mail para receber as instruções de recuperação da sua conta.
+          Digite sua nova senha para concluir a recuperação da conta.
         </Text>
 
         <TextInput
