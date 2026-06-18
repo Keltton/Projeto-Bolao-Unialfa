@@ -27,11 +27,11 @@ export default function ForgotPassword() {
           placeholder="Nova senha"
           placeholderTextColor="#999"
           secureTextEntry
-          
+          style={styles.input}
         />
 
         <TextInput
-    placeholder="Confirmar nova senha"
+  placeholder="Confirmar nova senha"
           placeholderTextColor="#999"
           secureTextEntry
           style={styles.input}
@@ -39,7 +39,7 @@ export default function ForgotPassword() {
 
         <TouchableOpacity style={styles.sendButton}>
           <Text style={styles.sendButtonText}>
-          Enviar Link
+          Salvar Senha
           </Text>
         </TouchableOpacity>
 
