@@ -17,7 +17,7 @@ export default function ForgotPassword() {
           style={styles.logo}
         />
 
-        <Text style={styles.title}>Recuperar Senha</Text>
+        <Text style={styles.title}>Nova Senha</Text>
 
         <Text style={styles.subtitle}>
           Informe seu e-mail para receber as instruções de recuperação da sua conta.
@@ -129,4 +129,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textDecorationLine: "underline",
   },
-});git ad
+});
