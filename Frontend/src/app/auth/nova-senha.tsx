@@ -20,14 +20,20 @@ export default function ForgotPassword() {
         <Text style={styles.title}>Nova Senha</Text>
 
         <Text style={styles.subtitle}>
-          Digite sua nova senha para concluir a recuperação da conta.
+          Informe seu e-mail para receber as instruções de recuperação da sua conta.
         </Text>
 
         <TextInput
-          placeholder="Digite seu e-mail"
+          placeholder="Nova senha"
           placeholderTextColor="#999"
-          keyboardType="email-address"
-          autoCapitalize="none"
+          secureTextEntry
+          
+        />
+
+        <TextInput
+    placeholder="Confirmar nova senha"
+          placeholderTextColor="#999"
+          secureTextEntry
           style={styles.input}
         />
 
