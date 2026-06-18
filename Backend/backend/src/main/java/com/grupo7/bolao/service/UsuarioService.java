@@ -2,6 +2,7 @@ package com.grupo7.bolao.service;
 
 import com.grupo7.bolao.dto.response.RankingResponse;
 import com.grupo7.bolao.dto.response.UsuarioRankingResponse;
+import com.grupo7.bolao.dto.response.UsuarioResponse;
 import com.grupo7.bolao.enums.PerfilUsuario;
 import com.grupo7.bolao.enums.StatusUsuario;
 import com.grupo7.bolao.model.Usuario;
@@ -62,6 +63,47 @@ public class UsuarioService {
                 pageUsuarios.getTotalPages(),
                 pageUsuarios.getTotalElements(),
                 posicaoAutenticado
+        );
+    }
+
+    public Page<UsuarioResponse> listarUsuarios(String busca, Pageable pageable) {
+        Page<Usuario> pageUsuarios;
+        if (busca != null && !busca.trim().isEmpty()) {
+            pageUsuarios = usuarioRepository.findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                    busca, busca, pageable
+            );
+        } else {
+            pageUsuarios = usuarioRepository.findAll(pageable);
+        }
+        return pageUsuarios.map(this::toResponse);
+    }
+
+    public UsuarioResponse obterDetalhesUsuario(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario não encontrado"));
+        return toResponse(usuario);
+    }
+
+    public UsuarioResponse alterarStatusUsuario(Long id, StatusUsuario status) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario não encontrado"));
+        usuario.setStatus(status);
+        return toResponse(usuarioRepository.save(usuario));
+    }
+
+    private UsuarioResponse toResponse(Usuario usuario) {
+        return new UsuarioResponse(
+                usuario.getId(),
+                usuario.getNome(),
+                usuario.getEmail(),
+                usuario.getAvatarUrl(),
+                usuario.getPerfil(),
+                usuario.getStatus(),
+                usuario.getPontuacaoTotal(),
+                usuario.getPlacaresExatos(),
+                usuario.getUltimoLoginEm(),
+                usuario.getCriadoEm(),
+                usuario.getAtualizadoEm()
         );
     }
 }
