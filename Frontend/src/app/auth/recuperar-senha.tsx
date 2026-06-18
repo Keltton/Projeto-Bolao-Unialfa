@@ -13,7 +13,7 @@ export default function ForgotPassword() {
     <View style={styles.container}>
       <View style={styles.card}>
         <Image
-          source={require("../../../assets/images/bola.png")}
+          source={require("../../../assets/images/brasil.png")}
           style={styles.logo}
         />
 
@@ -33,7 +33,7 @@ export default function ForgotPassword() {
 
         <TouchableOpacity style={styles.sendButton}>
           <Text style={styles.sendButtonText}>
-            ENVIAR LINK
+          Enviar Link
           </Text>
         </TouchableOpacity>
 
