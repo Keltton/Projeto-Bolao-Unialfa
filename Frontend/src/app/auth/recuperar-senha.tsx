@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 30,
 
     shadowColor: "#000",
@@ -126,6 +126,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
     color: "#137C3F",
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: 15,
+    textDecorationLine: "underline",
   },
 });
