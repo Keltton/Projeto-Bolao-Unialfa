@@ -78,11 +78,11 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 110,
-    height: 110,
+    width: 150,
+    height: 112,
     alignSelf: "center",
     resizeMode: "contain",
-    marginBottom: 20,
+    marginBottom: 5,
   },
 
   title: {
