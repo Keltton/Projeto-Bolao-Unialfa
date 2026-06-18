@@ -22,6 +22,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             Pageable pageable
     );
 
+    Page<Usuario> findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
+            String nome,
+            String email,
+            Pageable pageable
+    );
+
     @Query("SELECT COUNT(u) + 1 FROM Usuario u WHERE u.perfil = com.grupo7.bolao.enums.PerfilUsuario.USUARIO AND u.status = com.grupo7.bolao.enums.StatusUsuario.ATIVO AND (" +
            "u.pontuacaoTotal > :pontuacaoTotal OR " +
            "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos > :placaresExatos) OR " +
