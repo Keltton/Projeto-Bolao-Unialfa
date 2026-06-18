@@ -188,7 +188,7 @@ public class Usuario implements UserDetails {
     public boolean isAccountNonLocked() { return true; }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return status == StatusUsuario.ATIVO; }
 
     @Override
     public boolean isAccountNonExpired() { return true; }

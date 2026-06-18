@@ -6,6 +6,7 @@ import com.grupo7.bolao.dto.response.UsuarioResponse;
 import com.grupo7.bolao.model.Usuario;
 import com.grupo7.bolao.repository.UsuarioRepository;
 import com.grupo7.bolao.enums.PerfilUsuario;
+import com.grupo7.bolao.enums.StatusUsuario;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -59,12 +60,16 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest req){
+        Usuario usuario = usuarioRepository.findByEmail(req.email())
+                .orElseThrow(()->new IllegalArgumentException("Usuario não encontrado"));
+
+        if (usuario.getStatus() != StatusUsuario.ATIVO) {
+            throw new IllegalArgumentException("Sua conta está " + usuario.getStatus().name().toLowerCase() + ".");
+        }
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.email(), req.senha())
         );
-
-        Usuario usuario = usuarioRepository.findByEmail(req.email())
-                .orElseThrow(()->new IllegalArgumentException("Usuario não encontrado"));
 
         String token = jwtService.gerarToken(usuario);
 

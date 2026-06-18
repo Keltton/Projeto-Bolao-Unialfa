@@ -3,6 +3,7 @@ package com.grupo7.bolao.controller.api;
 import com.grupo7.bolao.dto.request.LoginRequest;
 import com.grupo7.bolao.dto.request.RegisterRequest;
 import com.grupo7.bolao.service.auth.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +20,7 @@ public class AuthApiController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         return ResponseEntity.ok(authService.cadastrar(req));
     }
 
