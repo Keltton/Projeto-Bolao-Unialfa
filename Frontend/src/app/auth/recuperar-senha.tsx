@@ -1,6 +1,6 @@
 import React from "react";
-import { Image } from "react-native";
-import { View, Text } from "react-native";
+import { Image, TouchableOpacity } from "react-native";
+import { View, Text, TextInput } from "react-native";
 
 export default function ForgotPassword() {
   return (
@@ -17,6 +17,14 @@ export default function ForgotPassword() {
       <Text>
         Informe seu e-mail para receber as instruções de recuperação.
       </Text>
+
+      <TextInput
+          placeholder="Digite seu e-mail"
+      />
+
+      <TouchableOpacity>
+  <Text>ENVIAR LINK</Text>
+</TouchableOpacity>
 
     </View>
   );
