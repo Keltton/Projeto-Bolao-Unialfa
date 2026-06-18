@@ -1,15 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html xmlns:th="http://www.thymeleaf.org" data-theme="light"
       th:replace="~{admin/template :: layout(
           'Dashboard — Bolão Copa 2026',
           'Dashboard',
           'Bolão Copa 2026 — Painel Administrativo',
           'dashboard',
-          ~{::content},
-          ~{::no-scripts}
+          ~{::content}
       )}">
-
-<th:block th:fragment="no-scripts"></th:block>
 
 <th:block th:fragment="content">
 
