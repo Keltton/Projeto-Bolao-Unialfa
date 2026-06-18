@@ -1,8 +1,10 @@
 package com.grupo7.bolao.config;
 
 import com.grupo7.bolao.service.auth.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -47,8 +49,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher("/api/**")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -63,5 +67,49 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher(request -> !request.getRequestURI().startsWith("/api"))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SecurityConfig::isPublicWebPath).permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login/process")
+                        .defaultSuccessUrl("/admin", true)
+                        .failureUrl("/login?error")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll()
+                )
+                .authenticationProvider(authenticationProvider());
+
+        return http.build();
+    }
+
+    private static boolean isPublicWebPath(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri.equals("/login")
+                || uri.startsWith("/login;")
+                || uri.startsWith("/login/")
+                || uri.equals("/recuperar-senha")
+                || uri.startsWith("/recuperar-senha;")
+                || uri.startsWith("/recuperar-senha/")
+                || uri.equals("/resetar-senha")
+                || uri.startsWith("/resetar-senha;")
+                || uri.startsWith("/resetar-senha/")
+                || uri.startsWith("/css/")
+                || uri.startsWith("/js/")
+                || uri.startsWith("/webjars/")
+                || uri.equals("/error");
     }
 }
