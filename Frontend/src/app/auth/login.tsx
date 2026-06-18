@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   title: {
     color: "#FFFFFF",
     fontSize: 34,
-    fontWeight: "800",
+    fontWeight: "700",
     textAlign: "center",
     letterSpacing: 1,
     marginBottom: 8,
@@ -97,13 +97,13 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    textShadowRadius: 4,
+    textShadowRadius: 2,
   },
 
   subtitle: {
     color: "rgba(255,255,255,0.85)",
     textAlign: "center",
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 22,
     marginBottom: 35,
     paddingHorizontal: 10,
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 24,
     fontWeight: "500",
-    fontSize: 14,
+    fontSize: 16,
     textDecorationLine: "underline",
   },
 
