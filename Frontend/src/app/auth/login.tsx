@@ -15,6 +15,7 @@ export default function Login() {
       source={require("../../../assets/images/fundo-login.jpg")}
       style={styles.container}
       resizeMode="cover"
+      
     >
       <View style={styles.overlay}>
         <Image
@@ -53,7 +54,11 @@ export default function Login() {
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.separator}>OU</Text>
+        <View style={styles.separatorContainer}>
+          <View style={styles.line} />
+          <Text style={styles.separator}>OU</Text>
+          <View style={styles.line} />
+      </View>
 
         <TouchableOpacity style={styles.registerButton}>
           <Text style={styles.registerButtonText}>
@@ -72,9 +77,10 @@ const styles = StyleSheet.create({
 
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.65)",
+    backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "center",
-    paddingHorizontal: 30,
+    paddingHorizontal: 40,
+    paddingVertical: 15,
   },
 
   logo: {
@@ -145,14 +151,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  separator: {
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginVertical: 18,
-    fontWeight: "600",
-    opacity: 0.8,
-  },
-
   registerButton: {
     borderWidth: 1.5,
     borderColor: "#E9C94A",
@@ -167,4 +165,22 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
   },
+
+  separatorContainer: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginVertical: 22,
+},
+
+line: {
+  flex: 1,
+  height: 1,
+  backgroundColor: "rgba(255,255,255,0.4)",
+},
+
+separator: {
+  color: "#FFFFFF",
+  marginHorizontal: 15,
+  fontWeight: "500",
+},
 });
