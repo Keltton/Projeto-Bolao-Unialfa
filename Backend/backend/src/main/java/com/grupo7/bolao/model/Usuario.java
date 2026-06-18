@@ -12,7 +12,12 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "usuarios")
+@Table(
+    name = "usuarios",
+    indexes = {
+        @Index(name = "idx_usuario_ranking", columnList = "perfil, status, pontuacaoTotal DESC, placaresExatos DESC, criadoEm ASC")
+    }
+)
 public class Usuario implements UserDetails {
 
     @Id
