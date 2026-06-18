@@ -1,5 +1,6 @@
 package com.grupo7.bolao.service.auth;
 
+import com.grupo7.bolao.enums.StatusUsuario;
 import com.grupo7.bolao.repository.UsuarioRepository;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
@@ -41,7 +42,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null){
                 usuarioRepository.findByEmail(email).ifPresent(usuario -> {
-                    if (jwtService.tokenValido(token, usuario)){
+                    if (usuario.getStatus() == StatusUsuario.ATIVO && jwtService.tokenValido(token, usuario)){
                         var authToken = new UsernamePasswordAuthenticationToken(
                                 usuario, null, usuario.getAuthorities());
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
