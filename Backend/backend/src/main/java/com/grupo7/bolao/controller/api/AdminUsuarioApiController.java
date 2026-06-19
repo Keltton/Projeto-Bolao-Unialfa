@@ -35,10 +35,22 @@ public class AdminUsuarioApiController {
     }
 
     @PatchMapping("/{id}/status")
+
     public ResponseEntity<UsuarioResponse> alterarStatus(
+
             @PathVariable Long id,
+
             @RequestParam StatusUsuario status
+
     ) {
         return ResponseEntity.ok(usuarioService.alterarStatusUsuario(id, status));
+    }
+
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> remover(@PathVariable Long id) {
+        usuarioService.remover(id);
+        return ResponseEntity.noContent().build();
     }
 }

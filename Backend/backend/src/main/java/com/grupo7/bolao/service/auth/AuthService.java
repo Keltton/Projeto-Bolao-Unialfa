@@ -1,6 +1,6 @@
 package com.grupo7.bolao.service.auth;
 import com.grupo7.bolao.dto.request.LoginRequest;
-import com.grupo7.bolao.dto.request.RegisterRequest;
+import com.grupo7.bolao.dto.request.UsuarioRequest;
 import com.grupo7.bolao.dto.response.LoginResponse;
 import com.grupo7.bolao.dto.response.UsuarioResponse;
 import com.grupo7.bolao.model.Usuario;
@@ -11,6 +11,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 
 @Service
@@ -29,7 +31,7 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public UsuarioResponse cadastrar(RegisterRequest req) {
+    public UsuarioResponse cadastrar(UsuarioRequest req) {
         if (usuarioRepository.existsByEmail(req.email())){
             throw new IllegalArgumentException("E-mail já cadastrado");
         }
@@ -68,24 +70,14 @@ public class AuthService {
         }
 
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.email(), req.senha())
-        );
+                new UsernamePasswordAuthenticationToken(req.email(), req.senha()));
+
+        usuario.setUltimoLoginEm(LocalDateTime.now());
+        usuarioRepository.save(usuario);
 
         String token = jwtService.gerarToken(usuario);
 
-        return new LoginResponse(token, new UsuarioResponse(
-                usuario.getId(),
-                usuario.getNome(),
-                usuario.getEmail(),
-                usuario.getAvatarUrl(),
-                usuario.getPerfil(),
-                usuario.getStatus(),
-                usuario.getPontuacaoTotal(),
-                usuario.getPlacaresExatos(),
-                usuario.getUltimoLoginEm(),
-                usuario.getCriadoEm(),
-                usuario.getAtualizadoEm()
-        ));
+        return new LoginResponse(token, UsuarioResponse.from(usuario));
     }
 }
 
