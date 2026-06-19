@@ -25,7 +25,7 @@ public class UsuariosController {
         this.usuarioService = usuarioService;
     }
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public String listar(
             @RequestParam(required = false) String busca,
             @RequestParam(defaultValue = "0") int pagina,

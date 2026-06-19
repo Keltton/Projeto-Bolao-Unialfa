@@ -188,6 +188,8 @@
     </dialog>
 
     <script th:inline="javascript">
+        const usuariosBaseUrl = /*[[@{/admin/usuarios/}]]*/ '/admin/usuarios/';
+
         function initLiveClock() {
             const el = document.getElementById('live-clock');
             if (!el) return;
@@ -238,7 +240,7 @@
                             : `Deseja desbloquear ${nome}?`;
                     document.getElementById('input-status').value = btn.dataset.status;
                     document.getElementById('form-alterar-status').action =
-                        /*[[@{/admin/usuarios/}]]*/ '/admin/usuarios/' + btn.dataset.id + '/status';
+                        usuariosBaseUrl + btn.dataset.id + '/status';
                     document.getElementById('btn-confirmar-acao').className =
                         acao === 'bloquear' ? 'btn btn-warning' : 'btn btn-success';
                     document.getElementById('modal-confirmacao').showModal();
