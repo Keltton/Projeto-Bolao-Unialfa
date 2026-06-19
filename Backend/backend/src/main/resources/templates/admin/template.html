@@ -315,11 +315,12 @@
                         </a>
                     </li>
                     <li>
-                        <span class="sidebar-link disabled" title="Em breve">
+                        <a th:href="@{/admin/palpites}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'palpites'} ? 'active' : _">
                             <i data-lucide="target" class="w-4 h-4 shrink-0"></i>
                             Palpites
-                            <span class="badge badge-xs badge-ghost ml-auto">breves</span>
-                        </span>
+                        </a>
                     </li>
                     <li>
                         <a th:href="@{/admin/usuarios}"
