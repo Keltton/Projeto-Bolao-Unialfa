@@ -17,6 +17,10 @@ import com.grupo7.bolao.dto.response.SelecaoResponse;
 import com.grupo7.bolao.service.ArquivoStorageService;
 import com.grupo7.bolao.service.SelecaoService;
 
+/**
+ * Controller Web (MVC) para a administração das Seleções no painel de controle.
+ * Permite a visualização, inserção, edição e exclusão de seleções com upload de imagens de bandeiras.
+ */
 @Controller
 @RequestMapping("/admin/selecoes")
 public class SelecoesController {
@@ -24,11 +28,24 @@ public class SelecoesController {
     private final SelecaoService selecaoService;
     private final ArquivoStorageService arquivoStorageService;
 
+    /**
+     * Construtor do SelecoesController.
+     *
+     * @param selecaoService Serviço de regras de negócio de seleções.
+     * @param arquivoStorageService Serviço para upload/gerenciamento de arquivos locais.
+     */
     public SelecoesController(SelecaoService selecaoService, ArquivoStorageService arquivoStorageService) {
         this.selecaoService = selecaoService;
         this.arquivoStorageService = arquivoStorageService;
     }
 
+    /**
+     * Renderiza a página principal do painel de seleções (listagem geral).
+     *
+     * @param busca Termo opcional para busca.
+     * @param model Objeto Model do Spring para passar atributos à view.
+     * @return O template Thymeleaf "admin/selecoes/index".
+     */
     @GetMapping({"", "/"})
     public String listar(
             @RequestParam(required = false) String busca,
@@ -41,6 +58,16 @@ public class SelecoesController {
         return "admin/selecoes/index";
     }
 
+    /**
+     * Trata o envio de formulário para cadastrar uma nova seleção, incluindo upload de bandeira.
+     *
+     * @param nome Nome do país/seleção.
+     * @param codigoFifa Código de 3 letras da FIFA.
+     * @param grupo Grupo da primeira fase.
+     * @param bandeira Arquivo binário da bandeira enviado via formulário multipart.
+     * @param redirectAttributes Atributos de redirecionamento para mensagens flash de sucesso/erro.
+     * @return Redirecionamento para a rota da listagem.
+     */
     @PostMapping
     public String cadastrar(
             @RequestParam String nome,
@@ -66,6 +93,18 @@ public class SelecoesController {
         return "redirect:/admin/selecoes";
     }
 
+    /**
+     * Trata o envio de formulário para atualizar os dados de uma seleção existente.
+     *
+     * @param id ID da seleção.
+     * @param nome Nome atualizado da seleção.
+     * @param codigoFifa Código atualizado da FIFA.
+     * @param grupo Grupo atualizado.
+     * @param bandeiraUrlAtual URL atual da bandeira para manter caso nenhuma nova imagem seja enviada.
+     * @param bandeira Novo arquivo binário opcional de bandeira.
+     * @param redirectAttributes Atributos de redirecionamento.
+     * @return Redirecionamento para a rota da listagem.
+     */
     @PostMapping("/{id}")
     public String atualizar(
             @PathVariable Long id,
@@ -101,6 +140,13 @@ public class SelecoesController {
         return "redirect:/admin/selecoes";
     }
 
+    /**
+     * Trata a requisição de exclusão de uma seleção pelo ID.
+     *
+     * @param id ID da seleção a ser excluída.
+     * @param redirectAttributes Atributos de redirecionamento.
+     * @return Redirecionamento para a rota da listagem.
+     */
     @PostMapping("/{id}/excluir")
     public String excluir(
             @PathVariable Long id,
@@ -117,6 +163,9 @@ public class SelecoesController {
         return "redirect:/admin/selecoes";
     }
 
+    /**
+     * Método auxiliar de validação simples de campos obrigatórios no controlador.
+     */
     private void validarCampos(String nome, String codigoFifa) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("O nome é obrigatório.");
