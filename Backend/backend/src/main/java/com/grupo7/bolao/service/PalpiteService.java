@@ -67,6 +67,40 @@ public class PalpiteService {
                 .toList();
     }
 
+    public List<PalpiteResponse> listarPalpites(Long partidaId, CriterioPontuacao criterio, String busca) {
+        String buscaNormalizada = busca != null && !busca.isBlank() ? busca.trim() : null;
+        List<Palpite> palpites;
+
+        if (buscaNormalizada != null) {
+            palpites = palpiteRepository.findByUsuarioBuscaOrderByCriadoEmDesc(buscaNormalizada);
+        } else if (partidaId != null && criterio != null) {
+            palpites = palpiteRepository.findByPartidaIdAndCriterioPontuacaoOrderByCriadoEmDesc(partidaId, criterio);
+        } else if (partidaId != null) {
+            palpites = palpiteRepository.findByPartidaIdOrderByCriadoEmDesc(partidaId);
+        } else if (criterio != null) {
+            palpites = palpiteRepository.findByCriterioPontuacaoOrderByCriadoEmDesc(criterio);
+        } else {
+            palpites = palpiteRepository.findAllByOrderByCriadoEmDesc();
+        }
+
+        if (buscaNormalizada != null) {
+            if (partidaId != null) {
+                palpites = palpites.stream()
+                        .filter(palpite -> palpite.getPartida().getId().equals(partidaId))
+                        .toList();
+            }
+            if (criterio != null) {
+                palpites = palpites.stream()
+                        .filter(palpite -> palpite.getCriterioPontuacao() == criterio)
+                        .toList();
+            }
+        }
+
+        return palpites.stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public PalpiteResponse buscarMeuPalpitePorId(Long id, Usuario usuario) {
         Palpite palpite = buscarPalpiteDoUsuario(id, usuario.getId());
         return toResponse(palpite);

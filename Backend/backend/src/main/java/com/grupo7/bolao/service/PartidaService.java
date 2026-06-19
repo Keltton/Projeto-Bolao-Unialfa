@@ -9,10 +9,12 @@ import com.grupo7.bolao.enums.StatusPartida;
 import com.grupo7.bolao.model.Partida;
 import com.grupo7.bolao.model.Selecao;
 import com.grupo7.bolao.repository.PartidaRepository;
+import com.grupo7.bolao.repository.PalpiteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -21,15 +23,18 @@ public class PartidaService {
     private final PartidaRepository partidaRepository;
     private final SelecaoService selecaoService;
     private final PalpiteService palpiteService;
+    private final PalpiteRepository palpiteRepository;
 
     public PartidaService(
             PartidaRepository partidaRepository,
             SelecaoService selecaoService,
-            PalpiteService palpiteService
+            PalpiteService palpiteService,
+            PalpiteRepository palpiteRepository
     ) {
         this.partidaRepository = partidaRepository;
         this.selecaoService = selecaoService;
         this.palpiteService = palpiteService;
+        this.palpiteRepository = palpiteRepository;
     }
 
     public PartidaResponse cadastrarPartida(PartidaRequest request) {
@@ -51,10 +56,10 @@ public class PartidaService {
     }
 
     public List<PartidaResponse> listarTodasPartidas() {
-        return partidaRepository.findAll()
+        return ordenarPorData(partidaRepository.findAll()
                 .stream()
                 .map(this::toResponse)
-                .toList();
+                .toList());
     }
 
     public PartidaResponse buscarPartidaPorId(Long id) {
@@ -67,24 +72,24 @@ public class PartidaService {
     }
 
     public List<PartidaResponse> listarPorFase(FasePartida fase) {
-        return partidaRepository.findByFase(fase)
+        return ordenarPorData(partidaRepository.findByFase(fase)
                 .stream()
                 .map(this::toResponse)
-                .toList();
+                .toList());
     }
 
     public List<PartidaResponse> listarPorStatus(StatusPartida status) {
-        return partidaRepository.findByStatus(status)
+        return ordenarPorData(partidaRepository.findByStatus(status)
                 .stream()
                 .map(this::toResponse)
-                .toList();
+                .toList());
     }
 
     public List<PartidaResponse> listarPorFaseEStatus(FasePartida fase, StatusPartida status) {
-        return partidaRepository.findByFaseAndStatus(fase, status)
+        return ordenarPorData(partidaRepository.findByFaseAndStatus(fase, status)
                 .stream()
                 .map(this::toResponse)
-                .toList();
+                .toList());
     }
 
     public List<PartidaResponse> listarPorPeriodo(LocalDateTime inicio, LocalDateTime fim) {
@@ -138,7 +143,16 @@ public class PartidaService {
 
     public void remover(Long id) {
         Partida partida = buscarEntidadePorId(id);
+        if (palpiteRepository.existsByPartidaId(id)) {
+            throw new IllegalArgumentException("Nao e possivel excluir partida com palpites registrados.");
+        }
         partidaRepository.delete(partida);
+    }
+
+    private List<PartidaResponse> ordenarPorData(List<PartidaResponse> partidas) {
+        return partidas.stream()
+                .sorted(Comparator.comparing(PartidaResponse::dataHora))
+                .toList();
     }
 
     private void validarSelecoesDiferentes(Long selecaoAId, Long selecaoBId) {

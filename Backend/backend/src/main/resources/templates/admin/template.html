@@ -58,7 +58,8 @@
 
         .admin-input {
             display: block;
-            width: 100%;
+            box-sizing: border-box;
+            max-width: 100%;
             border-radius: 0.5rem;
             border: 1px solid #e2e8f0;
             background-color: #ffffff;
@@ -68,6 +69,16 @@
             line-height: 1.25rem;
             outline: none;
             transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        select.admin-input {
+            cursor: pointer;
+            padding-right: 2rem;
+        }
+
+        input[type="datetime-local"].admin-input,
+        input[type="number"].admin-input {
+            min-height: 2.75rem;
         }
 
         .admin-input::placeholder { color: #94a3b8; }
@@ -105,9 +116,42 @@
         .admin-table tbody tr:hover td { background-color: #f8fafc; }
         .admin-table tbody tr:last-child td { border-bottom: none; }
 
+        .modal {
+            z-index: 1000;
+        }
+
         .modal-box {
             background-color: #ffffff !important;
             color: #0f172a !important;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal::backdrop {
+            background-color: rgba(15, 23, 42, 0.45);
+        }
+
+        .modal-action {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .modal-backdrop {
+            background: transparent;
+        }
+
+        .modal-backdrop button {
+            width: 100%;
+            height: 100%;
+            cursor: default;
+            opacity: 0;
         }
 
         @media (min-width: 1024px) {
@@ -263,18 +307,20 @@
                         </a>
                     </li>
                     <li>
-                        <span class="sidebar-link disabled" title="Em breve">
+                        <a th:href="@{/admin/partidas}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'partidas'} ? 'active' : _">
                             <i data-lucide="swords" class="w-4 h-4 shrink-0"></i>
                             Partidas
-                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
-                        </span>
+                        </a>
                     </li>
                     <li>
-                        <span class="sidebar-link disabled" title="Em breve">
+                        <a th:href="@{/admin/palpites}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'palpites'} ? 'active' : _">
                             <i data-lucide="target" class="w-4 h-4 shrink-0"></i>
                             Palpites
-                            <span class="badge badge-xs badge-ghost ml-auto">breves</span>
-                        </span>
+                        </a>
                     </li>
                     <li>
                         <a th:href="@{/admin/usuarios}"
