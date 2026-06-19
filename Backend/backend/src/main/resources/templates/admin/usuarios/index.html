@@ -92,29 +92,29 @@
                                 th:text="${#temporals.format(u.criadoEm, 'dd/MM/yyyy')}">
                                 01/06/2026
                             </td>
-                            <td class="text-right pr-6">
-                                <div class="flex items-center justify-end gap-2">
+                            <td class="text-center">
+                                <div class="flex items-center justify-start gap-2">
                                     <button type="button"
-                                            class="btn btn-ghost btn-sm btn-square btn-ver-usuario"
+                                            class="btn btn-ghost btn-md btn-square btn-ver-usuario"
                                             title="Visualizar"
-                                            th:attr="data-nome=${u.nome},data-email=${u.email},data-perfil=${u.perfil},data-status=${u.status},data-pontos=${u.pontuacaoTotal},data-placares=${u.placaresExatos},data-cadastro=${#temporals.format(u.criadoEm, 'dd/MM/yyyy HH:mm')}">
-                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                            th:attr="data-avatar=${u.avatarUrl},data-nome=${u.nome},data-email=${u.email},data-perfil=${u.perfil},data-status=${u.status},data-pontos=${u.pontuacaoTotal},data-placares=${u.placaresExatos},data-cadastro=${#temporals.format(u.criadoEm, 'dd/MM/yyyy HH:mm')}">
+                                        <i data-lucide="eye" class="w-5 h-5"></i>
                                     </button>
 
                                     <button th:if="${u.status.name() == 'ATIVO'}"
                                             type="button"
-                                            class="btn btn-ghost btn-sm btn-square text-warning btn-alterar-status"
+                                            class="btn btn-ghost btn-md btn-square text-warning btn-alterar-status"
                                             title="Bloquear"
                                             th:attr="data-id=${u.id},data-nome=${u.nome},data-acao='bloquear',data-status='BLOQUEADO'">
-                                        <i data-lucide="ban" class="w-4 h-4"></i>
+                                        <i data-lucide="ban" class="w-5 h-5"></i>
                                     </button>
 
                                     <button th:if="${u.status.name() == 'BLOQUEADO'}"
                                             type="button"
-                                            class="btn btn-ghost btn-sm btn-square text-success btn-alterar-status"
+                                            class="btn btn-ghost btn-md btn-square text-success btn-alterar-status"
                                             title="Desbloquear"
                                             th:attr="data-id=${u.id},data-nome=${u.nome},data-acao='desbloquear',data-status='ATIVO'">
-                                        <i data-lucide="lock-open" class="w-4 h-4"></i>
+                                        <i data-lucide="lock-open" class="w-5 h-5"></i>
                                     </button>
                                 </div>
                             </td>
@@ -142,7 +142,21 @@
     <!-- Modal detalhes -->
     <dialog id="modal-detalhes" class="modal">
         <div class="modal-box max-w-md bg-white text-slate-800">
-            <h3 class="font-bold text-lg" id="modal-detalhes-nome">Usuário</h3>
+            <div class="flex flex-col items-center gap-3 pb-4 border-b border-slate-100">
+                <div class="avatar">
+                    <div class="w-20 rounded-full ring ring-success/20 ring-offset-2">
+                        <img id="modal-detalhes-avatar"
+                             src=""
+                             alt="Avatar"
+                             class="hidden w-full h-full object-cover"/>
+                        <div id="modal-detalhes-avatar-placeholder"
+                             class="bg-slate-100 text-slate-600 w-full h-full flex items-center justify-center rounded-full">
+                            <span id="modal-detalhes-inicial" class="text-2xl font-bold">?</span>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="font-bold text-lg" id="modal-detalhes-nome">Usuário</h3>
+            </div>
             <div class="py-4 space-y-2 text-sm">
                 <p><span class="text-slate-500">E-mail:</span> <span id="modal-detalhes-email"></span></p>
                 <p><span class="text-slate-500">Perfil:</span> <span id="modal-detalhes-perfil"></span></p>
@@ -193,6 +207,11 @@
 
             document.querySelectorAll('.btn-ver-usuario').forEach(btn => {
                 btn.addEventListener('click', () => {
+                    const avatarUrl = btn.dataset.avatar;
+                    const img = document.getElementById('modal-detalhes-avatar');
+                    const placeholder = document.getElementById('modal-detalhes-avatar-placeholder');
+                    const inicial = document.getElementById('modal-detalhes-inicial');
+
                     document.getElementById('modal-detalhes-nome').textContent = btn.dataset.nome;
                     document.getElementById('modal-detalhes-email').textContent = btn.dataset.email;
                     document.getElementById('modal-detalhes-perfil').textContent =
