@@ -25,6 +25,10 @@ import java.util.Set;
 @Service
 public class PalpiteService {
 
+    public static final int PONTOS_PLACAR_EXATO = 10;
+    public static final int PONTOS_VENCEDOR_EMPATE = 5;
+    public static final int PONTOS_ERRO_TOTAL = 0;
+
     private final PalpiteRepository palpiteRepository;
     private final PartidaRepository partidaRepository;
     private final UsuarioRepository usuarioRepository;
@@ -179,18 +183,18 @@ public class PalpiteService {
         int placarRealB = partida.getGolsSelecaoB();
 
         if (placarPalpiteA == placarRealA && placarPalpiteB == placarRealB) {
-            palpite.setPontos(10);
+            palpite.setPontos(PONTOS_PLACAR_EXATO);
             palpite.setCriterioPontuacao(CriterioPontuacao.PLACAR_EXATO);
             return;
         }
 
         if (Integer.compare(placarPalpiteA, placarPalpiteB) == Integer.compare(placarRealA, placarRealB)) {
-            palpite.setPontos(5);
+            palpite.setPontos(PONTOS_VENCEDOR_EMPATE);
             palpite.setCriterioPontuacao(CriterioPontuacao.VENCEDOR_EMPATE);
             return;
         }
 
-        palpite.setPontos(0);
+        palpite.setPontos(PONTOS_ERRO_TOTAL);
         palpite.setCriterioPontuacao(CriterioPontuacao.ERROU);
     }
 
