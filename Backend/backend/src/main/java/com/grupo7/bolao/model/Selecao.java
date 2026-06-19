@@ -3,6 +3,11 @@ package com.grupo7.bolao.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entidade que representa uma Seleção participante do Bolão da Copa de 2026.
+ * Mapeia a tabela "selecoes" no banco de dados MySQL e armazena informações
+ * sobre o nome do país, código oficial da FIFA, link para a imagem da bandeira e o grupo da primeira fase.
+ */
 @Entity
 @Table(name = "selecoes")
 public class Selecao {
