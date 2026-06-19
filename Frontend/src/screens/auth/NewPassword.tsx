@@ -8,7 +8,7 @@ import {
   Image,
 } from "react-native";
 
-export default function ForgotPassword() {
+export default function NewPassword() {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
