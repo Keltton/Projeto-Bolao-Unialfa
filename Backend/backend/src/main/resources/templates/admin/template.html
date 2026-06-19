@@ -284,6 +284,14 @@
                             Usuários
                         </a>
                     </li>
+                     <li>
+                        <a th:href="@{/admin/selecoes}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'selecoes'} ? 'active' : _">
+                            <i data-lucide="target" class="w-4 h-4 shrink-0"></i>
+                            Seleções
+                        </a>
+                    </li>
                     <li>
                         <span class="sidebar-link disabled" title="Em breve">
                             <i data-lucide="trophy" class="w-4 h-4 shrink-0"></i>

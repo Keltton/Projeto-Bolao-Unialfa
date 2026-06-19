@@ -110,6 +110,7 @@ public class SecurityConfig {
                 || uri.startsWith("/css/")
                 || uri.startsWith("/js/")
                 || uri.startsWith("/webjars/")
+                || uri.startsWith("/uploads/")
                 || uri.equals("/error");
     }
 }

@@ -1,0 +1,333 @@
+<html xmlns:th="http://www.thymeleaf.org" data-theme="light"
+      th:replace="~{admin/template :: layout(
+          'Seleções — Bolão Copa 2026',
+          'Seleções',
+          'Gerenciar seleções do bolão',
+          'selecoes',
+          ~{::content}
+      )}">
+
+<th:block th:fragment="content">
+
+    <div th:if="${sucesso}" class="alert alert-success mb-4">
+        <i data-lucide="check-circle" class="w-5 h-5 shrink-0"></i>
+        <span th:text="${sucesso}">Sucesso</span>
+    </div>
+
+    <div th:if="${erro}" class="alert alert-error mb-4">
+        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+        <span th:text="${erro}">Erro</span>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold">Seleções</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                <span th:text="${#lists.size(selecoes)} + ' seleção(ões)'">0 seleção(ões)</span>
+                · <span id="live-clock"></span>
+            </p>
+        </div>
+        <button type="button" class="btn btn-success gap-2" id="btn-nova-selecao">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Nova seleção
+        </button>
+    </div>
+
+    <div class="card-panel rounded-2xl p-4">
+        <form method="get" th:action="@{/admin/selecoes}" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input type="search" name="busca" th:value="${busca}"
+                       placeholder="Buscar por nome, código FIFA ou grupo..."
+                       class="admin-input pl-10"/>
+            </div>
+            <button type="submit" class="btn btn-success sm:w-32">Buscar</button>
+        </form>
+    </div>
+
+    <div class="card-panel rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th class="pl-6">Seleção</th>
+                        <th>Código FIFA</th>
+                        <th>Grupo</th>
+                        <th>Cadastro</th>
+                        <th class="text-right pr-6">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="s : ${selecoes}">
+                        <td class="pl-6">
+                            <div class="flex items-center gap-3">
+                                <img th:if="${s.bandeiraUrl != null and !#strings.isEmpty(s.bandeiraUrl)}"
+                                     th:src="${s.bandeiraUrl}"
+                                     th:alt="${s.nome}"
+                                     class="w-8 h-8 rounded-full object-cover"/>
+                                <div th:if="${s.bandeiraUrl == null or #strings.isEmpty(s.bandeiraUrl)}"
+                                     class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold"
+                                     th:text="${#strings.toUpperCase(#strings.substring(s.codigoFifa, 0, 3))}">BRA</div>
+                                <span th:text="${s.nome}">Brasil</span>
+                            </div>
+                        </td>
+                        <td th:text="${s.codigoFifa}">BRA</td>
+                        <td>
+                            <span th:if="${s.grupo != null and !#strings.isEmpty(s.grupo)}"
+                                  class="badge badge-ghost"
+                                  th:text="${s.grupo}">A</span>
+                            <span th:if="${s.grupo == null or #strings.isEmpty(s.grupo)}" class="text-slate-400">—</span>
+                        </td>
+                        <td class="text-slate-500 whitespace-nowrap"
+                            th:text="${#temporals.format(s.criadoEm, 'dd/MM/yyyy')}">01/06/2026</td>
+                        <td class="pr-6">
+                            <div class="flex items-center justify-end gap-2">
+                                <button type="button"
+                                        class="btn btn-ghost btn-md btn-square btn-ver-selecao"
+                                        title="Visualizar"
+                                        th:attr="data-nome=${s.nome},data-codigo=${s.codigoFifa},data-grupo=${s.grupo},data-bandeira=${s.bandeiraUrl},data-cadastro=${#temporals.format(s.criadoEm, 'dd/MM/yyyy HH:mm')},data-atualizado=${#temporals.format(s.atualizadoEm, 'dd/MM/yyyy HH:mm')}">
+                                    <i data-lucide="eye" class="w-5 h-5"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-ghost btn-md btn-square btn-editar-selecao"
+                                        title="Editar"
+                                        th:attr="data-id=${s.id},data-nome=${s.nome},data-codigo=${s.codigoFifa},data-grupo=${s.grupo},data-bandeira=${s.bandeiraUrl}">
+                                    <i data-lucide="pencil" class="w-5 h-5"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-ghost btn-md btn-square text-error btn-excluir-selecao"
+                                        title="Excluir"
+                                        th:attr="data-id=${s.id},data-nome=${s.nome}">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(selecoes)}">
+                        <td colspan="5" class="text-center text-slate-500 py-8">
+                            Nenhuma seleção cadastrada.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal visualização -->
+    <dialog id="modal-detalhes" class="modal">
+        <div class="modal-box max-w-md bg-white text-slate-800">
+            <div class="flex flex-col items-center gap-3 pb-4 border-b border-slate-100">
+                <div class="avatar">
+                    <div class="w-20 rounded-full ring ring-success/20 ring-offset-2 overflow-hidden">
+                        <img id="modal-detalhes-bandeira"
+                             src=""
+                             alt="Bandeira"
+                             class="hidden w-full h-full object-cover"/>
+                        <div id="modal-detalhes-bandeira-placeholder"
+                             class="bg-slate-100 text-slate-600 w-full h-full flex items-center justify-center rounded-full">
+                            <span id="modal-detalhes-codigo" class="text-xl font-bold">BRA</span>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="font-bold text-lg" id="modal-detalhes-nome">Seleção</h3>
+            </div>
+            <div class="py-4 space-y-2 text-sm">
+                <p><span class="text-slate-500">Código FIFA:</span> <span id="modal-detalhes-codigo-texto"></span></p>
+                <p><span class="text-slate-500">Grupo:</span> <span id="modal-detalhes-grupo"></span></p>
+                <p><span class="text-slate-500">Cadastro:</span> <span id="modal-detalhes-cadastro"></span></p>
+                <p><span class="text-slate-500">Última atualização:</span> <span id="modal-detalhes-atualizado"></span></p>
+            </div>
+            <div class="modal-action">
+                <form method="dialog"><button class="btn">Fechar</button></form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>Fechar</button></form>
+    </dialog>
+
+    <!-- Modal cadastro / edição -->
+    <dialog id="modal-formulario" class="modal">
+        <div class="modal-box max-w-md bg-white text-slate-800">
+            <h3 class="font-bold text-lg mb-4" id="modal-formulario-titulo">Cadastrar seleção</h3>
+
+            <form id="form-selecao" th:action="@{/admin/selecoes}" method="post"
+                  enctype="multipart/form-data" class="space-y-4">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" id="bandeiraUrlAtual" name="bandeiraUrlAtual"/>
+
+                <div>
+                    <label for="nome" class="text-sm font-medium">Nome</label>
+                    <input type="text" id="nome" name="nome" maxlength="100" required
+                           placeholder="Brasil" class="admin-input w-full mt-1"/>
+                </div>
+
+                <div>
+                    <label for="codigoFifa" class="text-sm font-medium">Código FIFA</label>
+                    <input type="text" id="codigoFifa" name="codigoFifa" maxlength="3" minlength="3"
+                           placeholder="BRA" required
+                           class="admin-input w-full mt-1 uppercase"/>
+                </div>
+
+                <div>
+                    <label for="grupo" class="text-sm font-medium">Grupo</label>
+                    <input type="text" id="grupo" name="grupo" maxlength="10"
+                           placeholder="A" class="admin-input w-full mt-1"/>
+                </div>
+
+                <div>
+                    <label for="bandeira" class="text-sm font-medium">Bandeira</label>
+                    <input type="file" id="bandeira" name="bandeira"
+                           accept="image/png,image/jpeg,image/webp,image/gif"
+                           class="admin-input w-full mt-1 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-green-50 file:text-green-700"/>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, WEBP ou GIF — máx. 2MB</p>
+                </div>
+
+                <div id="preview-bandeira-container" class="hidden">
+                    <p class="text-sm font-medium mb-1">Bandeira atual</p>
+                    <img id="preview-bandeira" src="" alt="Bandeira atual"
+                         class="w-12 h-12 rounded-full object-cover border border-slate-200"/>
+                </div>
+
+                <div class="modal-action mt-6">
+                    <button type="button" class="btn btn-ghost" id="btn-cancelar-formulario">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success" id="btn-salvar-selecao">Salvar</button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>Fechar</button></form>
+    </dialog>
+
+    <!-- Modal confirmação exclusão -->
+    <dialog id="modal-excluir" class="modal">
+        <div class="modal-box max-w-sm bg-white text-slate-800">
+            <h3 class="font-bold text-lg">Excluir seleção</h3>
+            <p class="py-4 text-sm text-slate-600" id="modal-excluir-texto"></p>
+            <form id="form-excluir" method="post" class="modal-action gap-2">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="button" class="btn btn-ghost" id="btn-cancelar-exclusao">Cancelar</button>
+                <button type="submit" class="btn btn-error">Excluir</button>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>Fechar</button></form>
+    </dialog>
+
+    <script th:inline="javascript">
+        const selecoesBaseUrl = /*[[@{/admin/selecoes/}]]*/ '/admin/selecoes/';
+
+        function initLiveClock() {
+            const el = document.getElementById('live-clock');
+            if (!el) return;
+            const tick = () => {
+                el.textContent = new Date().toLocaleString('pt-BR', {
+                    weekday: 'short', day: '2-digit', month: 'short',
+                    hour: '2-digit', minute: '2-digit'
+                });
+            };
+            tick();
+            setInterval(tick, 60000);
+        }
+
+        function abrirModalCadastro() {
+            const form = document.getElementById('form-selecao');
+            form.action = /*[[@{/admin/selecoes}]]*/ '/admin/selecoes';
+            form.reset();
+            document.getElementById('bandeiraUrlAtual').value = '';
+            document.getElementById('modal-formulario-titulo').textContent = 'Cadastrar seleção';
+            document.getElementById('btn-salvar-selecao').textContent = 'Salvar';
+            document.getElementById('preview-bandeira-container').classList.add('hidden');
+            document.getElementById('bandeira').required = false;
+            document.getElementById('modal-formulario').showModal();
+        }
+
+        function abrirModalEdicao(btn) {
+            const form = document.getElementById('form-selecao');
+            form.action = selecoesBaseUrl + btn.dataset.id;
+            document.getElementById('modal-formulario-titulo').textContent = 'Editar seleção';
+            document.getElementById('btn-salvar-selecao').textContent = 'Atualizar';
+            document.getElementById('nome').value = btn.dataset.nome || '';
+            document.getElementById('codigoFifa').value = btn.dataset.codigo || '';
+            document.getElementById('grupo').value = btn.dataset.grupo || '';
+            document.getElementById('bandeira').value = '';
+            document.getElementById('bandeiraUrlAtual').value = btn.dataset.bandeira || '';
+
+            const previewContainer = document.getElementById('preview-bandeira-container');
+            const preview = document.getElementById('preview-bandeira');
+            if (btn.dataset.bandeira) {
+                preview.src = btn.dataset.bandeira;
+                previewContainer.classList.remove('hidden');
+            } else {
+                previewContainer.classList.add('hidden');
+            }
+
+            document.getElementById('bandeira').required = false;
+            document.getElementById('modal-formulario').showModal();
+        }
+
+        function abrirModalDetalhes(btn) {
+            const bandeiraUrl = btn.dataset.bandeira;
+            const codigo = btn.dataset.codigo || '—';
+            const img = document.getElementById('modal-detalhes-bandeira');
+            const placeholder = document.getElementById('modal-detalhes-bandeira-placeholder');
+
+            document.getElementById('modal-detalhes-nome').textContent = btn.dataset.nome || '—';
+            document.getElementById('modal-detalhes-codigo-texto').textContent = codigo;
+            document.getElementById('modal-detalhes-codigo').textContent = codigo;
+            document.getElementById('modal-detalhes-grupo').textContent =
+                btn.dataset.grupo && btn.dataset.grupo.trim() !== '' ? btn.dataset.grupo : '—';
+            document.getElementById('modal-detalhes-cadastro').textContent = btn.dataset.cadastro || '—';
+            document.getElementById('modal-detalhes-atualizado').textContent = btn.dataset.atualizado || '—';
+
+            if (bandeiraUrl && bandeiraUrl.trim() !== '') {
+                img.src = bandeiraUrl;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                img.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+
+            document.getElementById('modal-detalhes').showModal();
+        }
+
+        function initSelecoesPage() {
+            initLiveClock();
+            lucide.createIcons();
+
+            document.getElementById('btn-nova-selecao')?.addEventListener('click', abrirModalCadastro);
+            document.getElementById('btn-cancelar-formulario')?.addEventListener('click', () => {
+                document.getElementById('modal-formulario').close();
+            });
+            document.getElementById('btn-cancelar-exclusao')?.addEventListener('click', () => {
+                document.getElementById('modal-excluir').close();
+            });
+
+            document.querySelectorAll('.btn-ver-selecao').forEach(btn => {
+                btn.addEventListener('click', () => abrirModalDetalhes(btn));
+            });
+
+            document.querySelectorAll('.btn-editar-selecao').forEach(btn => {
+                btn.addEventListener('click', () => abrirModalEdicao(btn));
+            });
+
+            document.querySelectorAll('.btn-excluir-selecao').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('modal-excluir-texto').textContent =
+                        `Deseja excluir ${btn.dataset.nome}? Esta ação não pode ser desfeita.`;
+                    document.getElementById('form-excluir').action =
+                        selecoesBaseUrl + btn.dataset.id + '/excluir';
+                    document.getElementById('modal-excluir').showModal();
+                });
+            });
+
+            /*[# th:if="${erro}"]*/
+            document.getElementById('modal-formulario')?.showModal();
+            /*[/]*/
+        }
+
+        document.addEventListener('DOMContentLoaded', initSelecoesPage);
+    </script>
+
+</th:block>
+
+</html>
