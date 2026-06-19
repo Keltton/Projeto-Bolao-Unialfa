@@ -5,6 +5,12 @@ import com.grupo7.bolao.enums.StatusPartida;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entidade que representa uma Partida de futebol da Copa do Mundo de 2026.
+ * Mapeia a tabela "partidas" no banco de dados MySQL e armazena os IDs das duas seleções envolvidas,
+ * a data/hora do jogo, o estádio, a fase do torneio, o status atual (ex: AGENDADA, ANDAMENTO, ENCERRADA)
+ * e o placar oficial de gols de cada equipe.
+ */
 @Entity
 @Table(name = "partidas")
 public class Partida {

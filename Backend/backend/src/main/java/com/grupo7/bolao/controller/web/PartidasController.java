@@ -21,6 +21,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
+/**
+ * Controller Web (MVC) para a administração das Partidas no painel de controle.
+ * Permite a visualização, inserção, edição, lançamento de resultados e exclusão de confrontos.
+ */
 @Controller
 @RequestMapping("/admin/partidas")
 public class PartidasController {
@@ -30,11 +34,25 @@ public class PartidasController {
     private final PartidaService partidaService;
     private final SelecaoService selecaoService;
 
+    /**
+     * Construtor do PartidasController.
+     *
+     * @param partidaService Serviço de regras de negócio de partidas.
+     * @param selecaoService Serviço de regras de negócio de seleções.
+     */
     public PartidasController(PartidaService partidaService, SelecaoService selecaoService) {
         this.partidaService = partidaService;
         this.selecaoService = selecaoService;
     }
 
+    /**
+     * Renderiza a página principal do painel de partidas (listagem geral e filtros).
+     *
+     * @param fase Filtro opcional por fase do torneio.
+     * @param status Filtro opcional por status do jogo.
+     * @param model Objeto Model do Spring para passar atributos à view.
+     * @return O template Thymeleaf "admin/partidas/index".
+     */
     @GetMapping({"", "/"})
     public String listar(
             @RequestParam(required = false) FasePartida fase,
@@ -52,6 +70,19 @@ public class PartidasController {
         return "admin/partidas/index";
     }
 
+    /**
+     * Trata a requisição de cadastro de uma nova partida no painel administrativo.
+     *
+     * @param selecaoAId ID da Seleção A.
+     * @param selecaoBId ID da Seleção B.
+     * @param dataHora String de data/hora a ser convertida.
+     * @param estadio Nome do estádio.
+     * @param fase Fase do torneio.
+     * @param grupo Grupo da primeira fase (se aplicável).
+     * @param status Status do jogo.
+     * @param redirectAttributes Atributos de redirecionamento.
+     * @return Redirecionamento para a rota da listagem.
+     */
     @PostMapping
     public String cadastrar(
             @RequestParam Long selecaoAId,
@@ -73,6 +104,20 @@ public class PartidasController {
         return "redirect:/admin/partidas";
     }
 
+    /**
+     * Trata a requisição de atualização dos dados cadastrais de uma partida.
+     *
+     * @param id ID da partida.
+     * @param selecaoAId ID atualizado da Seleção A.
+     * @param selecaoBId ID atualizado da Seleção B.
+     * @param dataHora Data/hora atualizada.
+     * @param estadio Estádio atualizado.
+     * @param fase Fase atualizada.
+     * @param grupo Grupo atualizado.
+     * @param status Status atualizado.
+     * @param redirectAttributes Atributos de redirecionamento.
+     * @return Redirecionamento para a rota da listagem.
+     */
     @PostMapping("/{id}")
     public String atualizar(
             @PathVariable Long id,
@@ -95,6 +140,15 @@ public class PartidasController {
         return "redirect:/admin/partidas";
     }
 
+    /**
+     * Trata o lançamento do resultado oficial do confronto, encerrando a partida e atualizando palpites.
+     *
+     * @param id ID da partida.
+     * @param golsSelecaoA Gols marcados pela equipe A.
+     * @param golsSelecaoB Gols marcados pela equipe B.
+     * @param redirectAttributes Atributos de redirecionamento.
+     * @return Redirecionamento para a rota da listagem.
+     */
     @PostMapping("/{id}/resultado")
     public String lancarResultado(
             @PathVariable Long id,
@@ -114,6 +168,13 @@ public class PartidasController {
         return "redirect:/admin/partidas";
     }
 
+    /**
+     * Trata a requisição de exclusão de uma partida.
+     *
+     * @param id ID da partida.
+     * @param redirectAttributes Atributos de redirecionamento.
+     * @return Redirecionamento para a rota da listagem.
+     */
     @PostMapping("/{id}/excluir")
     public String excluir(
             @PathVariable Long id,
@@ -128,6 +189,9 @@ public class PartidasController {
         return "redirect:/admin/partidas";
     }
 
+    /**
+     * Auxiliar de filtragem interna baseada em fase e/ou status.
+     */
     private List<PartidaResponse> filtrarPartidas(FasePartida fase, StatusPartida status) {
         if (fase != null && status != null) {
             return partidaService.listarPorFaseEStatus(fase, status);
@@ -141,6 +205,9 @@ public class PartidasController {
         return partidaService.listarTodasPartidas();
     }
 
+    /**
+     * Constrói e valida o DTO {@link PartidaRequest} a partir dos parâmetros HTTP.
+     */
     private PartidaRequest montarRequest(
             Long selecaoAId,
             Long selecaoBId,
@@ -175,6 +242,9 @@ public class PartidasController {
         );
     }
 
+    /**
+     * Formata mensagens de erro de parsing de data de forma amigável.
+     */
     private String mensagemErro(Exception e) {
         if (e instanceof DateTimeParseException) {
             return "Data e hora inválidas.";
