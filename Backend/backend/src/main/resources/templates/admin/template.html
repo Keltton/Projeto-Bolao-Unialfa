@@ -1,31 +1,113 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="pt-BR" data-theme="light"
+      xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:fragment="layout (pageTitle, pageHeading, pageSubtitle, activeSection, content, extraScripts)">
+      th:fragment="layout (pageTitle, pageHeading, pageSubtitle, activeSection, content)">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
     <title th:text="${pageTitle}">Dashboard — Bolão Copa 2026</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css"/>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
     <style>
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        html { color-scheme: light only; }
+
         .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
         .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
         .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+
+        .menu .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid transparent;
+        }
+
         .sidebar-link.active {
             background: rgba(22, 163, 74, 0.1);
             color: #15803d;
             border-color: rgba(22, 163, 74, 0.25);
             font-weight: 600;
         }
-        .sidebar-link:hover:not(.active) { background: rgba(0, 0, 0, 0.04); }
+
+        .sidebar-link:hover:not(.active):not(.disabled) { background: rgba(0, 0, 0, 0.04); }
+
+        .sidebar-link.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
         .card-panel {
             background: #ffffff;
             border: 1px solid rgba(0, 0, 0, 0.06);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .admin-input {
+            display: block;
+            width: 100%;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            color: #0f172a;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .admin-input::placeholder { color: #94a3b8; }
+
+        .admin-input:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            color: #334155;
+        }
+
+        .admin-table thead th {
+            background-color: #f8fafc;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .admin-table tbody td {
+            background-color: #ffffff;
+            color: #334155;
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .admin-table tbody tr:hover td { background-color: #f8fafc; }
+        .admin-table tbody tr:last-child td { border-bottom: none; }
+
+        .modal-box {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
         }
 
         @media (min-width: 1024px) {
@@ -41,9 +123,7 @@
                 overflow: hidden;
             }
 
-            #app-drawer .drawer-overlay {
-                display: none !important;
-            }
+            #app-drawer .drawer-overlay { display: none !important; }
 
             #app-drawer .drawer-content {
                 grid-column: 2;
@@ -109,7 +189,7 @@
                     </div>
                     <div>
                         <h1 class="text-lg font-semibold leading-tight" th:text="${pageHeading}">Dashboard</h1>
-                        <p class="text-xs text-base-content/50 hidden sm:block" th:text="${pageSubtitle}">
+                        <p class="text-xs text-slate-500 hidden sm:block" th:text="${pageSubtitle}">
                             Bolão Copa 2026 — Painel Administrativo
                         </p>
                     </div>
@@ -144,7 +224,8 @@
             </div>
         </header>
 
-        <main class="flex-1 p-4 lg:p-6 animate-fade-in flex flex-col gap-6" th:insert="${content}"></main>
+        <main class="flex-1 p-4 lg:p-6 animate-fade-in flex flex-col gap-6 w-full mx-auto"
+              th:insert="${content}"></main>
 
         <footer class="footer footer-center p-4 mt-auto bg-white border-t border-slate-200 text-slate-400 text-xs">
             <aside>
@@ -156,7 +237,7 @@
     </div>
 
     <div class="drawer-side z-40">
-        <label for="sidebar-toggle" aria-label="fechar menu" class="drawer-overlay"></label>
+        <label for="sidebar-toggle" aria-label="Fechar menu" class="drawer-overlay"></label>
         <aside id="sidebar" class="bg-white w-64 min-h-full border-r border-slate-200 flex flex-col shadow-sm">
 
             <div class="p-4 border-b border-slate-200">
@@ -172,48 +253,50 @@
             </div>
 
             <nav class="flex-1 p-3">
-                <ul class="menu menu-sm gap-1">
+                <ul class="menu menu-sm gap-1 p-0">
                     <li>
                         <a th:href="@{/admin}"
-                           th:class="'sidebar-link gap-3 rounded-xl border border-transparent' + (${activeSection} == 'dashboard' ? ' active' : '')">
-                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'dashboard'} ? 'active' : _">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
                             Dashboard
                         </a>
                     </li>
                     <li>
-                        <a href="#"
-                           th:class="'sidebar-link gap-3 rounded-xl border border-transparent' + (${activeSection} == 'partidas' ? ' active' : '')">
-                            <i data-lucide="swords" class="w-4 h-4"></i>
+                        <span class="sidebar-link disabled" title="Em breve">
+                            <i data-lucide="swords" class="w-4 h-4 shrink-0"></i>
                             Partidas
-                        </a>
+                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
+                        </span>
                     </li>
                     <li>
-                        <a href="#"
-                           th:class="'sidebar-link gap-3 rounded-xl border border-transparent' + (${activeSection} == 'palpites' ? ' active' : '')">
-                            <i data-lucide="target" class="w-4 h-4"></i>
+                        <span class="sidebar-link disabled" title="Em breve">
+                            <i data-lucide="target" class="w-4 h-4 shrink-0"></i>
                             Palpites
-                        </a>
+                            <span class="badge badge-xs badge-ghost ml-auto">breves</span>
+                        </span>
                     </li>
                     <li>
-                        <a href="#"
-                           th:class="'sidebar-link gap-3 rounded-xl border border-transparent' + (${activeSection} == 'usuarios' ? ' active' : '')">
-                            <i data-lucide="users" class="w-4 h-4"></i>
+                        <a th:href="@{/admin/usuarios}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'usuarios'} ? 'active' : _">
+                            <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
                             Usuários
                         </a>
                     </li>
                     <li>
-                        <a href="#"
-                           th:class="'sidebar-link gap-3 rounded-xl border border-transparent' + (${activeSection} == 'ranking' ? ' active' : '')">
-                            <i data-lucide="trophy" class="w-4 h-4"></i>
+                        <span class="sidebar-link disabled" title="Em breve">
+                            <i data-lucide="trophy" class="w-4 h-4 shrink-0"></i>
                             Ranking
-                        </a>
+                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
+                        </span>
                     </li>
                     <li>
-                        <a href="#"
-                           th:class="'sidebar-link gap-3 rounded-xl border border-transparent' + (${activeSection} == 'relatorios' ? ' active' : '')">
-                            <i data-lucide="file-bar-chart" class="w-4 h-4"></i>
+                        <span class="sidebar-link disabled" title="Em breve">
+                            <i data-lucide="file-bar-chart" class="w-4 h-4 shrink-0"></i>
                             Relatórios
-                        </a>
+                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
+                        </span>
                     </li>
                 </ul>
             </nav>
@@ -227,8 +310,8 @@
                         </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">Admin</p>
-                        <p class="text-xs text-base-content/50 truncate" sec:authentication="name">admin@copa2026.com.br</p>
+                        <p class="text-sm font-medium truncate">Administrador</p>
+                        <p class="text-xs text-slate-500 truncate" sec:authentication="name">admin@copa2026.com.br</p>
                     </div>
                 </div>
             </div>
@@ -279,20 +362,14 @@
         updateMenuIcon();
     }
 
-    function refreshData() {
-        window.location.reload();
-    }
-
     function initAdminLayout() {
         initSidebarToggle();
         lucide.createIcons();
-        document.getElementById('btn-refresh')?.addEventListener('click', refreshData);
+        document.getElementById('btn-refresh')?.addEventListener('click', () => window.location.reload());
     }
 
     document.addEventListener('DOMContentLoaded', initAdminLayout);
 </script>
-
-<th:block th:replace="${extraScripts}"></th:block>
 
 </body>
 </html>
