@@ -18,6 +18,10 @@ export async function logout(): Promise<void> {
   await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
 }
 
+export async function updateStoredUser(usuario: Usuario): Promise<void> {
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(usuario));
+}
+
 export async function getStoredSession(): Promise<LoginResponse | null> {
   const [[, token], [, userJson]] = await AsyncStorage.multiGet([TOKEN_KEY, USER_KEY]);
   if (!token || !userJson) return null;

@@ -8,6 +8,7 @@ type AuthContextData = {
   isAuthenticated: boolean;
   signIn: (email: string, senha: string) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUser: (usuario: Usuario) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -33,6 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }
 
+  
+  async function updateUser(usuario: Usuario) {
+    await authService.updateStoredUser(usuario);
+    setUser(usuario);
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -40,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user,
       signIn,
       signOut,
+      updateUser,
     }}>
       {children}
     </AuthContext.Provider>

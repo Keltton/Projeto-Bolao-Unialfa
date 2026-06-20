@@ -31,11 +31,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             Pageable pageable
     );
 
-    @Query("SELECT COUNT(u) + 1 FROM Usuario u WHERE u.perfil = com.grupo7.bolao.enums.PerfilUsuario.USUARIO AND u.status = :status AND (" +
-           "u.pontuacaoTotal > :pontuacaoTotal OR " +
-           "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos > :placaresExatos) OR " +
-           "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos = :placaresExatos AND u.criadoEm < :criadoEm)" +
-           ")")
+    @Query("SELECT COUNT(u) + 1 FROM Usuario u WHERE u.perfil = com.grupo7.bolao.enums.PerfilUsuario.USUARIO AND u.status = com.grupo7.bolao.enums.StatusUsuario.ATIVO AND (" +
+    "u.pontuacaoTotal > :pontuacaoTotal OR " +
+    "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos > :placaresExatos) OR " +
+    "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos = :placaresExatos AND u.criadoEm < :criadoEm)" +
+    ")")
     long obterPosicaoNoRanking(
             @Param("pontuacaoTotal") Integer pontuacaoTotal,
             @Param("placaresExatos") Integer placaresExatos,
