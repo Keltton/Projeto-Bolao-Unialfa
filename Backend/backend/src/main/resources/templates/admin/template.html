@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout (pageTitle, pageHeading, pageSubtitle, activeSection, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <title th:text="${pageTitle}">Dashboard — Bolão Copa 2026</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css"/>
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+
+    <style>
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        html { color-scheme: light only; }
+
+        .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+        .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+
+        .menu .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid transparent;
+        }
+
+        .sidebar-link.active {
+            background: rgba(22, 163, 74, 0.1);
+            color: #15803d;
+            border-color: rgba(22, 163, 74, 0.25);
+            font-weight: 600;
+        }
+
+        .sidebar-link:hover:not(.active):not(.disabled) { background: rgba(0, 0, 0, 0.04); }
+
+        .sidebar-link.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .card-panel {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .admin-input {
+            display: block;
+            box-sizing: border-box;
+            max-width: 100%;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            color: #0f172a;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        select.admin-input {
+            cursor: pointer;
+            padding-right: 2rem;
+        }
+
+        input[type="datetime-local"].admin-input,
+        input[type="number"].admin-input {
+            min-height: 2.75rem;
+        }
+
+        .admin-input::placeholder { color: #94a3b8; }
+
+        .admin-input:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            color: #334155;
+        }
+
+        .admin-table thead th {
+            background-color: #f8fafc;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .admin-table tbody td {
+            background-color: #ffffff;
+            color: #334155;
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .admin-table tbody tr:hover td { background-color: #f8fafc; }
+        .admin-table tbody tr:last-child td { border-bottom: none; }
+
+        .modal {
+            z-index: 1000;
+        }
+
+        .modal-box {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal::backdrop {
+            background-color: rgba(15, 23, 42, 0.45);
+        }
+
+        .modal-action {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .modal-backdrop {
+            background: transparent;
+        }
+
+        .modal-backdrop button {
+            width: 100%;
+            height: 100%;
+            cursor: default;
+            opacity: 0;
+        }
+
+        @media (min-width: 1024px) {
+            html, body {
+                height: 100%;
+                overflow: hidden;
+            }
+
+            #app-drawer {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            #app-drawer .drawer-overlay { display: none !important; }
+
+            #app-drawer .drawer-content {
+                grid-column: 2;
+                grid-row: 1;
+                min-width: 0;
+                height: 100vh;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            #app-drawer .drawer-side {
+                grid-column: 1;
+                grid-row: 1;
+                position: relative !important;
+                top: auto !important;
+                height: 100vh !important;
+                min-height: unset !important;
+                transform: none !important;
+                transition: width 0.3s ease, opacity 0.3s ease;
+                overflow: hidden;
+            }
+
+            #app-drawer .drawer-side > aside {
+                width: 16rem;
+                min-width: 16rem;
+                height: 100vh;
+                overflow-y: auto;
+            }
+
+            #app-drawer .drawer-toggle:not(:checked) ~ .drawer-side {
+                width: 0 !important;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            #app-drawer .drawer-toggle:checked ~ .drawer-side {
+                width: 16rem !important;
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+
+<div class="drawer" id="app-drawer">
+    <input id="sidebar-toggle" type="checkbox" class="drawer-toggle"/>
+
+    <div class="drawer-content flex flex-col min-h-screen lg:min-h-0 lg:h-full">
+
+        <header class="navbar bg-white border-b border-slate-200 px-4 py-3 lg:px-6 sticky top-0 z-30 shadow-sm">
+            <div class="flex-none">
+                <label for="sidebar-toggle" class="btn btn-square btn-ghost" title="Abrir/fechar menu">
+                    <i data-lucide="panel-left-close" class="w-5 h-5" id="menu-icon"></i>
+                </label>
+            </div>
+
+            <div class="flex-1">
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex w-9 h-9 rounded-xl bg-success/15 border border-success/25 items-center justify-center">
+                        <i data-lucide="trophy" class="w-5 h-5 text-warning"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-semibold leading-tight" th:text="${pageHeading}">Dashboard</h1>
+                        <p class="text-xs text-slate-500 hidden sm:block" th:text="${pageSubtitle}">
+                            Bolão Copa 2026 — Painel Administrativo
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-none flex items-center gap-2">
+                <button class="btn btn-ghost btn-circle btn-sm" id="btn-refresh" title="Atualizar dados" type="button">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
+
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
+                        <div class="bg-success/20 text-success rounded-full w-9">
+                            <span class="text-sm font-bold"
+                                  th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">AD</span>
+                        </div>
+                    </div>
+                    <ul tabindex="0"
+                        class="dropdown-content menu bg-white rounded-box z-50 w-52 p-2 shadow-xl border border-slate-200 mt-2">
+                        <li class="menu-title" sec:authentication="name">Administrador</li>
+                        <li>
+                            <form th:action="@{/logout}" method="post">
+                                <button type="submit" class="flex items-center gap-2 w-full">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                    Sair
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 p-4 lg:p-6 animate-fade-in flex flex-col gap-6 w-full mx-auto"
+              th:insert="${content}"></main>
+
+        <footer class="footer footer-center p-4 mt-auto bg-white border-t border-slate-200 text-slate-400 text-xs">
+            <aside>
+                <p>Bolão Copa 2026 — v1.0.0
+                    <span class="badge badge-warning badge-xs badge-outline ml-1">BETA</span>
+                </p>
+            </aside>
+        </footer>
+    </div>
+
+    <div class="drawer-side z-40">
+        <label for="sidebar-toggle" aria-label="Fechar menu" class="drawer-overlay"></label>
+        <aside id="sidebar" class="bg-white w-64 min-h-full border-r border-slate-200 flex flex-col shadow-sm">
+
+            <div class="p-4 border-b border-slate-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-success/20 to-warning/10 border border-success/30 flex items-center justify-center">
+                        <i data-lucide="trophy" class="w-5 h-5 text-warning"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="font-bold text-sm leading-tight">BOLÃO</p>
+                        <p class="text-warning text-xs font-semibold">COPA 2026</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 p-3">
+                <ul class="menu menu-sm gap-1 p-0">
+                    <li>
+                        <a th:href="@{/admin}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'dashboard'} ? 'active' : _">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/admin/partidas}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'partidas'} ? 'active' : _">
+                            <i data-lucide="swords" class="w-4 h-4 shrink-0"></i>
+                            Partidas
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/admin/palpites}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'palpites'} ? 'active' : _">
+                            <i data-lucide="target" class="w-4 h-4 shrink-0"></i>
+                            Palpites
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/admin/usuarios}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'usuarios'} ? 'active' : _">
+                            <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
+                            Usuários
+                        </a>
+                    </li>
+                     <li>
+                        <a th:href="@{/admin/selecoes}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'selecoes'} ? 'active' : _">
+                            <i data-lucide="target" class="w-4 h-4 shrink-0"></i>
+                            Seleções
+                        </a>
+                    </li>
+                    <li>
+                        <span class="sidebar-link disabled" title="Em breve">
+                            <i data-lucide="trophy" class="w-4 h-4 shrink-0"></i>
+                            Ranking
+                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="sidebar-link disabled" title="Em breve">
+                            <i data-lucide="file-bar-chart" class="w-4 h-4 shrink-0"></i>
+                            Relatórios
+                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
+                        </span>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="p-4 border-t border-slate-200">
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <div class="avatar placeholder">
+                        <div class="bg-success/20 text-success rounded-full w-9">
+                            <span class="text-xs font-bold"
+                                  th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">AD</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate">Administrador</p>
+                        <p class="text-xs text-slate-500 truncate" sec:authentication="name">admin@copa2026.com.br</p>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+</div>
+
+<div class="toast toast-end toast-bottom z-50" id="toast-container"></div>
+
+<script>
+    function updateMenuIcon() {
+        const toggle = document.getElementById('sidebar-toggle');
+        const icon = document.getElementById('menu-icon');
+        if (!icon) return;
+        icon.setAttribute('data-lucide', toggle.checked ? 'panel-left-close' : 'panel-left');
+        lucide.createIcons();
+    }
+
+    function initSidebarToggle() {
+        const toggle = document.getElementById('sidebar-toggle');
+        const isDesktop = () => window.innerWidth >= 1024;
+
+        const saved = localStorage.getItem('sidebar-open');
+        if (isDesktop()) {
+            toggle.checked = saved !== null ? saved === 'true' : true;
+        } else {
+            toggle.checked = false;
+        }
+
+        toggle.addEventListener('change', () => {
+            if (isDesktop()) {
+                localStorage.setItem('sidebar-open', toggle.checked);
+            }
+            updateMenuIcon();
+        });
+
+        window.addEventListener('resize', () => {
+            if (!isDesktop()) {
+                toggle.checked = false;
+            } else {
+                const stored = localStorage.getItem('sidebar-open');
+                toggle.checked = stored !== null ? stored === 'true' : true;
+            }
+            updateMenuIcon();
+        });
+
+        updateMenuIcon();
+    }
+
+    function initAdminLayout() {
+        initSidebarToggle();
+        lucide.createIcons();
+        document.getElementById('btn-refresh')?.addEventListener('click', () => window.location.reload());
+    }
+
+    document.addEventListener('DOMContentLoaded', initAdminLayout);
+</script>
+
+</body>
+</html>

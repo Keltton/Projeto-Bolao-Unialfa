@@ -1,0 +1,576 @@
+<html xmlns:th="http://www.thymeleaf.org" data-theme="light"
+      th:replace="~{admin/template :: layout(
+          'Partidas — Bolão Copa 2026',
+          'Partidas',
+          'Gerenciar jogos e resultados',
+          'partidas',
+          ~{::content}
+      )}">
+
+<th:block th:fragment="content">
+
+    <div th:if="${sucesso}" class="alert alert-success mb-4">
+        <i data-lucide="check-circle" class="w-5 h-5 shrink-0"></i>
+        <span th:text="${sucesso}">Sucesso</span>
+    </div>
+
+    <div th:if="${erro}" class="alert alert-error mb-4">
+        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+        <span th:text="${erro}">Erro</span>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold">Partidas</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                <span th:text="${#lists.size(partidas)} + ' partida(s)'">0 partida(s)</span>
+                · <span id="live-clock"></span>
+            </p>
+        </div>
+        <button type="button" class="btn btn-success gap-2" id="btn-nova-partida"
+                th:disabled="${#lists.size(selecoes) < 2}">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Nova partida
+        </button>
+    </div>
+
+    <div th:if="${#lists.size(selecoes) < 2}" class="alert alert-warning mb-4">
+        <i data-lucide="info" class="w-5 h-5 shrink-0"></i>
+        <span>Cadastre pelo menos duas seleções antes de criar partidas.</span>
+    </div>
+
+    <div class="card-panel rounded-2xl p-4">
+        <form method="get" th:action="@{/admin/partidas}" class="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+            <select name="fase" class="admin-input w-full sm:w-48">
+                <option value="">Todas as fases</option>
+                <option th:each="f : ${fases}" th:value="${f.name()}" th:text="${f.name() == 'GRUPOS' ? 'Grupos' :
+                    (f.name() == 'OITAVAS' ? 'Oitavas de final' :
+                    (f.name() == 'QUARTAS' ? 'Quartas de final' :
+                    (f.name() == 'SEMIFINAL' ? 'Semifinal' :
+                    (f.name() == 'TERCEIRO_LUGAR' ? 'Disputa 3º lugar' : 'Final'))))}"
+                        th:selected="${faseFiltro != null and faseFiltro == f}">Grupos</option>
+            </select>
+            <select name="status" class="admin-input w-full sm:w-48">
+                <option value="">Todos os status</option>
+                <option th:each="s : ${statusList}" th:value="${s.name()}" th:text="${s.name() == 'AGENDADA' ? 'Agendada' :
+                    (s.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Encerrada')}"
+                        th:selected="${statusFiltro != null and statusFiltro == s}">Agendada</option>
+            </select>
+            <div class="flex gap-2 sm:ml-auto">
+                <button type="submit" class="btn btn-success flex-1 sm:flex-none sm:min-w-32">Filtrar</button>
+                <a th:href="@{/admin/partidas}" class="btn btn-ghost flex-1 sm:flex-none sm:min-w-32">Limpar</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-panel rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="admin-table min-w-[960px]">
+                <thead>
+                    <tr>
+                        <th class="pl-6 min-w-[240px]">Confronto</th>
+                        <th class="whitespace-nowrap">Data / Hora</th>
+                        <th class="hidden lg:table-cell">Estádio</th>
+                        <th class="whitespace-nowrap">Fase</th>
+                        <th class="hidden md:table-cell">Grupo</th>
+                        <th class="whitespace-nowrap">Status</th>
+                        <th class="whitespace-nowrap text-center">Placar</th>
+                        <th class="text-right pr-6 min-w-[168px]">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="p : ${partidas}">
+                        <td class="pl-6">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 min-w-0 max-w-[110px]">
+                                    <img th:if="${p.selecaoA.bandeiraUrl != null and !#strings.isEmpty(p.selecaoA.bandeiraUrl)}"
+                                         th:src="${p.selecaoA.bandeiraUrl}"
+                                         th:alt="${p.selecaoA.nome}"
+                                         class="w-6 h-6 rounded-full object-cover shrink-0"/>
+                                    <span th:if="${p.selecaoA.bandeiraUrl == null or #strings.isEmpty(p.selecaoA.bandeiraUrl)}"
+                                          class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold shrink-0"
+                                          th:text="${#strings.toUpperCase(#strings.substring(p.selecaoA.codigoFifa, 0, 3))}">BRA</span>
+                                    <span class="truncate text-sm font-medium" th:text="${p.selecaoA.nome}">Brasil</span>
+                                </span>
+                                <span class="text-slate-400 text-xs shrink-0 px-0.5">x</span>
+                                <span class="inline-flex items-center gap-1.5 min-w-0 max-w-[110px]">
+                                    <img th:if="${p.selecaoB.bandeiraUrl != null and !#strings.isEmpty(p.selecaoB.bandeiraUrl)}"
+                                         th:src="${p.selecaoB.bandeiraUrl}"
+                                         th:alt="${p.selecaoB.nome}"
+                                         class="w-6 h-6 rounded-full object-cover shrink-0"/>
+                                    <span th:if="${p.selecaoB.bandeiraUrl == null or #strings.isEmpty(p.selecaoB.bandeiraUrl)}"
+                                          class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold shrink-0"
+                                          th:text="${#strings.toUpperCase(#strings.substring(p.selecaoB.codigoFifa, 0, 3))}">ARG</span>
+                                    <span class="truncate text-sm font-medium" th:text="${p.selecaoB.nome}">Argentina</span>
+                                </span>
+                            </div>
+                        </td>
+                        <td class="text-slate-600 whitespace-nowrap text-sm"
+                            th:text="${#temporals.format(p.dataHora, 'dd/MM/yyyy HH:mm')}">15/06/2026 20:00</td>
+                        <td class="text-slate-500 text-sm hidden lg:table-cell max-w-[140px]">
+                            <span th:if="${p.estadio != null and !#strings.isEmpty(p.estadio)}"
+                                  class="block truncate" th:text="${p.estadio}">Maracanã</span>
+                            <span th:if="${p.estadio == null or #strings.isEmpty(p.estadio)}" class="text-slate-400">—</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-ghost text-xs whitespace-nowrap"
+                                  th:text="${p.fase.name() == 'GRUPOS' ? 'Grupos' :
+                                    (p.fase.name() == 'OITAVAS' ? 'Oitavas' :
+                                    (p.fase.name() == 'QUARTAS' ? 'Quartas' :
+                                    (p.fase.name() == 'SEMIFINAL' ? 'Semifinal' :
+                                    (p.fase.name() == 'TERCEIRO_LUGAR' ? '3º lugar' : 'Final'))))}">Grupos</span>
+                        </td>
+                        <td class="hidden md:table-cell">
+                            <span th:if="${p.grupo != null and !#strings.isEmpty(p.grupo)}"
+                                  class="badge badge-ghost"
+                                  th:text="${p.grupo}">A</span>
+                            <span th:if="${p.grupo == null or #strings.isEmpty(p.grupo)}" class="text-slate-400">—</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-outline text-xs whitespace-nowrap"
+                                  th:classappend="${p.status.name() == 'AGENDADA' ? ' border-sky-200 bg-sky-50 text-sky-700' :
+                                    (p.status.name() == 'EM_ANDAMENTO' ? ' border-amber-200 bg-amber-50 text-amber-700' : ' border-green-200 bg-green-50 text-green-700')}"
+                                  th:text="${p.status.name() == 'AGENDADA' ? 'Agendada' :
+                                    (p.status.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Encerrada')}">Agendada</span>
+                        </td>
+                        <td class="whitespace-nowrap text-center">
+                            <span th:if="${p.golsSelecaoA != null and p.golsSelecaoB != null}"
+                                  class="font-semibold text-sm tabular-nums"
+                                  th:text="${p.golsSelecaoA + ' × ' + p.golsSelecaoB}">2 × 1</span>
+                            <span th:if="${p.golsSelecaoA == null or p.golsSelecaoB == null}" class="text-slate-400">—</span>
+                        </td>
+                        <td class="pr-6">
+                            <div class="flex items-center justify-end gap-1 flex-nowrap">
+                                <button type="button"
+                                        class="btn btn-ghost btn-sm btn-square btn-ver-partida"
+                                        title="Visualizar"
+                                        th:attr="data-id=${p.id},
+                                                 data-selecao-a=${p.selecaoA.nome},
+                                                 data-selecao-b=${p.selecaoB.nome},
+                                                 data-bandeira-a=${p.selecaoA.bandeiraUrl},
+                                                 data-bandeira-b=${p.selecaoB.bandeiraUrl},
+                                                 data-codigo-a=${p.selecaoA.codigoFifa},
+                                                 data-codigo-b=${p.selecaoB.codigoFifa},
+                                                 data-data-hora=${#temporals.format(p.dataHora, 'dd/MM/yyyy HH:mm')},
+                                                 data-estadio=${p.estadio},
+                                                 data-fase=${p.fase.name()},
+                                                 data-grupo=${p.grupo},
+                                                 data-status=${p.status.name()},
+                                                 data-gols-a=${p.golsSelecaoA},
+                                                 data-gols-b=${p.golsSelecaoB},
+                                                 data-cadastro=${#temporals.format(p.criadoEm, 'dd/MM/yyyy HH:mm')},
+                                                 data-atualizado=${#temporals.format(p.atualizadoEm, 'dd/MM/yyyy HH:mm')}">
+                                    <i data-lucide="eye" class="w-5 h-5"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-ghost btn-sm btn-square btn-editar-partida"
+                                        title="Editar"
+                                        th:attr="data-id=${p.id},
+                                                 data-selecao-a-id=${p.selecaoA.id},
+                                                 data-selecao-b-id=${p.selecaoB.id},
+                                                 data-data-hora=${#temporals.format(p.dataHora, 'yyyy-MM-dd''T''HH:mm')},
+                                                 data-estadio=${p.estadio},
+                                                 data-fase=${p.fase.name()},
+                                                 data-grupo=${p.grupo},
+                                                 data-status=${p.status.name()}">
+                                    <i data-lucide="pencil" class="w-5 h-5"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-ghost btn-sm btn-square btn-resultado-partida"
+                                        title="Lançar resultado"
+                                        th:attr="data-id=${p.id},
+                                                 data-selecao-a=${p.selecaoA.nome},
+                                                 data-selecao-b=${p.selecaoB.nome},
+                                                 data-gols-a=${p.golsSelecaoA != null ? p.golsSelecaoA : 0},
+                                                 data-gols-b=${p.golsSelecaoB != null ? p.golsSelecaoB : 0}">
+                                    <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-ghost btn-sm btn-square text-error btn-excluir-partida"
+                                        title="Excluir"
+                                        th:attr="data-id=${p.id},
+                                                 data-selecao-a=${p.selecaoA.nome},
+                                                 data-selecao-b=${p.selecaoB.nome}">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(partidas)}">
+                        <td colspan="8" class="text-center text-slate-500 py-8">
+                            Nenhuma partida cadastrada.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal visualização -->
+    <dialog id="modal-detalhes" class="modal modal-middle">
+        <div class="modal-box w-full max-w-md bg-white text-slate-800">
+            <h3 class="font-bold text-lg mb-4">Detalhes da partida</h3>
+            <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-4 border-y border-slate-100">
+                <div class="text-center min-w-0">
+                    <div class="w-12 h-12 mx-auto rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                        <img id="modal-detalhes-bandeira-a" src="" alt="" class="hidden w-full h-full object-cover"/>
+                        <span id="modal-detalhes-codigo-a" class="text-sm font-bold text-slate-600">BRA</span>
+                    </div>
+                    <p id="modal-detalhes-selecao-a" class="text-sm font-medium mt-2 truncate px-1">Brasil</p>
+                </div>
+                <div class="text-center px-2">
+                    <p id="modal-detalhes-placar" class="text-2xl font-bold tabular-nums whitespace-nowrap">—</p>
+                    <p class="text-xs text-slate-500 mt-1">Placar</p>
+                </div>
+                <div class="text-center min-w-0">
+                    <div class="w-12 h-12 mx-auto rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                        <img id="modal-detalhes-bandeira-b" src="" alt="" class="hidden w-full h-full object-cover"/>
+                        <span id="modal-detalhes-codigo-b" class="text-sm font-bold text-slate-600">ARG</span>
+                    </div>
+                    <p id="modal-detalhes-selecao-b" class="text-sm font-medium mt-2 truncate px-1">Argentina</p>
+                </div>
+            </div>
+            <div class="py-4 space-y-2.5 text-sm">
+                <div class="flex justify-between gap-4">
+                    <span class="text-slate-500 shrink-0">Data / Hora</span>
+                    <span id="modal-detalhes-data-hora" class="text-right font-medium"></span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-slate-500 shrink-0">Estádio</span>
+                    <span id="modal-detalhes-estadio" class="text-right font-medium truncate"></span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-slate-500 shrink-0">Fase</span>
+                    <span id="modal-detalhes-fase" class="text-right font-medium"></span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-slate-500 shrink-0">Grupo</span>
+                    <span id="modal-detalhes-grupo" class="text-right font-medium"></span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-slate-500 shrink-0">Status</span>
+                    <span id="modal-detalhes-status" class="text-right font-medium"></span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-slate-500 shrink-0">Cadastro</span>
+                    <span id="modal-detalhes-cadastro" class="text-right font-medium"></span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-slate-500 shrink-0">Atualização</span>
+                    <span id="modal-detalhes-atualizado" class="text-right font-medium"></span>
+                </div>
+            </div>
+            <div class="modal-action">
+                <form method="dialog"><button class="btn">Fechar</button></form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button type="submit">Fechar</button></form>
+    </dialog>
+
+    <!-- Modal cadastro / edição -->
+    <dialog id="modal-formulario" class="modal modal-middle">
+        <div class="modal-box w-full max-w-lg bg-white text-slate-800">
+            <h3 class="font-bold text-lg mb-4" id="modal-formulario-titulo">Cadastrar partida</h3>
+
+            <form id="form-partida" th:action="@{/admin/partidas}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="faseFiltro" th:value="${faseFiltro}"/>
+                <input type="hidden" name="statusFiltro" th:value="${statusFiltro}"/>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="selecaoAId" class="text-sm font-medium">Seleção A</label>
+                            <select id="selecaoAId" name="selecaoAId" required class="admin-input w-full mt-1">
+                                <option value="">Selecione...</option>
+                                <option th:each="s : ${selecoes}" th:value="${s.id}"
+                                        th:text="${s.nome + ' (' + s.codigoFifa + ')'}">Brasil (BRA)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="selecaoBId" class="text-sm font-medium">Seleção B</label>
+                            <select id="selecaoBId" name="selecaoBId" required class="admin-input w-full mt-1">
+                                <option value="">Selecione...</option>
+                                <option th:each="s : ${selecoes}" th:value="${s.id}"
+                                        th:text="${s.nome + ' (' + s.codigoFifa + ')'}">Argentina (ARG)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="dataHora" class="text-sm font-medium">Data e hora</label>
+                        <input type="datetime-local" id="dataHora" name="dataHora" required
+                               class="admin-input w-full mt-1"/>
+                    </div>
+
+                    <div>
+                        <label for="estadio" class="text-sm font-medium">Estádio</label>
+                        <input type="text" id="estadio" name="estadio" maxlength="150"
+                               placeholder="Maracanã" class="admin-input w-full mt-1"/>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label for="fase" class="text-sm font-medium">Fase</label>
+                            <select id="fase" name="fase" required class="admin-input w-full mt-1">
+                                <option th:each="f : ${fases}" th:value="${f.name()}" th:text="${f.name() == 'GRUPOS' ? 'Grupos' :
+                                    (f.name() == 'OITAVAS' ? 'Oitavas de final' :
+                                    (f.name() == 'QUARTAS' ? 'Quartas de final' :
+                                    (f.name() == 'SEMIFINAL' ? 'Semifinal' :
+                                    (f.name() == 'TERCEIRO_LUGAR' ? 'Disputa 3º lugar' : 'Final'))))}">Grupos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="grupo" class="text-sm font-medium">Grupo</label>
+                            <input type="text" id="grupo" name="grupo" maxlength="10"
+                                   placeholder="A" class="admin-input w-full mt-1"/>
+                        </div>
+                        <div>
+                            <label for="status" class="text-sm font-medium">Status</label>
+                            <select id="status" name="status" class="admin-input w-full mt-1">
+                                <option value="">Padrão (Agendada)</option>
+                                <option th:each="s : ${statusList}" th:value="${s.name()}" th:text="${s.name() == 'AGENDADA' ? 'Agendada' :
+                                    (s.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Encerrada')}">Agendada</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" id="btn-cancelar-formulario">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-salvar-partida">Salvar</button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button type="submit">Fechar</button></form>
+    </dialog>
+
+    <!-- Modal resultado -->
+    <dialog id="modal-resultado" class="modal modal-middle">
+        <div class="modal-box w-full max-w-sm bg-white text-slate-800">
+            <h3 class="font-bold text-lg">Lançar resultado</h3>
+            <p class="text-sm text-slate-500 mt-1 mb-5" id="modal-resultado-confronto"></p>
+
+            <form id="form-resultado" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="faseFiltro" th:value="${faseFiltro}"/>
+                <input type="hidden" name="statusFiltro" th:value="${statusFiltro}"/>
+
+                <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-4">
+                    <div class="text-center">
+                        <label for="golsSelecaoA" id="modal-resultado-selecao-a"
+                               class="text-sm font-medium block mb-2 truncate">Brasil</label>
+                        <input type="number" id="golsSelecaoA" name="golsSelecaoA" min="0" required
+                               class="admin-input w-16 mx-auto text-center tabular-nums"/>
+                    </div>
+                    <span class="text-xl font-bold text-slate-400 pb-3">×</span>
+                    <div class="text-center">
+                        <label for="golsSelecaoB" id="modal-resultado-selecao-b"
+                               class="text-sm font-medium block mb-2 truncate">Argentina</label>
+                        <input type="number" id="golsSelecaoB" name="golsSelecaoB" min="0" required
+                               class="admin-input w-16 mx-auto text-center tabular-nums"/>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" id="btn-cancelar-resultado">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar</button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button type="submit">Fechar</button></form>
+    </dialog>
+
+    <!-- Modal confirmação exclusão -->
+    <dialog id="modal-excluir" class="modal modal-middle">
+        <div class="modal-box w-full max-w-sm bg-white text-slate-800">
+            <h3 class="font-bold text-lg">Excluir partida</h3>
+            <p class="py-4 text-sm text-slate-600 leading-relaxed" id="modal-excluir-texto"></p>
+            <form id="form-excluir" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="faseFiltro" th:value="${faseFiltro}"/>
+                <input type="hidden" name="statusFiltro" th:value="${statusFiltro}"/>
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" id="btn-cancelar-exclusao">Cancelar</button>
+                    <button type="submit" class="btn btn-error">Excluir</button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button type="submit">Fechar</button></form>
+    </dialog>
+
+    <script th:inline="javascript">
+        const partidasBaseUrl = /*[[@{/admin/partidas/}]]*/ '/admin/partidas/';
+
+        const FASE_LABELS = {
+            GRUPOS: 'Grupos',
+            OITAVAS: 'Oitavas de final',
+            QUARTAS: 'Quartas de final',
+            SEMIFINAL: 'Semifinal',
+            TERCEIRO_LUGAR: 'Disputa 3º lugar',
+            FINAL: 'Final'
+        };
+
+        const STATUS_LABELS = {
+            AGENDADA: 'Agendada',
+            EM_ANDAMENTO: 'Em andamento',
+            ENCERRADA: 'Encerrada'
+        };
+
+        function initLiveClock() {
+            const el = document.getElementById('live-clock');
+            if (!el) return;
+            const tick = () => {
+                el.textContent = new Date().toLocaleString('pt-BR', {
+                    weekday: 'short', day: '2-digit', month: 'short',
+                    hour: '2-digit', minute: '2-digit'
+                });
+            };
+            tick();
+            setInterval(tick, 60000);
+        }
+
+        function exibirBandeira(imgId, codigoId, url, codigo) {
+            const img = document.getElementById(imgId);
+            const codigoEl = document.getElementById(codigoId);
+            codigoEl.textContent = codigo || '—';
+
+            if (url && url.trim() !== '') {
+                img.src = url;
+                img.classList.remove('hidden');
+                codigoEl.classList.add('hidden');
+            } else {
+                img.src = '';
+                img.classList.add('hidden');
+                codigoEl.classList.remove('hidden');
+            }
+        }
+
+        function abrirModalCadastro() {
+            const form = document.getElementById('form-partida');
+            form.action = /*[[@{/admin/partidas}]]*/ '/admin/partidas';
+            form.reset();
+            document.getElementById('modal-formulario-titulo').textContent = 'Cadastrar partida';
+            document.getElementById('btn-salvar-partida').textContent = 'Salvar';
+            document.getElementById('modal-formulario').showModal();
+        }
+
+        function abrirModalEdicao(btn) {
+            const form = document.getElementById('form-partida');
+            form.action = partidasBaseUrl + btn.dataset.id;
+            document.getElementById('modal-formulario-titulo').textContent = 'Editar partida';
+            document.getElementById('btn-salvar-partida').textContent = 'Atualizar';
+            document.getElementById('selecaoAId').value = btn.dataset.selecaoAId || '';
+            document.getElementById('selecaoBId').value = btn.dataset.selecaoBId || '';
+            document.getElementById('dataHora').value = btn.dataset.dataHora || '';
+            document.getElementById('estadio').value = btn.dataset.estadio || '';
+            document.getElementById('fase').value = btn.dataset.fase || 'GRUPOS';
+            document.getElementById('grupo').value = btn.dataset.grupo || '';
+            document.getElementById('status').value = btn.dataset.status || '';
+            document.getElementById('modal-formulario').showModal();
+        }
+
+        function abrirModalDetalhes(btn) {
+            document.getElementById('modal-detalhes-selecao-a').textContent = btn.dataset.selecaoA || '—';
+            document.getElementById('modal-detalhes-selecao-b').textContent = btn.dataset.selecaoB || '—';
+            document.getElementById('modal-detalhes-data-hora').textContent = btn.dataset.dataHora || '—';
+            document.getElementById('modal-detalhes-estadio').textContent =
+                btn.dataset.estadio && btn.dataset.estadio.trim() !== '' ? btn.dataset.estadio : '—';
+            document.getElementById('modal-detalhes-fase').textContent = FASE_LABELS[btn.dataset.fase] || '—';
+            document.getElementById('modal-detalhes-grupo').textContent =
+                btn.dataset.grupo && btn.dataset.grupo.trim() !== '' ? btn.dataset.grupo : '—';
+            document.getElementById('modal-detalhes-status').textContent = STATUS_LABELS[btn.dataset.status] || '—';
+            document.getElementById('modal-detalhes-cadastro').textContent = btn.dataset.cadastro || '—';
+            document.getElementById('modal-detalhes-atualizado').textContent = btn.dataset.atualizado || '—';
+
+            const golsA = btn.dataset.golsA;
+            const golsB = btn.dataset.golsB;
+            document.getElementById('modal-detalhes-placar').textContent =
+                golsA !== undefined && golsB !== undefined && golsA !== '' && golsB !== ''
+                    ? `${golsA} × ${golsB}` : '—';
+
+            exibirBandeira(
+                'modal-detalhes-bandeira-a', 'modal-detalhes-codigo-a',
+                btn.dataset.bandeiraA, btn.dataset.codigoA
+            );
+            exibirBandeira(
+                'modal-detalhes-bandeira-b', 'modal-detalhes-codigo-b',
+                btn.dataset.bandeiraB, btn.dataset.codigoB
+            );
+
+            document.getElementById('modal-detalhes').showModal();
+        }
+
+        function abrirModalResultado(btn) {
+            document.getElementById('modal-resultado-confronto').textContent =
+                `${btn.dataset.selecaoA} × ${btn.dataset.selecaoB}`;
+            document.getElementById('modal-resultado-selecao-a').textContent = btn.dataset.selecaoA || '—';
+            document.getElementById('modal-resultado-selecao-b').textContent = btn.dataset.selecaoB || '—';
+            document.getElementById('golsSelecaoA').value = btn.dataset.golsA ?? 0;
+            document.getElementById('golsSelecaoB').value = btn.dataset.golsB ?? 0;
+            document.getElementById('form-resultado').action = partidasBaseUrl + btn.dataset.id + '/resultado';
+            document.getElementById('modal-resultado').showModal();
+        }
+
+        function validarFormularioPartida(event) {
+            const selecaoA = document.getElementById('selecaoAId').value;
+            const selecaoB = document.getElementById('selecaoBId').value;
+
+            if (selecaoA && selecaoB && selecaoA === selecaoB) {
+                event.preventDefault();
+                alert('Selecione duas seleções diferentes.');
+                return false;
+            }
+            return true;
+        }
+
+        function initPartidasPage() {
+            initLiveClock();
+            lucide.createIcons();
+
+            document.getElementById('form-partida')?.addEventListener('submit', validarFormularioPartida);
+
+            document.getElementById('btn-nova-partida')?.addEventListener('click', abrirModalCadastro);
+            document.getElementById('btn-cancelar-formulario')?.addEventListener('click', () => {
+                document.getElementById('modal-formulario').close();
+            });
+            document.getElementById('btn-cancelar-resultado')?.addEventListener('click', () => {
+                document.getElementById('modal-resultado').close();
+            });
+            document.getElementById('btn-cancelar-exclusao')?.addEventListener('click', () => {
+                document.getElementById('modal-excluir').close();
+            });
+
+            document.querySelectorAll('.btn-ver-partida').forEach(btn => {
+                btn.addEventListener('click', () => abrirModalDetalhes(btn));
+            });
+
+            document.querySelectorAll('.btn-editar-partida').forEach(btn => {
+                btn.addEventListener('click', () => abrirModalEdicao(btn));
+            });
+
+            document.querySelectorAll('.btn-resultado-partida').forEach(btn => {
+                btn.addEventListener('click', () => abrirModalResultado(btn));
+            });
+
+            document.querySelectorAll('.btn-excluir-partida').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('modal-excluir-texto').textContent =
+                        `Deseja excluir ${btn.dataset.selecaoA} × ${btn.dataset.selecaoB}? Esta ação não pode ser desfeita.`;
+                    document.getElementById('form-excluir').action =
+                        partidasBaseUrl + btn.dataset.id + '/excluir';
+                    document.getElementById('modal-excluir').showModal();
+                });
+            });
+
+            /*[# th:if="${erro}"]*/
+            document.getElementById('modal-formulario')?.showModal();
+            /*[/]*/
+        }
+
+        document.addEventListener('DOMContentLoaded', initPartidasPage);
+    </script>
+
+</th:block>
+
+</html>

@@ -8,6 +8,8 @@ import {
   Image,
 } from "react-native";
 
+
+
 export default function ForgotPassword() {
   return (
     <View style={styles.container}>
