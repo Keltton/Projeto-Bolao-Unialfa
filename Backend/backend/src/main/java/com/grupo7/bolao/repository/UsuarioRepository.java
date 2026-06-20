@@ -13,32 +13,35 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
-    Optional<Usuario> findByEmail(String email);
-    boolean existsByEmail(String email);
-    long countByStatus(StatusUsuario status);
-    long countByUltimoLoginEmAfter(LocalDateTime dataHora);
+        Optional<Usuario> findByEmail(String email);
 
-    Page<Usuario> findByPerfilAndStatusOrderByPontuacaoTotalDescPlacaresExatosDescCriadoEmAsc(
-            PerfilUsuario perfil,
-            StatusUsuario status,
-            Pageable pageable
-    );
+        boolean existsByEmail(String email);
 
-    Page<Usuario> findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
-            String nome,
-            String email,
-            StatusUsuario status,
-            Pageable pageable
-    );
+        long countByStatus(StatusUsuario status);
 
-    @Query("SELECT COUNT(u) + 1 FROM Usuario u WHERE u.perfil = com.grupo7.bolao.enums.PerfilUsuario.USUARIO AND u.status = :status AND (" +
-           "u.pontuacaoTotal > :pontuacaoTotal OR " +
-           "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos > :placaresExatos) OR " +
-           "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos = :placaresExatos AND u.criadoEm < :criadoEm)" +
-           ")")
-    long obterPosicaoNoRanking(
-            @Param("pontuacaoTotal") Integer pontuacaoTotal,
-            @Param("placaresExatos") Integer placaresExatos,
-            @Param("criadoEm") LocalDateTime criadoEm
-    );
+        long countByUltimoLoginEmAfter(LocalDateTime dataHora);
+
+        Page<Usuario> findByPerfilAndStatusOrderByPontuacaoTotalDescPlacaresExatosDescCriadoEmAsc(
+                        PerfilUsuario perfil,
+                        StatusUsuario status,
+                        Pageable pageable);
+
+        Page<Usuario> findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        String nome,
+                        String email,
+                        StatusUsuario status,
+                        Pageable pageable);
+
+        @Query("SELECT COUNT(u) + 1 FROM Usuario u WHERE u.perfil = com.grupo7.bolao.enums.PerfilUsuario.USUARIO AND u.status = :status AND ("
+                        +
+                        "u.pontuacaoTotal > :pontuacaoTotal OR " +
+                        "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos > :placaresExatos) OR " +
+                        "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos = :placaresExatos AND u.criadoEm < :criadoEm)"
+                        +
+                        ")")
+        long obterPosicaoNoRanking(
+                        @Param("status") StatusUsuario status,
+                        @Param("pontuacaoTotal") Integer pontuacaoTotal,
+                        @Param("placaresExatos") Integer placaresExatos,
+                        @Param("criadoEm") LocalDateTime criadoEm);
 }

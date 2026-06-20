@@ -56,6 +56,7 @@ public class UsuarioService {
         Integer posicaoAutenticado = null;
         if (usuarioAutenticado != null && usuarioAutenticado.getPerfil() == PerfilUsuario.USUARIO && usuarioAutenticado.getStatus() == StatusUsuario.ATIVO) {
             posicaoAutenticado = (int) usuarioRepository.obterPosicaoNoRanking(
+                    StatusUsuario.ATIVO,
                     usuarioAutenticado.getPontuacaoTotal(),
                     usuarioAutenticado.getPlacaresExatos(),
                     usuarioAutenticado.getCriadoEm()

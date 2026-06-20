@@ -129,7 +129,7 @@ export default function Palpites() {
     const isEncerrada = item.partida.status === "ENCERRADA";
     const temPontuacao = item.pontos !== null;
 
-    let BadgeColor = theme.border;
+    let BadgeColor: string = theme.border;
     let CriterioTexto = "Aguardando partida";
     let PontosTexto = "—";
 

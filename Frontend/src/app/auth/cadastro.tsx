@@ -10,10 +10,12 @@ import {
   StatusBar,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
 
 export default function Cadastro() {
   const router = useRouter();
@@ -25,8 +27,9 @@ export default function Cadastro() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [confirmarSenhaVisivel, setConfirmarSenhaVisivel] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCadastro = () => {
+  const handleCadastro = async () => {
     if (!nome.trim() || !email.trim() || !senha.trim() || !confirmarSenha.trim()) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
       return;
@@ -35,12 +38,54 @@ export default function Cadastro() {
       Alert.alert("Erro", "As senhas não coincidem.");
       return;
     }
+    if (senha.length < 6) {
+      Alert.alert("Erro", "A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
 
-    Alert.alert(
-      "Cadastro Realizado",
-      "Sua conta foi criada com sucesso! Agora você já pode fazer login.",
-      [{ text: "OK", onPress: () => router.push("/auth/login") }]
-    );
+    setIsLoading(true);
+    try {
+      await api.post("/api/auth/register", {
+        nome,
+        email,
+        senha,
+        avatarUrl: null
+      });
+
+      Alert.alert(
+        "Cadastro Realizado",
+        "Sua conta foi criada com sucesso! Agora você já pode fazer login.",
+        [{ text: "OK", onPress: () => router.push("/auth/login") }]
+      );
+    } catch (error: any) {
+      console.log("Cadastro error:", error);
+      const isNetworkError = !error.response;
+
+      if (isNetworkError) {
+        Alert.alert(
+          "Modo Offline / Testes",
+          "O backend está desligado. Deseja simular a criação da conta e avançar para o login?",
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Simular e Avançar",
+              onPress: () => {
+                Alert.alert(
+                  "Cadastro Simulado (Modo Offline)",
+                  "Sua conta temporária foi criada localmente para testes.",
+                  [{ text: "Ir para Login", onPress: () => router.push("/auth/login") }]
+                );
+              }
+            }
+          ]
+        );
+      } else {
+        const msg = error.response?.data?.mensagem || error.response?.data?.message || "Erro ao realizar cadastro.";
+        Alert.alert("Erro no Cadastro", msg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -161,8 +206,13 @@ export default function Cadastro() {
                     <TouchableOpacity
                       style={[styles.registerBtn, { backgroundColor: theme.secondary }]}
                       onPress={handleCadastro}
+                      disabled={isLoading}
                     >
-                      <Text style={[styles.registerBtnText, { color: theme.background }]}>CRIAR CONTA</Text>
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color={theme.background} />
+                      ) : (
+                        <Text style={[styles.registerBtnText, { color: theme.background }]}>CRIAR CONTA</Text>
+                      )}
                     </TouchableOpacity>
 
                     <TouchableOpacity
