@@ -75,7 +75,7 @@ export default function login() {
                 <View style={styles.inputGroup}>
                   <View style={styles.labelRow}>
                     <Text style={[styles.label, { color: theme.textSecondary }]}>Senha</Text>
-                    <TouchableOpacity onPress={() => router.push("/auth/recuperar-senha")}>
+                    <TouchableOpacity onPress={() => router.push("/auth/ForgotPassword")}>
                       <Text style={[styles.forgotPassword, { color: theme.secondary }]}>
                         Esqueci minha senha
                       </Text>
@@ -120,7 +120,7 @@ export default function login() {
 
                   <TouchableOpacity
                     style={[styles.registerBtn, { borderColor: theme.border }]}
-                    onPress={() => router.push("/auth/cadastro")}
+                    onPress={() => router.push("/auth/Cadastro")}
                   >
                     <Text style={[styles.registerBtnText, { color: theme.text }]}>CRIAR CONTA</Text>
                   </TouchableOpacity>
