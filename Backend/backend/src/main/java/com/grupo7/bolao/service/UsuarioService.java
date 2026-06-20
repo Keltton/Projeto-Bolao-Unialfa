@@ -71,15 +71,25 @@ public class UsuarioService {
         );
     }
 
-    public Page<UsuarioResponse> listarUsuarios(String busca, Pageable pageable) {
+    public Page<UsuarioResponse> listarUsuarios(String busca, StatusUsuario status, Pageable pageable) {
+        boolean temBusca = busca != null && !busca.trim().isEmpty();
         Page<Usuario> pageUsuarios;
-        if (busca != null && !busca.trim().isEmpty()) {
-            pageUsuarios = usuarioRepository.findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                    busca, busca, pageable
-            );
+    
+        if (temBusca && status != null) {
+            pageUsuarios = usuarioRepository
+                .findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                    busca, busca, status, pageable);
+        } else if (temBusca) {
+            pageUsuarios = usuarioRepository
+                .findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                    busca, busca, StatusUsuario.ATIVO, pageable);
+        } else if (status != null) {
+            pageUsuarios = usuarioRepository.findByPerfilAndStatusOrderByPontuacaoTotalDescPlacaresExatosDescCriadoEmAsc(
+                PerfilUsuario.USUARIO, status, pageable);
         } else {
             pageUsuarios = usuarioRepository.findAll(pageable);
         }
+    
         return pageUsuarios.map(this::toResponse);
     }
 

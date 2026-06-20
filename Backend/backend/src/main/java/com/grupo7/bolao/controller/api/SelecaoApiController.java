@@ -37,7 +37,7 @@ public class SelecaoApiController {
     public ResponseEntity<List<SelecaoResponse>> listarTodas(
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) String grupo) {
-        List<SelecaoResponse> selecoes = selecaoService.listarSelecoes(nome, grupo);
+        List<SelecaoResponse> selecoes = selecaoService.listarSelecoes(nome);
         long total = selecaoService.obterTotalSelecoes();
 
         return ResponseEntity.ok()
