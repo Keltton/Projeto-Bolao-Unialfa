@@ -47,7 +47,7 @@ public class AuthApiController {
     @PostMapping("/redefinir-senha")
     public ResponseEntity<Map<String, String>> redefinirSenha(
             @Valid @RequestBody RedefinirSenhaRequest req) {
-        recuperacaoSenhaService.redefinirSenha(req.token(), req.novaSenha());
+        recuperacaoSenhaService.redefinirSenha(req.codigo(), req.novaSenha());
         return ResponseEntity.ok(Map.of("mensagem", "Senha redefinida com sucesso."));
     }
 }
