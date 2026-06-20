@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+//CONTROLLER da API direcionamento da rota pra consumo de API voltada ao usuario comum
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioApiController {
@@ -18,14 +19,16 @@ public class UsuarioApiController {
         this.usuarioService = usuarioService;
     }
 
+    //atualiza os dados do perfil do usuario logado
     @PutMapping("/me")
     public ResponseEntity<UsuarioResponse> editarPerfil(
             @AuthenticationPrincipal Usuario usuarioLogado,
             @Valid @RequestBody EditarPerfilRequest request) {
-        return ResponseEntity.ok(usuarioService.editarPerfil(usuarioLogado.getId(), request));
+        return ResponseEntity.ok(usuarioService.atualizarUsuario(usuarioLogado.getId(), request ));
     }
 
-    @DeleteMapping("/me")
+    //remove a conta do usuario
+    @DeleteMapping("/me/{id}")
     public ResponseEntity<Void> remover(@PathVariable Long id) {
         usuarioService.remover(id);
         return ResponseEntity.noContent().build();

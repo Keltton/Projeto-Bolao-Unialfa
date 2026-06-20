@@ -1,6 +1,6 @@
 package com.grupo7.bolao.service;
 
-import com.grupo7.bolao.model.TokenRecuperacaoSenha;
+import com.grupo7.bolao.model.CodigoRecuperacaoSenha;
 import com.grupo7.bolao.model.Usuario;
 import com.grupo7.bolao.repository.TokenRecuperacaoSenhaRepository;
 import com.grupo7.bolao.repository.UsuarioRepository;
@@ -9,69 +9,89 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
+//serviço responsavel pela recuperacao e redefinicao de senha
 @Service
 public class RecuperacaoSenhaService {
 
     private final UsuarioRepository usuarioRepository;
     private final TokenRecuperacaoSenhaRepository tokenRepository;
     private final EmailService emailService;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder senhaEncoder;
+
+    //gerador seguro de numeros aleatorios para os codigos de recuperacao
+    private final SecureRandom numAleatorio = new SecureRandom();
 
     @Value("${recuperacao.senha.expiracao.minutos:30}")
     private int expiracaoMinutos;
 
-    @Value("${recuperacao.senha.url.base:http://localhost:8080}")
-    private String urlBase;
 
     public RecuperacaoSenhaService(UsuarioRepository usuarioRepository,
                                    TokenRecuperacaoSenhaRepository tokenRepository,
                                    EmailService emailService,
-                                   PasswordEncoder passwordEncoder) {
+                                   PasswordEncoder senhaEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.tokenRepository = tokenRepository;
         this.emailService = emailService;
-        this.passwordEncoder = passwordEncoder;
+        this.senhaEncoder = senhaEncoder;
     }
 
+    //gera e envia um codigo de recuperacao para o email informado
     @Transactional
     public void solicitarRecuperacao(String email) {
         usuarioRepository.findByEmail(email).ifPresent(usuario -> {
+
+            //remove codigos antigos
             tokenRepository.deleteByUsuarioId(usuario.getId());
 
-            String codigo = UUID.randomUUID().toString();
+            //chama a função que gera um novo codigo de seis digitos
+            String codigo = gerarCodigoSeisDigitos();
 
-            TokenRecuperacaoSenha token = new TokenRecuperacaoSenha();
+            CodigoRecuperacaoSenha token = new CodigoRecuperacaoSenha();
             token.setUsuario(usuario);
-            token.setTokenHash(codigo);
+            token.setCodigoHash(codigo);
+            //define o prazo de expiracao do codigo
             token.setExpiraEm(LocalDateTime.now().plusMinutes(expiracaoMinutos));
             tokenRepository.save(token);
 
-            String link = urlBase + "/resetar-senha?token=" + codigo;
-            emailService.enviarRecuperacaoSenha(email, link);
+            //envia o codigo para o email do usuario
+            emailService.enviarRecuperacaoSenha(email, codigo);
         });
     }
 
+    //redefine a senha utilizando um codigo valido
     @Transactional
     public void redefinirSenha(String codigo, String novaSenha) {
-        TokenRecuperacaoSenha token = tokenRepository.findByTokenHash(codigo)
-                .orElseThrow(() -> new IllegalArgumentException("Token inválido."));
 
+        //busca o codigo informado no banco
+        CodigoRecuperacaoSenha token = tokenRepository.findByTokenHash(codigo)
+                .orElseThrow(() -> new IllegalArgumentException("Código inválido."));
+
+        //impede reutilizacao do codigo
         if (token.getUsadoEm() != null) {
-            throw new IllegalArgumentException("Este link já foi utilizado.");
+            throw new IllegalArgumentException("Este código já foi utilizado.");
         }
 
+        //verifica se o codigo ainda esta dentro do prazo de validade
         if (LocalDateTime.now().isAfter(token.getExpiraEm())) {
-            throw new IllegalArgumentException("Este link expirou. Solicite um novo.");
+            throw new IllegalArgumentException("Este código expirou. Solicite um novo.");
         }
 
+        //atualiza a senha do usuario utilizando o encoder
         Usuario usuario = token.getUsuario();
-        usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+        usuario.setSenhaHash(senhaEncoder.encode(novaSenha));
         usuarioRepository.save(usuario);
 
+        //marca o codigo como utilizado
         token.setUsadoEm(LocalDateTime.now());
         tokenRepository.save(token);
+    }
+
+    //gera um codigo numerico aleatorio de seis digitos
+    private String gerarCodigoSeisDigitos() {
+        int numero = numAleatorio.nextInt(1_000_000);
+        return String.format("%06d", numero);
     }
 }

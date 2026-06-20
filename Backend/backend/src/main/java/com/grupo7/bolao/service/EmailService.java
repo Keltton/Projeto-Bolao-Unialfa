@@ -13,16 +13,16 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    public void enviarRecuperacaoSenha(String destinatario, String link) {
+    public void enviarRecuperacaoSenha(String destinatario, String codigo) {
         SimpleMailMessage mensagem = new SimpleMailMessage();
         mensagem.setTo(destinatario);
         mensagem.setSubject("Bolão Copa 2026 - Recuperação de Senha");
         mensagem.setText(
                 "Olá!\n\n" +
-                        "Recebemos uma solicitação de recuperação de senha.\n\n" +
-                        "Clique no link abaixo para redefinir sua senha:\n" +
-                        link + "\n\n" +
-                        "Este link expira em 30 minutos.\n\n" +
+                        "Seu código de verificação é:\n\n" +
+                        codigo + "\n\n" +
+                        "Digite esse código no aplicativo para redefinir sua senha.\n" +
+                        "Este código expira em 30 minutos.\n\n" +
                         "Se você não solicitou isso, ignore este e-mail."
         );
         mailSender.send(mensagem);

@@ -3,9 +3,14 @@ package com.grupo7.bolao.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+//entidade do token pra recuperação, é aqui que fica definido os atributos da tabela e os construtores utilizado pelo backend
 @Entity
+
+//define as caracteristicas da tabela
 @Table(name = "tokens_recuperacao_senha")
-public class TokenRecuperacaoSenha {
+public class CodigoRecuperacaoSenha {
+
+    //atributos e suas anotações
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -15,7 +20,7 @@ public class TokenRecuperacaoSenha {
     private Usuario usuario;
 
     @Column(nullable = false, unique = true, length = 255)
-    private String tokenHash;
+    private String codigoHash;
 
     @Column(nullable = false)
     private LocalDateTime expiraEm;
@@ -25,8 +30,12 @@ public class TokenRecuperacaoSenha {
     @Column(nullable = false)
     private LocalDateTime criadoEm = LocalDateTime.now();
 
-    public TokenRecuperacaoSenha() {}
+    public CodigoRecuperacaoSenha() {}
 
+
+    //construtores dos atributos
+
+    //executa antes da entidade ser inserida na banco, pega a data e hora do momento e registra nos atributos
     @PrePersist
     public void aoCriar() {
         if (criadoEm == null) {
@@ -34,6 +43,7 @@ public class TokenRecuperacaoSenha {
         }
     }
 
+    //get e setters
     public Long getId() {
         return id;
     }
@@ -50,12 +60,12 @@ public class TokenRecuperacaoSenha {
         this.usuario = usuario;
     }
 
-    public String getTokenHash() {
-        return tokenHash;
+    public String getCodigoHash() {
+        return codigoHash;
     }
 
-    public void setTokenHash(String tokenHash) {
-        this.tokenHash = tokenHash;
+    public void setCodigoHash(String codigoHash) {
+        this.codigoHash = codigoHash;
     }
 
     public LocalDateTime getExpiraEm() {

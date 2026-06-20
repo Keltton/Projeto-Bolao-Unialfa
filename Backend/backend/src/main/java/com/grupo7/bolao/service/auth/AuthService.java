@@ -20,17 +20,20 @@ public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
+    private final AuthenticationManager GerenciaAuticacao;
     private final JwtService jwtService;
 
+
+
     public AuthService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder,
-                       AuthenticationManager authenticationManager, JwtService jwtService) {
+                       AuthenticationManager GerenciaAuticacao, JwtService jwtService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
+        this.GerenciaAuticacao = GerenciaAuticacao;
         this.jwtService = jwtService;
     }
 
+    //cadastro de usuario
     public UsuarioResponse cadastrar(UsuarioRequest req) {
         if (usuarioRepository.existsByEmail(req.email())){
             throw new IllegalArgumentException("E-mail já cadastrado");
@@ -61,20 +64,25 @@ public class AuthService {
 
     }
 
+    //login do usuario, chamando o gerador de token
     public LoginResponse login(LoginRequest req){
         Usuario usuario = usuarioRepository.findByEmail(req.email())
                 .orElseThrow(()->new IllegalArgumentException("Usuario não encontrado"));
 
+        //se o usuario não estiver ativo, erro
         if (usuario.getStatus() != StatusUsuario.ATIVO) {
             throw new IllegalArgumentException("Sua conta está " + usuario.getStatus().name().toLowerCase() + ".");
         }
 
-        authenticationManager.authenticate(
+        //autentica a senha
+        GerenciaAuticacao.authenticate(
                 new UsernamePasswordAuthenticationToken(req.email(), req.senha()));
 
+        //setando o ultimo login
         usuario.setUltimoLoginEm(LocalDateTime.now());
         usuarioRepository.save(usuario);
 
+        //chamando o gerador de token em jwtService
         String token = jwtService.gerarToken(usuario);
 
         return new LoginResponse(token, UsuarioResponse.from(usuario));

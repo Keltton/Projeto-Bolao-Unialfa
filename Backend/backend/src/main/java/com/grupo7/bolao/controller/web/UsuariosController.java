@@ -34,7 +34,7 @@ public class UsuariosController {
             Model model
     ) {
         Pageable pageable = PageRequest.of(pagina, tamanho);
-        Page<UsuarioResponse> usuarios = usuarioService.listarUsuarios(busca, status, pageable);
+        Page<UsuarioResponse> usuarios = usuarioService.listarUsuarios(busca, null, pageable);
         model.addAttribute("usuarios", usuarios);
         model.addAttribute("busca", busca);
         model.addAttribute("paginaAtual", pagina);
