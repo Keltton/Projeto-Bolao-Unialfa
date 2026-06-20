@@ -57,9 +57,10 @@ public class PartidasController {
     public String listar(
             @RequestParam(required = false) FasePartida fase,
             @RequestParam(required = false) StatusPartida status,
+            @RequestParam(required = false) Long selecaoId,
             Model model
     ) {
-        List<PartidaResponse> partidas = filtrarPartidas(fase, status);
+        List<PartidaResponse> partidas = filtrarPartidas(fase, status, selecaoId);
 
         model.addAttribute("partidas", partidas);
         model.addAttribute("selecoes", selecaoService.listarTodasSelecoes());
@@ -192,17 +193,23 @@ public class PartidasController {
     /**
      * Auxiliar de filtragem interna baseada em fase e/ou status.
      */
-    private List<PartidaResponse> filtrarPartidas(FasePartida fase, StatusPartida status) {
-        if (fase != null && status != null) {
-            return partidaService.listarPorFaseEStatus(fase, status);
+    private List<PartidaResponse> filtrarPartidas(FasePartida fase, StatusPartida status, Long selecaoId) {
+        List<PartidaResponse> partidas;
+        if (selecaoId != null) {
+            partidas = partidaService.listarPorSelecao(selecaoId);
+        } else if (fase != null && status != null) {
+            partidas = partidaService.listarPorFaseEStatus(fase, status);
+        } else if (fase != null) {
+            partidas = partidaService.listarPorFase(fase);
+        } else if (status != null) {
+            partidas = partidaService.listarPorStatus(status);
+        } else {
+            partidas = partidaService.listarTodasPartidas();
         }
-        if (fase != null) {
-            return partidaService.listarPorFase(fase);
-        }
-        if (status != null) {
-            return partidaService.listarPorStatus(status);
-        }
-        return partidaService.listarTodasPartidas();
+        return partidas.stream()
+                .filter(p -> fase == null || p.fase() == fase)
+                .filter(p -> status == null || p.status() == status)
+                .toList();
     }
 
     /**
