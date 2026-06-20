@@ -15,6 +15,8 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByEmail(String email);
     boolean existsByEmail(String email);
+    long countByStatus(StatusUsuario status);
+    long countByUltimoLoginEmAfter(LocalDateTime dataHora);
 
     Page<Usuario> findByPerfilAndStatusOrderByPontuacaoTotalDescPlacaresExatosDescCriadoEmAsc(
             PerfilUsuario perfil,

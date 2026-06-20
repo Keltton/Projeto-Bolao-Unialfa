@@ -14,6 +14,8 @@ import java.util.List;
  */
 public interface PartidaRepository extends JpaRepository<Partida, Long> {
 
+    long countByStatus(StatusPartida status);
+
     /**
      * Busca partidas que ocorrem em uma determinada fase da competição.
      *
