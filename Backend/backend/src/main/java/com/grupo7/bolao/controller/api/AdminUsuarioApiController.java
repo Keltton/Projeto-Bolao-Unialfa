@@ -26,7 +26,7 @@ public class AdminUsuarioApiController {
             @RequestParam(defaultValue = "50") int tamanho
     ) {
         Pageable pageable = PageRequest.of(pagina, tamanho);
-        return ResponseEntity.ok(usuarioService.listarUsuarios(busca, pageable));
+        return ResponseEntity.ok(usuarioService.listarUsuarios(busca, StatusUsuario.ATIVO, pageable));
     }
 
     @GetMapping("/{id}")

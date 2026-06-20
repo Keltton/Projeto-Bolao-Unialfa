@@ -102,23 +102,16 @@ public class SelecaoService {
      * Normaliza as entradas antes de consultar o banco de dados.
      *
      * @param nome Nome parcial da seleção (opcional).
-     * @param grupo Grupo da primeira fase (opcional).
      * @return Lista de seleções que correspondem aos critérios.
      */
-    public List<SelecaoResponse> listarSelecoes(String nome, String grupo) {
+    public List<SelecaoResponse> listarSelecoes(String nome) {
         String nomeTrim = (nome != null) ? nome.trim() : "";
-        String grupoTrim = (grupo != null) ? grupo.trim() : "";
 
         boolean temNome = !nomeTrim.isEmpty();
-        boolean temGrupo = !grupoTrim.isEmpty();
 
         List<Selecao> selecoes;
-        if (temNome && temGrupo) {
-            selecoes = selecaoRepository.buscarPorNomeEGrupo(nomeTrim, grupoTrim);
-        } else if (temNome) {
+        if (temNome) {
             selecoes = selecaoRepository.buscarPorNome(nomeTrim);
-        } else if (temGrupo) {
-            selecoes = selecaoRepository.findByGrupo(grupoTrim);
         } else {
             selecoes = selecaoRepository.findAll();
         }

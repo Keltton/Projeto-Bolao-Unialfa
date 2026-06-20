@@ -30,13 +30,15 @@ public class UsuariosController {
             @RequestParam(required = false) String busca,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho,
+            @RequestParam(required = false) StatusUsuario status,
             Model model
     ) {
         Pageable pageable = PageRequest.of(pagina, tamanho);
-        Page<UsuarioResponse> usuarios = usuarioService.listarUsuarios(busca, pageable);
+        Page<UsuarioResponse> usuarios = usuarioService.listarUsuarios(busca, status, pageable);
         model.addAttribute("usuarios", usuarios);
         model.addAttribute("busca", busca);
         model.addAttribute("paginaAtual", pagina);
+        model.addAttribute("status", status);
         return "admin/usuarios/index";
     }
 

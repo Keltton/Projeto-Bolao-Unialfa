@@ -65,7 +65,6 @@ export default function Login() {
                       placeholder="nome@exemplo.com"
                       placeholderTextColor="rgba(189, 202, 185, 0.5)"
                       keyboardType="email-address"
-                      autoCapitalize="none"
                       style={[styles.textInput, { color: theme.text }]}
                     />
                   </View>

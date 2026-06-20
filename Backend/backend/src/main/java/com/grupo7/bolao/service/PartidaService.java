@@ -247,6 +247,18 @@ public class PartidaService {
     }
 
     /**
+     * Filtra partidas em que a seleção participa (como A ou B).
+     */
+    public List<PartidaResponse> listarPorSelecao(Long selecaoId) {
+        return ordenarPorData(
+                partidaRepository.findBySelecaoAIdOrSelecaoBId(selecaoId, selecaoId)
+                        .stream()
+                        .map(this::toResponse)
+                        .toList()
+        );
+    }
+
+    /**
      * Garante que não sejam selecionadas as mesmas seleções no mesmo confronto.
      */
     private void validarSelecoesDiferentes(Long selecaoAId, Long selecaoBId) {

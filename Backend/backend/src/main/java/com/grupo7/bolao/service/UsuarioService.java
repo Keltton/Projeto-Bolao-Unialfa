@@ -71,15 +71,25 @@ public class UsuarioService {
         );
     }
 
-    public Page<UsuarioResponse> listarUsuarios(String busca, Pageable pageable) {
+    public Page<UsuarioResponse> listarUsuarios(String busca, StatusUsuario status, Pageable pageable) {
+        boolean temBusca = busca != null && !busca.trim().isEmpty();
         Page<Usuario> pageUsuarios;
-        if (busca != null && !busca.trim().isEmpty()) {
-            pageUsuarios = usuarioRepository.findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                    busca, busca, pageable
-            );
+    
+        if (temBusca && status != null) {
+            pageUsuarios = usuarioRepository
+                .findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                    busca, busca, status, pageable);
+        } else if (temBusca) {
+            pageUsuarios = usuarioRepository
+                .findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                    busca, busca, StatusUsuario.ATIVO, pageable);
+        } else if (status != null) {
+            pageUsuarios = usuarioRepository.findByPerfilAndStatusOrderByPontuacaoTotalDescPlacaresExatosDescCriadoEmAsc(
+                PerfilUsuario.USUARIO, status, pageable);
         } else {
             pageUsuarios = usuarioRepository.findAll(pageable);
         }
+    
         return pageUsuarios.map(this::toResponse);
     }
 
@@ -88,13 +98,41 @@ public class UsuarioService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario não encontrado"));
 
         if (request.nome() != null && !request.nome().isBlank()) {
-            usuario.setNome(request.nome());
+            usuario.setNome(request.nome().trim());
         }
         if (request.avatarUrl() != null) {
             usuario.setAvatarUrl(request.avatarUrl());
         }
+        if (request.email() != null && !request.email().isBlank()) {
+            String email = request.email().trim();
+            if (!email.equalsIgnoreCase(usuario.getEmail())) {
+                if (usuarioRepository.existsByEmail(email)) {
+                    throw new IllegalArgumentException("Este e-mail já está cadastrado.");
+                }
+                usuario.setEmail(email);
+            }
+        }
+
+        boolean trocarSenha = request.novaSenha() != null && !request.novaSenha().isBlank();
+        if (trocarSenha) {
+            if (request.senhaAtual() == null || request.senhaAtual().isBlank()) {
+                throw new IllegalArgumentException("Informe a senha atual para definir uma nova senha.");
+            }
+            if (!passwordEncoder.matches(request.senhaAtual(), usuario.getSenhaHash())) {
+                throw new IllegalArgumentException("Senha atual incorreta.");
+            }
+            if (request.novaSenha().length() < 6) {
+                throw new IllegalArgumentException("A nova senha deve ter no mínimo 6 caracteres.");
+            }
+            usuario.setSenhaHash(passwordEncoder.encode(request.novaSenha()));
+        }
 
         return UsuarioResponse.from(usuarioRepository.save(usuario));
+    }
+
+    public Usuario buscarEntidadePorId(Long id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario não encontrado"));
     }
 
     public void excluirContaPropria(Long id) {

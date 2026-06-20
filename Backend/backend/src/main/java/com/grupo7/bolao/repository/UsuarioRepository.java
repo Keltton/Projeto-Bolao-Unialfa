@@ -15,6 +15,8 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByEmail(String email);
     boolean existsByEmail(String email);
+    long countByStatus(StatusUsuario status);
+    long countByUltimoLoginEmAfter(LocalDateTime dataHora);
 
     Page<Usuario> findByPerfilAndStatusOrderByPontuacaoTotalDescPlacaresExatosDescCriadoEmAsc(
             PerfilUsuario perfil,
@@ -25,10 +27,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Page<Usuario> findByNomeContainingIgnoreCaseOrEmailContainingIgnoreCase(
             String nome,
             String email,
+            StatusUsuario status,
             Pageable pageable
     );
 
-    @Query("SELECT COUNT(u) + 1 FROM Usuario u WHERE u.perfil = com.grupo7.bolao.enums.PerfilUsuario.USUARIO AND u.status = com.grupo7.bolao.enums.StatusUsuario.ATIVO AND (" +
+    @Query("SELECT COUNT(u) + 1 FROM Usuario u WHERE u.perfil = com.grupo7.bolao.enums.PerfilUsuario.USUARIO AND u.status = :status AND (" +
            "u.pontuacaoTotal > :pontuacaoTotal OR " +
            "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos > :placaresExatos) OR " +
            "(u.pontuacaoTotal = :pontuacaoTotal AND u.placaresExatos = :placaresExatos AND u.criadoEm < :criadoEm)" +

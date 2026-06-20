@@ -51,7 +51,7 @@ public class SelecoesController {
             @RequestParam(required = false) String busca,
             Model model
     ) {
-        List<SelecaoResponse> selecoes = selecaoService.listarTodasSelecoes();
+        List<SelecaoResponse> selecoes = selecaoService.listarSelecoes(busca);
 
         model.addAttribute("selecoes", selecoes);
         model.addAttribute("busca", busca);

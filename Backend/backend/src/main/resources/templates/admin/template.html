@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light"
+<html lang="pt-BR"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:fragment="layout (pageTitle, pageHeading, pageSubtitle, activeSection, content)">
@@ -13,251 +13,117 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css"/>
     <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-    <style>
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        html { color-scheme: light only; }
-
-        .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
-        .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
-
-        .menu .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.75rem;
-            border: 1px solid transparent;
-        }
-
-        .sidebar-link.active {
-            background: rgba(22, 163, 74, 0.1);
-            color: #15803d;
-            border-color: rgba(22, 163, 74, 0.25);
-            font-weight: 600;
-        }
-
-        .sidebar-link:hover:not(.active):not(.disabled) { background: rgba(0, 0, 0, 0.04); }
-
-        .sidebar-link.disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        .card-panel {
-            background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .admin-input {
-            display: block;
-            box-sizing: border-box;
-            max-width: 100%;
-            border-radius: 0.5rem;
-            border: 1px solid #e2e8f0;
-            background-color: #ffffff;
-            color: #0f172a;
-            padding: 0.625rem 0.875rem;
-            font-size: 0.875rem;
-            line-height: 1.25rem;
-            outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s;
-        }
-
-        select.admin-input {
-            cursor: pointer;
-            padding-right: 2rem;
-        }
-
-        input[type="datetime-local"].admin-input,
-        input[type="number"].admin-input {
-            min-height: 2.75rem;
-        }
-
-        .admin-input::placeholder { color: #94a3b8; }
-
-        .admin-input:focus {
-            border-color: #16a34a;
-            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
-        }
-
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #ffffff;
-            color: #334155;
-        }
-
-        .admin-table thead th {
-            background-color: #f8fafc;
-            color: #64748b;
-            font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.875rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .admin-table tbody td {
-            background-color: #ffffff;
-            color: #334155;
-            padding: 0.875rem 1rem;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: middle;
-        }
-
-        .admin-table tbody tr:hover td { background-color: #f8fafc; }
-        .admin-table tbody tr:last-child td { border-bottom: none; }
-
-        .modal {
-            z-index: 1000;
-        }
-
-        .modal-box {
-            background-color: #ffffff !important;
-            color: #0f172a !important;
-            max-height: calc(100vh - 2rem);
-            overflow-y: auto;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-
-        .modal::backdrop {
-            background-color: rgba(15, 23, 42, 0.45);
-        }
-
-        .modal-action {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .modal-backdrop {
-            background: transparent;
-        }
-
-        .modal-backdrop button {
-            width: 100%;
-            height: 100%;
-            cursor: default;
-            opacity: 0;
-        }
-
-        @media (min-width: 1024px) {
-            html, body {
-                height: 100%;
-                overflow: hidden;
-            }
-
-            #app-drawer {
-                display: grid;
-                grid-template-columns: auto 1fr;
-                height: 100vh;
-                overflow: hidden;
-            }
-
-            #app-drawer .drawer-overlay { display: none !important; }
-
-            #app-drawer .drawer-content {
-                grid-column: 2;
-                grid-row: 1;
-                min-width: 0;
-                height: 100vh;
-                overflow-y: auto;
-                overflow-x: hidden;
-            }
-
-            #app-drawer .drawer-side {
-                grid-column: 1;
-                grid-row: 1;
-                position: relative !important;
-                top: auto !important;
-                height: 100vh !important;
-                min-height: unset !important;
-                transform: none !important;
-                transition: width 0.3s ease, opacity 0.3s ease;
-                overflow: hidden;
-            }
-
-            #app-drawer .drawer-side > aside {
-                width: 16rem;
-                min-width: 16rem;
-                height: 100vh;
-                overflow-y: auto;
-            }
-
-            #app-drawer .drawer-toggle:not(:checked) ~ .drawer-side {
-                width: 0 !important;
-                opacity: 0;
-                pointer-events: none;
-            }
-
-            #app-drawer .drawer-toggle:checked ~ .drawer-side {
-                width: 16rem !important;
-                opacity: 1;
-                pointer-events: auto;
-            }
-        }
-    </style>
+    <link th:href="@{/assets/css/global.css}" rel="stylesheet" type="text/css"/>
+    <script th:src="@{/assets/js/template.js}"></script>
 </head>
 
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
 
 <div class="drawer" id="app-drawer">
-    <input id="sidebar-toggle" type="checkbox" class="drawer-toggle"/>
+    <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" checked/>
+    <script>
+        (function () {
+            var toggle = document.getElementById('sidebar-toggle');
+            if (window.innerWidth < 1024) {
+                toggle.checked = false;
+            } else if (localStorage.getItem('sidebar-open') === 'false') {
+                toggle.checked = false;
+            }
+        })();
+    </script>
 
     <div class="drawer-content flex flex-col min-h-screen lg:min-h-0 lg:h-full">
+        <header class="navbar bg-white border-b border-green-100 px-4 py-3 lg:px-6 sticky top-0 z-30 shadow-sm">
 
-        <header class="navbar bg-white border-b border-slate-200 px-4 py-3 lg:px-6 sticky top-0 z-30 shadow-sm">
+            <!-- Menu -->
             <div class="flex-none">
-                <label for="sidebar-toggle" class="btn btn-square btn-ghost" title="Abrir/fechar menu">
-                    <i data-lucide="panel-left-close" class="w-5 h-5" id="menu-icon"></i>
+                <label for="sidebar-toggle"
+                       class="btn btn-square btn-ghost hover:bg-green-50"
+                       title="Abrir/fechar menu">
+                    <i data-lucide="panel-left-close"
+                       class="w-5 h-5 text-slate-600"
+                       id="menu-icon"></i>
                 </label>
             </div>
 
+            <!-- Título -->
             <div class="flex-1">
                 <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex w-9 h-9 rounded-xl bg-success/15 border border-success/25 items-center justify-center">
-                        <i data-lucide="trophy" class="w-5 h-5 text-warning"></i>
+                    <div class="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-br from-green-600 to-green-700 items-center justify-center shadow-md">
+                        <i data-lucide="trophy" class="w-5 h-5 text-amber-300"></i>
                     </div>
+
                     <div>
-                        <h1 class="text-lg font-semibold leading-tight" th:text="${pageHeading}">Dashboard</h1>
-                        <p class="text-xs text-slate-500 hidden sm:block" th:text="${pageSubtitle}">
+                        <h1 class="text-lg font-bold leading-tight text-slate-800"
+                            th:text="${pageHeading}">
+                            Dashboard
+                        </h1>
+                        <p class="text-xs text-slate-500 hidden sm:block"
+                           th:text="${pageSubtitle}">
                             Bolão Copa 2026 — Painel Administrativo
                         </p>
                     </div>
                 </div>
             </div>
 
+            <!-- Ações -->
             <div class="flex-none flex items-center gap-2">
-                <button class="btn btn-ghost btn-circle btn-sm" id="btn-refresh" title="Atualizar dados" type="button">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+
+                <!-- Atualizar -->
+                <button class="btn btn-ghost btn-circle btn-sm hover:bg-green-50"
+                        id="btn-refresh"
+                        title="Atualizar dados"
+                        type="button">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-600"></i>
                 </button>
 
+                <!-- Status -->
+                <div class="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-green-50 border border-green-100">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span class="text-xs font-medium text-green-700">Sistema Online</span>
+                </div>
+
+                <!-- Usuário -->
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
-                        <div class="bg-success/20 text-success rounded-full w-9">
-                            <span class="text-sm font-bold"
-                                  th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">AD</span>
+                    <div tabindex="0"
+                         role="button"
+                         class="btn btn-ghost hover:bg-green-50 rounded-xl">
+                        <div class="avatar placeholder">
+                            <div class="bg-green-600 text-white rounded-full w-9 font-bold text-sm">
+                                <span th:text="${usuarioAtual != null ? #strings.toUpperCase(#strings.substring(usuarioAtual.nome(), 0, 2)) : #strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">
+                                    AD
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="hidden md:block text-left ml-2">
+                            <p class="text-sm font-semibold text-slate-700"
+                               th:text="${usuarioAtual != null ? usuarioAtual.nome() : 'Administrador'}">
+                                Admin
+                            </p>
                         </div>
                     </div>
+
                     <ul tabindex="0"
-                        class="dropdown-content menu bg-white rounded-box z-50 w-52 p-2 shadow-xl border border-slate-200 mt-2">
-                        <li class="menu-title" sec:authentication="name">Administrador</li>
+                        class="dropdown-content menu bg-white rounded-2xl z-50 w-60 p-2 shadow-xl border border-green-100 mt-3">
+                        <li class="menu-title">
+                            <span sec:authentication="name">admin@copa2026.com.br</span>
+                        </li>
+                        <li>
+                            <button type="button" id="btn-meu-perfil" class="flex items-center gap-2 w-full">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                                Meu Perfil
+                            </button>
+                        </li>
+
+                        <div class="divider my-1"></div>
+
                         <li>
                             <form th:action="@{/logout}" method="post">
-                                <button type="submit" class="flex items-center gap-2 w-full">
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
+                                <button type="submit" class="text-error flex items-center gap-2">
                                     <i data-lucide="log-out" class="w-4 h-4"></i>
                                     Sair
                                 </button>
@@ -268,13 +134,18 @@
             </div>
         </header>
 
-        <main class="flex-1 p-4 lg:p-6 animate-fade-in flex flex-col gap-6 w-full mx-auto"
+        <main class="flex-1 p-4 lg:p-6 animate-fade-in flex flex-col gap-6 w-full mx-auto bg-gray-200/20"
               th:insert="${content}"></main>
 
-        <footer class="footer footer-center p-4 mt-auto bg-white border-t border-slate-200 text-slate-400 text-xs">
-            <aside>
-                <p>Bolão Copa 2026 — v1.0.0
-                    <span class="badge badge-warning badge-xs badge-outline ml-1">BETA</span>
+        <footer class="footer footer-center mt-auto border-t border-base-300 bg-base-100 px-6 py-4 text-base-content/60">
+            <aside class="flex flex-col items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold">Bolão Copa 2026</span>
+                    <span class="badge badge-primary badge-sm">v1.0.0</span>
+                    <span class="badge badge-warning badge-sm">BETA</span>
+                </div>
+                <p class="text-xs opacity-70">
+                    © 2026 Grupo 7 • Sistema de gerenciamento do Bolão da Copa do Mundo
                 </p>
             </aside>
         </footer>
@@ -282,20 +153,24 @@
 
     <div class="drawer-side z-40">
         <label for="sidebar-toggle" aria-label="Fechar menu" class="drawer-overlay"></label>
-        <aside id="sidebar" class="bg-white w-64 min-h-full border-r border-slate-200 flex flex-col shadow-sm">
 
-            <div class="p-4 border-b border-slate-200">
+        <aside id="sidebar"
+               class="bg-white w-64 min-h-full border-r border-green-100 flex flex-col shadow-lg">
+
+            <!-- Logo -->
+            <div class="p-4 border-b border-green-100">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-success/20 to-warning/10 border border-success/30 flex items-center justify-center">
-                        <i data-lucide="trophy" class="w-5 h-5 text-warning"></i>
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-green-600 to-green-700 shadow-md flex items-center justify-center">
+                        <i data-lucide="trophy" class="w-5 h-5 text-amber-300"></i>
                     </div>
                     <div class="min-w-0">
-                        <p class="font-bold text-sm leading-tight">BOLÃO</p>
-                        <p class="text-warning text-xs font-semibold">COPA 2026</p>
+                        <p class="font-extrabold text-sm leading-tight text-green-700">BOLÃO</p>
+                        <p class="text-amber-500 text-xs font-bold tracking-wide">COPA 2026</p>
                     </div>
                 </div>
             </div>
 
+            <!-- Menu -->
             <nav class="flex-1 p-3">
                 <ul class="menu menu-sm gap-1 p-0">
                     <li>
@@ -330,100 +205,233 @@
                             Usuários
                         </a>
                     </li>
-                     <li>
+                    <li>
                         <a th:href="@{/admin/selecoes}"
                            class="sidebar-link"
                            th:classappend="${activeSection == 'selecoes'} ? 'active' : _">
-                            <i data-lucide="target" class="w-4 h-4 shrink-0"></i>
+                            <i data-lucide="flag" class="w-4 h-4 shrink-0"></i>
                             Seleções
                         </a>
                     </li>
                     <li>
-                        <span class="sidebar-link disabled" title="Em breve">
+                        <a th:href="@{/admin/ranking}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'ranking'} ? 'active' : _">
                             <i data-lucide="trophy" class="w-4 h-4 shrink-0"></i>
                             Ranking
-                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
-                        </span>
-                    </li>
-                    <li>
-                        <span class="sidebar-link disabled" title="Em breve">
-                            <i data-lucide="file-bar-chart" class="w-4 h-4 shrink-0"></i>
-                            Relatórios
-                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
-                        </span>
+                        </a>
                     </li>
                 </ul>
             </nav>
 
-            <div class="p-4 border-t border-slate-200">
-                <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <!-- Usuário -->
+            <div class="p-4 border-t border-green-100">
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
                     <div class="avatar placeholder">
-                        <div class="bg-success/20 text-success rounded-full w-9">
-                            <span class="text-xs font-bold"
-                                  th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">AD</span>
+                        <div class="bg-green-600 text-white rounded-full w-9 font-bold text-xs">
+                            <span th:text="${usuarioAtual != null ? #strings.toUpperCase(#strings.substring(usuarioAtual.nome(), 0, 2)) : #strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">
+                                AD
+                            </span>
                         </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">Administrador</p>
-                        <p class="text-xs text-slate-500 truncate" sec:authentication="name">admin@copa2026.com.br</p>
+                        <p class="text-sm font-semibold truncate text-slate-700"
+                           th:text="${usuarioAtual != null ? usuarioAtual.nome() : 'Administrador'}">
+                            Administrador
+                        </p>
+                        <p class="text-xs text-slate-500 truncate" sec:authentication="name">
+                            admin@copa2026.com.br
+                        </p>
                     </div>
+                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
                 </div>
             </div>
-
         </aside>
     </div>
 </div>
 
-<div class="toast toast-end toast-bottom z-50" id="toast-container"></div>
+<div id="page-perfil"
+     class="hidden"
+     th:if="${usuarioAtual != null}"
+     th:attr="data-nome=${usuarioAtual.nome()},
+              data-email=${usuarioAtual.email()},
+              data-avatar=${usuarioAtual.avatarUrl()},
+              data-abrir-modal=${abrirModalPerfil}"></div>
 
-<script>
-    function updateMenuIcon() {
-        const toggle = document.getElementById('sidebar-toggle');
-        const icon = document.getElementById('menu-icon');
-        if (!icon) return;
-        icon.setAttribute('data-lucide', toggle.checked ? 'panel-left-close' : 'panel-left');
-        lucide.createIcons();
-    }
+<!-- Modal Perfil -->
+<dialog id="modal-perfil" class="modal" th:if="${usuarioAtual != null}">
+    <div class="modal-box max-w-4xl p-0 overflow-hidden bg-white max-h-[90vh] overflow-y-auto">
 
-    function initSidebarToggle() {
-        const toggle = document.getElementById('sidebar-toggle');
-        const isDesktop = () => window.innerWidth >= 1024;
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-green-700 via-green-600 to-green-500 px-8 py-6 text-white">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <i data-lucide="user-circle" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold">Meu Perfil</h3>
+                    <p class="text-green-100 text-sm">
+                        Atualize seus dados pessoais e informações da conta
+                    </p>
+                </div>
+            </div>
+        </div>
 
-        const saved = localStorage.getItem('sidebar-open');
-        if (isDesktop()) {
-            toggle.checked = saved !== null ? saved === 'true' : true;
-        } else {
-            toggle.checked = false;
-        }
+        <form id="form-perfil"
+              th:action="@{/admin/perfil}"
+              method="post"
+              enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden"
+                   id="perfil-avatar-url-atual"
+                   name="avatarUrlAtual"
+                   th:value="${usuarioAtual.avatarUrl()}"/>
 
-        toggle.addEventListener('change', () => {
-            if (isDesktop()) {
-                localStorage.setItem('sidebar-open', toggle.checked);
-            }
-            updateMenuIcon();
-        });
+            <div class="p-6 space-y-6">
 
-        window.addEventListener('resize', () => {
-            if (!isDesktop()) {
-                toggle.checked = false;
-            } else {
-                const stored = localStorage.getItem('sidebar-open');
-                toggle.checked = stored !== null ? stored === 'true' : true;
-            }
-            updateMenuIcon();
-        });
+                <!-- Avatar -->
+                <div class="flex flex-col items-center gap-4">
+                    <div class="avatar">
+                        <div class="w-28 rounded-full ring ring-green-200 ring-offset-4 ring-offset-white overflow-hidden shadow-lg bg-green-50">
+                            <img id="perfil-preview-avatar"
+                                 th:src="${usuarioAtual.avatarUrl()}"
+                                 alt="Avatar"
+                                 class="w-full h-full object-cover"
+                                 th:classappend="${usuarioAtual.avatarUrl() == null or #strings.isEmpty(usuarioAtual.avatarUrl())} ? 'hidden' : _"/>
+                            <div id="perfil-preview-inicial"
+                                 class="w-full h-full flex items-center justify-center bg-green-100 text-green-700 font-bold text-3xl"
+                                 th:classappend="${usuarioAtual.avatarUrl() != null and !#strings.isEmpty(usuarioAtual.avatarUrl())} ? 'hidden' : _">
+                                <span th:text="${#strings.toUpperCase(#strings.substring(usuarioAtual.nome(), 0, 2))}">
+                                    AD
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="badge badge-success badge-outline">Perfil Ativo</span>
+                </div>
 
-        updateMenuIcon();
-    }
+                <!-- Nome -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">Nome</span>
+                    </label>
+                    <label class="input input-bordered flex items-center gap-2 focus-within:border-green-500">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                        <input type="text"
+                               id="perfil-nome"
+                               name="nome"
+                               maxlength="120"
+                               required
+                               th:value="${usuarioAtual.nome()}"
+                               class="grow"/>
+                    </label>
+                </div>
 
-    function initAdminLayout() {
-        initSidebarToggle();
-        lucide.createIcons();
-        document.getElementById('btn-refresh')?.addEventListener('click', () => window.location.reload());
-    }
+                <!-- Email -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">E-mail</span>
+                    </label>
+                    <label class="input input-bordered flex items-center gap-2 focus-within:border-green-500">
+                        <i data-lucide="mail" class="w-4 h-4 text-slate-400"></i>
+                        <input type="email"
+                               id="perfil-email"
+                               name="email"
+                               maxlength="180"
+                               required
+                               th:value="${usuarioAtual.email()}"
+                               class="grow"/>
+                    </label>
+                </div>
 
-    document.addEventListener('DOMContentLoaded', initAdminLayout);
-</script>
+                <!-- Segurança -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-green-600"></i>
+                        <h4 class="font-semibold">Segurança da Conta</h4>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-5">
+                        Preencha os campos abaixo apenas se desejar alterar sua senha.
+                    </p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="perfil-senha-atual"
+                                   class="block text-sm font-medium text-slate-600 mb-2">
+                                Senha Atual
+                            </label>
+                            <input type="password"
+                                   id="perfil-senha-atual"
+                                   name="senhaAtual"
+                                   autocomplete="current-password"
+                                   class="input input-bordered w-full focus:input-success"/>
+                        </div>
+                        <div>
+                            <label for="perfil-nova-senha"
+                                   class="block text-sm font-medium text-slate-600 mb-2">
+                                Nova Senha
+                            </label>
+                            <input type="password"
+                                   id="perfil-nova-senha"
+                                   name="novaSenha"
+                                   minlength="6"
+                                   autocomplete="new-password"
+                                   class="input input-bordered w-full focus:input-success"/>
+                        </div>
+                        <div>
+                            <label for="perfil-confirmar-senha"
+                                   class="block text-sm font-medium text-slate-600 mb-2">
+                                Confirmar Nova Senha
+                            </label>
+                            <input type="password"
+                                   id="perfil-confirmar-senha"
+                                   name="confirmarSenha"
+                                   minlength="6"
+                                   autocomplete="new-password"
+                                   class="input input-bordered w-full focus:input-success"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload -->
+                <div class="bg-green-50 border border-green-100 rounded-2xl p-4">
+                    <label for="perfil-avatar"
+                           class="block text-sm font-semibold text-slate-700 mb-2">
+                        Foto de Perfil
+                    </label>
+                    <input type="file"
+                           id="perfil-avatar"
+                           name="avatar"
+                           accept="image/png,image/jpeg,image/webp,image/gif"
+                           class="file-input file-input-bordered file-input-success w-full"/>
+                    <p class="text-xs text-slate-500 mt-2">
+                        PNG, JPG, WEBP ou GIF • Máximo 2MB
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                <span class="text-xs text-slate-500">Bolão Copa 2026</span>
+                <div class="flex gap-3">
+                    <button type="button" id="btn-cancelar-perfil" class="btn btn-ghost">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success px-8 gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button type="button">Fechar</button>
+    </form>
+</dialog>
+
+<div class="toast toast-end toast-top z-50"
+     id="toast-container"
+     th:attr="data-sucesso=${sucesso}, data-erro=${erro}"></div>
 
 </body>
 </html>

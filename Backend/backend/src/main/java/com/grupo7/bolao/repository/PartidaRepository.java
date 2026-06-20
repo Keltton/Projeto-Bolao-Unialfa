@@ -14,6 +14,8 @@ import java.util.List;
  */
 public interface PartidaRepository extends JpaRepository<Partida, Long> {
 
+    long countByStatus(StatusPartida status);
+
     /**
      * Busca partidas que ocorrem em uma determinada fase da competição.
      *
@@ -55,4 +57,14 @@ public interface PartidaRepository extends JpaRepository<Partida, Long> {
      * @return Lista de partidas futuras ordenadas.
      */
     List<Partida> findByDataHoraAfterOrderByDataHoraAsc(LocalDateTime dataHora);
+
+
+    /**
+     * Busca partidas que ocorrem com uma seleção específica.
+     *
+     * @param selecaoAId ID da seleção A.
+     * @param selecaoBId ID da seleção B.
+     * @return Lista de partidas com a seleção.
+     */
+    List<Partida> findBySelecaoAIdOrSelecaoBId(Long selecaoAId, Long selecaoBId);
 }
