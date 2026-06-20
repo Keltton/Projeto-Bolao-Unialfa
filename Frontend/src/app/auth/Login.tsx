@@ -8,7 +8,7 @@ import {
   View,
   SafeAreaView,
   StatusBar,
-  Alert,
+
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -65,7 +65,6 @@ export default function login() {
                       placeholder="nome@exemplo.com"
                       placeholderTextColor="rgba(189, 202, 185, 0.5)"
                       keyboardType="email-address"
-                      autoCapitalize="none"
                       style={[styles.textInput, { color: theme.text }]}
                     />
                   </View>
@@ -105,9 +104,6 @@ export default function login() {
                 <View style={styles.actionsContainer}>
                   <TouchableOpacity
                     style={[styles.loginBtn, { backgroundColor: theme.secondary }]}
-                    onPress={async () => {
-                      // Simulate login logic here
-                    }}
                   >
                     <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
                   </TouchableOpacity>

@@ -11,7 +11,11 @@ import {
   
 } from "react-native";
 
+import * as Router from "expo-router";
+
+
 export default function Cadastro() {
+  const route = Router.useRouter();
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -70,8 +74,7 @@ export default function Cadastro() {
 
           <TouchableOpacity>
             <Text style={styles.loginText}>
-              Já possui uma conta?{" "}
-              <Text style={styles.loginHighlight}>
+              Já possui uma conta? <Text style={styles.loginHighlight} onPress={() => route.push("/auth/Login")}>
                 Entrar
               </Text>
             </Text>

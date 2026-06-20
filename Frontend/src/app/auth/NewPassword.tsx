@@ -31,7 +31,7 @@ export default function NewPassword() {
         />
 
         <TextInput
-  placeholder="Confirmar nova senha"
+          placeholder="Confirmar nova senha"
           placeholderTextColor="#999"
           secureTextEntry
           style={styles.input}
