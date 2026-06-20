@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,88 +9,66 @@ import {
   Image,
   SafeAreaView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import { FasePartida, Partida } from "@/types/Partida";
+import { listarPartidas } from "@/services/partidaService";
+import { getApiErrorMessage } from "@/services/api";
+import { formatarDataPartida } from "@/util/formatDate";
+import { resolveImageUrl } from "@/util/imageUrl";
 
-// Mock de partidas para a visualização inicial
-const PARTIDAS_MOCK = [
-  {
-    id: 1,
-    selecaoA: { nome: "Brasil", codigoFifa: "BRA", bandeiraUrl: "https://flagcdn.com/w80/br.png" },
-    selecaoB: { nome: "Argentina", codigoFifa: "ARG", bandeiraUrl: "https://flagcdn.com/w80/ar.png" },
-    dataHora: "21/06 • 16:00",
-    estadio: "MetLife Stadium",
-    fase: "GRUPOS",
-    grupo: "C",
-    status: "AGENDADA",
-    golsSelecaoA: null,
-    golsSelecaoB: null,
-  },
-  {
-    id: 2,
-    selecaoA: { nome: "França", codigoFifa: "FRA", bandeiraUrl: "https://flagcdn.com/w80/fr.png" },
-    selecaoB: { nome: "Alemanha", codigoFifa: "GER", bandeiraUrl: "https://flagcdn.com/w80/de.png" },
-    dataHora: "21/06 • 13:00",
-    estadio: "Rose Bowl",
-    fase: "GRUPOS",
-    grupo: "D",
-    status: "AGENDADA",
-    golsSelecaoA: null,
-    golsSelecaoB: null,
-  },
-  {
-    id: 3,
-    selecaoA: { nome: "Portugal", codigoFifa: "POR", bandeiraUrl: "https://flagcdn.com/w80/pt.png" },
-    selecaoB: { nome: "Espanha", codigoFifa: "ESP", bandeiraUrl: "https://flagcdn.com/w80/es.png" },
-    dataHora: "22/06 • 10:00",
-    estadio: "SoFi Stadium",
-    fase: "GRUPOS",
-    grupo: "E",
-    status: "AGENDADA",
-    golsSelecaoA: null,
-    golsSelecaoB: null,
-  },
-  {
-    id: 4,
-    selecaoA: { nome: "Inglaterra", codigoFifa: "ENG", bandeiraUrl: "https://flagcdn.com/w80/gb-eng.png" },
-    selecaoB: { nome: "Itália", codigoFifa: "ITA", bandeiraUrl: "https://flagcdn.com/w80/it.png" },
-    dataHora: "18/06 • 18:00",
-    estadio: "Mercedes-Benz Stadium",
-    fase: "GRUPOS",
-    grupo: "A",
-    status: "ENCERRADA",
-    golsSelecaoA: 2,
-    golsSelecaoB: 1,
-  },
-  {
-    id: 5,
-    selecaoA: { nome: "Uruguai", codigoFifa: "URU", bandeiraUrl: "https://flagcdn.com/w80/uy.png" },
-    selecaoB: { nome: "Holanda", codigoFifa: "NED", bandeiraUrl: "https://flagcdn.com/w80/nl.png" },
-    dataHora: "19/06 • 15:00",
-    estadio: "Hard Rock Stadium",
-    fase: "GRUPOS",
-    grupo: "B",
-    status: "ENCERRADA",
-    golsSelecaoA: 0,
-    golsSelecaoB: 2,
-  }
+const FASES: Array<{ label: string; value: "TODAS" | FasePartida }> = [
+  { label: "TODAS", value: "TODAS" },
+  { label: "GRUPOS", value: "GRUPOS" },
+  { label: "OITAVAS", value: "OITAVAS" },
+  { label: "QUARTAS", value: "QUARTAS" },
+  { label: "SEMI", value: "SEMIFINAL" },
+  { label: "FINAL", value: "FINAL" },
 ];
 
 export default function Partidas() {
   const router = useRouter();
   const theme = Colors.dark;
-  const [faseAtiva, setFaseAtiva] = useState("TODAS");
 
-  const fases = ["TODAS", "GRUPOS", "OITAVAS", "QUARTAS", "SEMI", "FINAL"];
+  const [partidas, setPartidas] = useState<Partida[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [faseAtiva, setFaseAtiva] = useState<"TODAS" | FasePartida>("TODAS");
 
-  const partidasFiltradas = faseAtiva === "TODAS" 
-    ? PARTIDAS_MOCK 
-    : PARTIDAS_MOCK.filter(p => p.fase === faseAtiva);
+  const carregarPartidas = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage(null);
 
-  const renderPartida = ({ item }: { item: typeof PARTIDAS_MOCK[0] }) => {
+    try {
+      const filtros = faseAtiva !== "TODAS" ? { fase: faseAtiva } : undefined;
+      const data = await listarPartidas(filtros);
+      setPartidas(data);
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, "Erro ao carregar partidas."));
+      setPartidas([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [faseAtiva]);
+
+  useEffect(() => {
+    carregarPartidas();
+  }, [carregarPartidas]);
+
+  const renderBandeira = (bandeiraUrl?: string | null) => {
+    const uri = resolveImageUrl(bandeiraUrl);
+    if (!uri) {
+      return <View style={[styles.flag, { backgroundColor: theme.border }]} />;
+    }
+    return <Image source={{ uri }} style={styles.flag} />;
+  };
+
+  const renderPartida = ({ item }: { item: Partida }) => {
     const isEncerrada = item.status === "ENCERRADA";
+    const isEmAndamento = item.status === "EM_ANDAMENTO";
 
     return (
       <TouchableOpacity
@@ -101,27 +79,51 @@ export default function Partidas() {
           <Text style={[styles.phaseText, { color: theme.primary }]}>
             FASE DE {item.fase} {item.grupo ? `• GRUPO ${item.grupo}` : ""}
           </Text>
-          <View style={[styles.statusBadge, { backgroundColor: isEncerrada ? theme.border : theme.primary + "20" }]}>
-            <Text style={[styles.statusText, { color: isEncerrada ? theme.textSecondary : theme.primary }]}>
-              {isEncerrada ? "ENCERRADA" : "AGENDADA"}
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: isEncerrada
+                  ? theme.border
+                  : isEmAndamento
+                    ? theme.secondary + "30"
+                    : theme.primary + "20",
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusText,
+                {
+                  color: isEncerrada
+                    ? theme.textSecondary
+                    : isEmAndamento
+                      ? theme.secondary
+                      : theme.primary,
+                },
+              ]}
+            >
+              {item.status.replace("_", " ")}
             </Text>
           </View>
         </View>
 
         <View style={styles.teamsRow}>
-          {/* Team A */}
           <View style={styles.teamContainer}>
-            <Image source={{ uri: item.selecaoA.bandeiraUrl }} style={styles.flag} />
+            {renderBandeira(item.selecaoA.bandeiraUrl)}
             <Text style={[styles.teamName, { color: theme.text }]}>{item.selecaoA.nome}</Text>
           </View>
 
-          {/* Scores/VS */}
           <View style={styles.vsContainer}>
-            {isEncerrada ? (
+            {isEncerrada || isEmAndamento ? (
               <View style={styles.scoreRow}>
-                <Text style={[styles.scoreNumber, { color: theme.text }]}>{item.golsSelecaoA}</Text>
+                <Text style={[styles.scoreNumber, { color: theme.text }]}>
+                  {item.golsSelecaoA ?? 0}
+                </Text>
                 <Text style={[styles.vsText, { color: theme.textSecondary }]}>x</Text>
-                <Text style={[styles.scoreNumber, { color: theme.text }]}>{item.golsSelecaoB}</Text>
+                <Text style={[styles.scoreNumber, { color: theme.text }]}>
+                  {item.golsSelecaoB ?? 0}
+                </Text>
               </View>
             ) : (
               <View style={[styles.vsBadge, { backgroundColor: theme.border }]}>
@@ -130,9 +132,8 @@ export default function Partidas() {
             )}
           </View>
 
-          {/* Team B */}
           <View style={styles.teamContainer}>
-            <Image source={{ uri: item.selecaoB.bandeiraUrl }} style={styles.flag} />
+            {renderBandeira(item.selecaoB.bandeiraUrl)}
             <Text style={[styles.teamName, { color: theme.text }]}>{item.selecaoB.nome}</Text>
           </View>
         </View>
@@ -140,11 +141,17 @@ export default function Partidas() {
         <View style={styles.matchFooter}>
           <View style={styles.footerInfo}>
             <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
-            <Text style={[styles.footerText, { color: theme.textSecondary }]}> {item.dataHora}</Text>
+            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+              {" "}
+              {formatarDataPartida(item.dataHora)}
+            </Text>
           </View>
           <View style={styles.footerInfo}>
             <Ionicons name="pin-outline" size={14} color={theme.textSecondary} />
-            <Text style={[styles.footerText, { color: theme.textSecondary }]}> {item.estadio}</Text>
+            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+              {" "}
+              {item.estadio}
+            </Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -157,18 +164,17 @@ export default function Partidas() {
         <Text style={[styles.headerTitle, { color: theme.text }]}>Tabela de Jogos</Text>
       </View>
 
-      {/* Horizontal Filter Bar */}
       <View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterBar}
         >
-          {fases.map((fase) => {
-            const isSelected = faseAtiva === fase;
+          {FASES.map((fase) => {
+            const isSelected = faseAtiva === fase.value;
             return (
               <TouchableOpacity
-                key={fase}
+                key={fase.value}
                 style={[
                   styles.filterItem,
                   {
@@ -176,7 +182,7 @@ export default function Partidas() {
                     borderColor: theme.border,
                   },
                 ]}
-                onPress={() => setFaseAtiva(fase)}
+                onPress={() => setFaseAtiva(fase.value)}
               >
                 <Text
                   style={[
@@ -187,7 +193,7 @@ export default function Partidas() {
                     },
                   ]}
                 >
-                  {fase}
+                  {fase.label}
                 </Text>
               </TouchableOpacity>
             );
@@ -195,14 +201,37 @@ export default function Partidas() {
         </ScrollView>
       </View>
 
-      {/* Match List */}
-      <FlatList
-        data={partidasFiltradas}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderPartida}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={theme.secondary} />
+        </View>
+      ) : errorMessage ? (
+        <View style={styles.centerContent}>
+          <Text style={styles.errorText}>{errorMessage}</Text>
+          <TouchableOpacity
+            style={[styles.retryBtn, { borderColor: theme.border }]}
+            onPress={carregarPartidas}
+          >
+            <Text style={[styles.retryText, { color: theme.secondary }]}>Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          style={styles.list}
+          data={partidas}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderPartida}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                Nenhuma partida encontrada.
+              </Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -237,9 +266,44 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: 12,
   },
+  list: {
+    flex: 1,
+  },
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+    flexGrow: 1,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#ff6b6b",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  retryBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  retryText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
   },
   matchCard: {
     borderWidth: 1,
@@ -291,6 +355,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     marginTop: 6,
+    textAlign: "center",
   },
   vsContainer: {
     alignItems: "center",
@@ -326,8 +391,10 @@ const styles = StyleSheet.create({
   footerInfo: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
   footerText: {
     fontSize: 11,
+    flexShrink: 1,
   },
 });

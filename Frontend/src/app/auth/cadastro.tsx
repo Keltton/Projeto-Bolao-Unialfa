@@ -8,16 +8,19 @@ import {
   View,
   SafeAreaView,
   StatusBar,
-  Alert,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import { register } from "@/services/authService";
+import { getApiErrorMessage } from "@/services/api";
+import { toastError, toastSuccess } from "@/util/toast";
 
 export default function Cadastro() {
   const router = useRouter();
-  const theme = Colors.dark; // Visual escuro premium da Copa
+  const theme = Colors.dark;
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -25,22 +28,49 @@ export default function Cadastro() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [confirmarSenhaVisivel, setConfirmarSenhaVisivel] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleCadastro = () => {
+  const clearError = () => {
+    if (errorMessage) setErrorMessage(null);
+  };
+
+  const handleCadastro = async () => {
+    setErrorMessage(null);
+
     if (!nome.trim() || !email.trim() || !senha.trim() || !confirmarSenha.trim()) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
-      return;
-    }
-    if (senha !== confirmarSenha) {
-      Alert.alert("Erro", "As senhas não coincidem.");
+      toastError("Por favor, preencha todos os campos.");
       return;
     }
 
-    Alert.alert(
-      "Cadastro Realizado",
-      "Sua conta foi criada com sucesso! Agora você já pode fazer login.",
-      [{ text: "OK", onPress: () => router.push("/auth/login") }]
-    );
+    if (nome.trim().length < 3) {
+      toastError("O nome deve ter no mínimo 3 caracteres.");
+      return;
+    }
+
+    if (senha.length < 6) {
+      toastError("A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      toastError("As senhas não coincidem.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await register(nome.trim(), email.trim(), senha);
+      toastSuccess("Agora faça login com seu e-mail e senha.", "Conta criada!");
+      router.replace("/auth/login");
+    } catch (error) {
+      toastError(
+        getApiErrorMessage(error, "Não foi possível criar a conta."),
+        "Falha no cadastro"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,9 +115,13 @@ export default function Cadastro() {
                       <Ionicons name="person-outline" size={20} color={theme.textSecondary} />
                       <TextInput
                         value={nome}
-                        onChangeText={setNome}
+                        onChangeText={(text) => {
+                          setNome(text);
+                          clearError();
+                        }}
                         placeholder="Seu nome completo"
                         placeholderTextColor="rgba(189, 202, 185, 0.5)"
+                        autoCapitalize="words"
                         style={[styles.textInput, { color: theme.text }]}
                       />
                     </View>
@@ -100,11 +134,15 @@ export default function Cadastro() {
                       <Ionicons name="mail-outline" size={20} color={theme.textSecondary} />
                       <TextInput
                         value={email}
-                        onChangeText={setEmail}
+                        onChangeText={(text) => {
+                          setEmail(text);
+                          clearError();
+                        }}
                         placeholder="nome@exemplo.com"
                         placeholderTextColor="rgba(189, 202, 185, 0.5)"
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        autoCorrect={false}
                         style={[styles.textInput, { color: theme.text }]}
                       />
                     </View>
@@ -117,7 +155,10 @@ export default function Cadastro() {
                       <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} />
                       <TextInput
                         value={senha}
-                        onChangeText={setSenha}
+                        onChangeText={(text) => {
+                          setSenha(text);
+                          clearError();
+                        }}
                         placeholder="••••••••"
                         placeholderTextColor="rgba(189, 202, 185, 0.5)"
                         secureTextEntry={!senhaVisivel}
@@ -140,7 +181,10 @@ export default function Cadastro() {
                       <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} />
                       <TextInput
                         value={confirmarSenha}
-                        onChangeText={setConfirmarSenha}
+                        onChangeText={(text) => {
+                          setConfirmarSenha(text);
+                          clearError();
+                        }}
                         placeholder="••••••••"
                         placeholderTextColor="rgba(189, 202, 185, 0.5)"
                         secureTextEntry={!confirmarSenhaVisivel}
@@ -158,16 +202,34 @@ export default function Cadastro() {
 
                   {/* Actions */}
                   <View style={styles.actionsContainer}>
+                    {errorMessage ? (
+                      <View style={styles.errorBox}>
+                        <Ionicons name="alert-circle-outline" size={18} color="#ff6b6b" />
+                        <Text style={styles.errorText}>{errorMessage}</Text>
+                      </View>
+                    ) : null}
+
                     <TouchableOpacity
-                      style={[styles.registerBtn, { backgroundColor: theme.secondary }]}
+                      style={[
+                        styles.registerBtn,
+                        { backgroundColor: theme.secondary, opacity: loading ? 0.7 : 1 },
+                      ]}
                       onPress={handleCadastro}
+                      disabled={loading}
                     >
-                      <Text style={[styles.registerBtnText, { color: theme.background }]}>CRIAR CONTA</Text>
+                      {loading ? (
+                        <ActivityIndicator color={theme.background} />
+                      ) : (
+                        <Text style={[styles.registerBtnText, { color: theme.background }]}>
+                          CRIAR CONTA
+                        </Text>
+                      )}
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={styles.backToLoginBtn}
                       onPress={() => router.push("/auth/login")}
+                      disabled={loading}
                     >
                       <Text style={styles.loginText}>
                         Já possui uma conta?{" "}
@@ -268,6 +330,22 @@ const styles = StyleSheet.create({
   actionsContainer: {
     marginTop: 15,
     gap: 12,
+  },
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(255, 107, 107, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 107, 0.4)",
+    borderRadius: 10,
+    padding: 12,
+  },
+  errorText: {
+    flex: 1,
+    color: "#ff6b6b",
+    fontSize: 13,
+    fontWeight: "600",
   },
   registerBtn: {
     height: 52,

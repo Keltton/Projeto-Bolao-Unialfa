@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -8,29 +8,105 @@ import {
   Image,
   SafeAreaView,
   Platform,
+  ActivityIndicator,
+  ImageStyle,
+  StyleProp,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/AuthContext";
+import { listarProximasPartidas } from "@/services/partidaService";
+import { listarMeusPalpites } from "@/services/palpiteService";
+import { obterRanking } from "@/services/rankingService";
+import { getApiErrorMessage } from "@/services/api";
+import { Partida } from "@/types/Partida";
+import { Palpite } from "@/types/Palpite";
+import { formatarDataPartida } from "@/util/formatDate";
+import { resolveImageUrl } from "@/util/imageUrl";
 
 export default function Home() {
   const router = useRouter();
-  const theme = Colors.dark; // Forçar visual escuro premium conforme mockups
+  const theme = Colors.dark;
+  const { user } = useAuth();
+
+  const [proximas, setProximas] = useState<Partida[]>([]);
+  const [palpites, setPalpites] = useState<Palpite[]>([]);
+  const [posicao, setPosicao] = useState<number | null>(null);
+  const [totalParticipantes, setTotalParticipantes] = useState(0);
+  const [pontuacao, setPontuacao] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const carregarHome = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [partidasData, palpitesData, rankingData] = await Promise.all([
+        listarProximasPartidas(),
+        listarMeusPalpites(),
+        obterRanking(0, 50),
+      ]);
+
+      setProximas(partidasData);
+      setPalpites(palpitesData);
+      setPosicao(rankingData.posicaoUsuarioAutenticado);
+      setTotalParticipantes(rankingData.totalElementos);
+
+      const euNoRanking = rankingData.ranking.find((r) => r.id === user?.id);
+      setPontuacao(euNoRanking?.pontuacaoTotal ?? user?.pontuacaoTotal ?? 0);
+    } catch (error) {
+      console.error(getApiErrorMessage("Erro ao carregar home."));
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, user?.pontuacaoTotal]);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarHome();
+    }, [carregarHome])
+  );
+
+  const destaque = proximas[0] ?? null;
+  const outras = proximas.slice(1, 3);
+  const primeiroNome = user?.nome?.split(" ")[0] ?? "Jogador";
+  const avatarUri = resolveImageUrl(user?.avatarUrl);
+
+  const buscarPalpite = (partidaId: number) =>
+    palpites.find((p) => p.partida.id === partidaId);
+
+  const renderBandeira = (url?: string | null, style: StyleProp<ImageStyle> = styles.flag) => {
+    const uri = resolveImageUrl(url);
+    if (!uri) {
+      return <View style={[style, { backgroundColor: theme.border }]} />;
+    }
+    return <Image source={{ uri }} style={style} resizeMode="cover" />;
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Sticky Top Bar / Header */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <View style={[styles.avatarBorder, { borderColor: theme.primary }]}>
-            <Image
-              source={{ uri: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80" }}
-              style={styles.avatar}
-            />
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatar} />
+            ) : (
+              <View
+                style={[
+                  styles.avatar,
+                  { backgroundColor: theme.border, justifyContent: "center", alignItems: "center" },
+                ]}
+              >
+                <Ionicons name="person" size={20} color={theme.textSecondary} />
+              </View>
+            )}
           </View>
           <View>
-            <Text style={[styles.welcomeText, { color: theme.text }]}>Olá, Rafael! 👋</Text>
-            <Text style={[styles.subWelcomeText, { color: theme.textSecondary }]}>Que venham os jogos!</Text>
+            <Text style={[styles.welcomeText, { color: theme.text }]}>
+              Olá, {primeiroNome}! 👋
+            </Text>
+            <Text style={[styles.subWelcomeText, { color: theme.textSecondary }]}>
+              Que venham os jogos!
+            </Text>
           </View>
         </View>
         <TouchableOpacity style={styles.notificationButton}>
@@ -40,12 +116,11 @@ export default function Home() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Stats Bento Grid */}
         <View style={styles.statsGrid}>
           <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
             <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Sua pontuação</Text>
             <View style={styles.statNumberContainer}>
-              <Text style={[styles.statNumber, { color: theme.primary }]}>125</Text>
+              <Text style={[styles.statNumber, { color: theme.primary }]}>{pontuacao}</Text>
               <Text style={[styles.statUnit, { color: theme.primary }]}>pontos</Text>
             </View>
           </View>
@@ -53,13 +128,16 @@ export default function Home() {
           <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
             <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Sua posição</Text>
             <View style={styles.statNumberContainer}>
-              <Text style={[styles.statNumber, { color: theme.secondary }]}>12º</Text>
-              <Text style={[styles.statUnit, { color: theme.secondary }]}>de 1.234</Text>
+              <Text style={[styles.statNumber, { color: theme.secondary }]}>
+                {posicao != null ? `${posicao}º` : "—"}
+              </Text>
+              <Text style={[styles.statUnit, { color: theme.secondary }]}>
+                de {totalParticipantes}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Featured Match Section */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas partidas</Text>
           <TouchableOpacity onPress={() => router.push("/(tabs)/partidas")}>
@@ -67,107 +145,118 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-        {/* Featured Match Card */}
-        <View style={[styles.featuredCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-          <View style={styles.badgeContainer}>
-            <Text style={[styles.featuredBadge, { backgroundColor: theme.secondary, color: theme.text }]}>
-              EM DESTAQUE
-            </Text>
-          </View>
-
-          <View style={styles.teamsRow}>
-            {/* Team A */}
-            <View style={styles.teamContainer}>
-              <Image
-                source={{ uri: "https://flagcdn.com/w160/br.png" }}
-                style={styles.flag}
-              />
-              <Text style={[styles.teamName, { color: theme.text }]}>BRASIL</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color={theme.primary} style={{ marginVertical: 40 }} />
+        ) : destaque ? (
+          <View style={[styles.featuredCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+            <View style={styles.badgeContainer}>
+              <Text style={[styles.featuredBadge, { backgroundColor: theme.secondary, color: theme.text }]}>
+                EM DESTAQUE
+              </Text>
             </View>
 
-            {/* VS Box */}
-            <View style={styles.vsContainer}>
-              <View style={[styles.scoreBox, { backgroundColor: theme.border }]}>
-                <Text style={[styles.scoreText, { color: theme.textSecondary }]}>—</Text>
+            <View style={styles.teamsRow}>
+              <View style={styles.teamContainer}>
+                {renderBandeira(destaque.selecaoA.bandeiraUrl)}
+                <Text style={[styles.teamName, { color: theme.text }]}>
+                  {destaque.selecaoA.nome.toUpperCase()}
+                </Text>
               </View>
-              <Text style={[styles.vsText, { color: theme.primary }]}>VS</Text>
-              <View style={[styles.scoreBox, { backgroundColor: theme.border }]}>
-                <Text style={[styles.scoreText, { color: theme.textSecondary }]}>—</Text>
+
+              <View style={styles.vsContainer}>
+                {(() => {
+                  const palpite = buscarPalpite(destaque.id);
+                  return (
+                    <>
+                      <View style={[styles.scoreBox, { backgroundColor: theme.border }]}>
+                        <Text style={[styles.scoreText, { color: theme.textSecondary }]}>
+                          {palpite ? palpite.golsSelecaoA : "—"}
+                        </Text>
+                      </View>
+                      <Text style={[styles.vsText, { color: theme.primary }]}>VS</Text>
+                      <View style={[styles.scoreBox, { backgroundColor: theme.border }]}>
+                        <Text style={[styles.scoreText, { color: theme.textSecondary }]}>
+                          {palpite ? palpite.golsSelecaoB : "—"}
+                        </Text>
+                      </View>
+                    </>
+                  );
+                })()}
+              </View>
+
+              <View style={styles.teamContainer}>
+                {renderBandeira(destaque.selecaoB.bandeiraUrl)}
+                <Text style={[styles.teamName, { color: theme.text }]}>
+                  {destaque.selecaoB.nome.toUpperCase()}
+                </Text>
               </View>
             </View>
 
-            {/* Team B */}
-            <View style={styles.teamContainer}>
-              <Image
-                source={{ uri: "https://flagcdn.com/w160/ar.png" }}
-                style={styles.flag}
-              />
-              <Text style={[styles.teamName, { color: theme.text }]}>ARGENTINA</Text>
+            <View style={styles.matchMeta}>
+              <View style={styles.metaRow}>
+                <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
+                <Text style={[styles.metaText, { color: theme.textSecondary }]}>
+                  {" "}{formatarDataPartida(destaque.dataHora)}
+                </Text>
+              </View>
+              {destaque.grupo && (
+                <Text style={[styles.groupText, { color: theme.primary }]}>
+                  Grupo {destaque.grupo}
+                </Text>
+              )}
             </View>
+
+            <TouchableOpacity
+              style={[styles.palpiteButton, { backgroundColor: theme.secondary }]}
+              onPress={() => router.push(`/partidas/${destaque.id}`)}
+            >
+              <Ionicons name="create-outline" size={20} color={theme.background} />
+              <Text style={[styles.palpiteButtonText, { color: theme.background }]}>
+                {buscarPalpite(destaque.id) ? "EDITAR PALPITE" : "FAZER PALPITE"}
+              </Text>
+            </TouchableOpacity>
           </View>
+        ) : (
+          <Text style={{ color: theme.textSecondary, textAlign: "center", marginVertical: 24 }}>
+            Nenhuma partida próxima agendada.
+          </Text>
+        )}
 
-          <View style={styles.matchMeta}>
-            <View style={styles.metaRow}>
-              <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
-              <Text style={[styles.metaText, { color: theme.textSecondary }]}> 21/06 • 16:00</Text>
-            </View>
-            <Text style={[styles.groupText, { color: theme.primary }]}>Grupo C</Text>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.palpiteButton, { backgroundColor: theme.secondary }]}
-            onPress={() => router.push("/partidas/1")}
-          >
-            <Ionicons name="create-outline" size={20} color={theme.background} />
-            <Text style={[styles.palpiteButtonText, { color: theme.background }]}>FAZER PALPITE</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Secondary Match List */}
         <View style={styles.listContainer}>
-          {/* Match 2 */}
-          <TouchableOpacity
-            style={[styles.matchRow, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-            onPress={() => router.push("/partidas/2")}
-          >
-            <View style={styles.rowTeam}>
-              <Image source={{ uri: "https://flagcdn.com/w80/fr.png" }} style={styles.smallFlag} />
-              <Text style={[styles.rowTeamText, { color: theme.text }]}>França</Text>
-            </View>
+          {outras.map((partida) => (
+            <TouchableOpacity
+              key={partida.id}
+              style={[styles.matchRow, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+              onPress={() => router.push(`/partidas/${partida.id}`)}
+            >
+              <View style={styles.rowTeam}>
+                {renderBandeira(partida.selecaoA.bandeiraUrl, styles.smallFlag)}
+                <Text style={[styles.rowTeamText, { color: theme.text }]} numberOfLines={1}>
+                  {partida.selecaoA.nome}
+                </Text>
+              </View>
 
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowDate, { color: theme.text }]}>21/06 • 13:00</Text>
-              <Text style={[styles.rowGroup, { color: theme.textSecondary }]}>Grupo D</Text>
-            </View>
+              <View style={styles.rowInfo}>
+                <Text style={[styles.rowDate, { color: theme.text }]}>
+                  {formatarDataPartida(partida.dataHora)}
+                </Text>
+                {partida.grupo && (
+                  <Text style={[styles.rowGroup, { color: theme.textSecondary }]}>
+                    Grupo {partida.grupo}
+                  </Text>
+                )}
+              </View>
 
-            <View style={[styles.rowTeam, styles.alignRight]}>
-              <Text style={[styles.rowTeamText, { color: theme.text }]}>Alemanha</Text>
-              <Image source={{ uri: "https://flagcdn.com/w80/de.png" }} style={styles.smallFlag} />
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} style={styles.chevron} />
-          </TouchableOpacity>
+              <View style={[styles.rowTeam, styles.alignRight]}>
+                <Text style={[styles.rowTeamText, { color: theme.text }]} numberOfLines={1}>
+                  {partida.selecaoB.nome}
+                </Text>
+                {renderBandeira(partida.selecaoB.bandeiraUrl, styles.smallFlag)}
+              </View>
 
-          {/* Match 3 */}
-          <TouchableOpacity
-            style={[styles.matchRow, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-            onPress={() => router.push("/partidas/3")}
-          >
-            <View style={styles.rowTeam}>
-              <Image source={{ uri: "https://flagcdn.com/w80/pt.png" }} style={styles.smallFlag} />
-              <Text style={[styles.rowTeamText, { color: theme.text }]}>Portugal</Text>
-            </View>
-
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowDate, { color: theme.text }]}>22/06 • 10:00</Text>
-              <Text style={[styles.rowGroup, { color: theme.textSecondary }]}>Grupo E</Text>
-            </View>
-
-            <View style={[styles.rowTeam, styles.alignRight]}>
-              <Text style={[styles.rowTeamText, { color: theme.text }]}>Espanha</Text>
-              <Image source={{ uri: "https://flagcdn.com/w80/es.png" }} style={styles.smallFlag} />
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} style={styles.chevron} />
-          </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} style={styles.chevron} />
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -319,7 +408,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 40,
     borderRadius: 6,
-    resizeMode: "cover",
   },
   teamName: {
     fontSize: 13,

@@ -8,20 +8,47 @@ import {
   View,
   SafeAreaView,
   StatusBar,
-  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@/contexts/AuthContext";
+import { getApiErrorMessage } from "@/services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 
 export default function Login() {
   const router = useRouter();
-  const theme = Colors.dark; // Visual escuro premium da Copa
+  const { signIn } = useAuth();
+  const theme = Colors.dark;
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const clearError = () => {
+    if (errorMessage) setErrorMessage(null);
+  };
+
+  const handleLogin = async () => {
+    setErrorMessage(null);
+
+    if (!email.trim() || !senha.trim()) {
+      setErrorMessage("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signIn(email, senha);
+      router.replace("/(tabs)");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, "Credenciais inválidas."));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -61,10 +88,15 @@ export default function Login() {
                     <Ionicons name="mail-outline" size={20} color={theme.textSecondary} />
                     <TextInput
                       value={email}
-                      onChangeText={setEmail}
+                      onChangeText={(text) => {
+                        setEmail(text);
+                        clearError();
+                      }}
                       placeholder="nome@exemplo.com"
                       placeholderTextColor="rgba(189, 202, 185, 0.5)"
                       keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
                       style={[styles.textInput, { color: theme.text }]}
                     />
                   </View>
@@ -84,7 +116,10 @@ export default function Login() {
                     <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} />
                     <TextInput
                       value={senha}
-                      onChangeText={setSenha}
+                      onChangeText={(text) => {
+                        setSenha(text);
+                        clearError();
+                      }}
                       placeholder="••••••••"
                       placeholderTextColor="rgba(189, 202, 185, 0.5)"
                       secureTextEntry={!senhaVisivel}
@@ -102,22 +137,26 @@ export default function Login() {
 
                 {/* Actions */}
                 <View style={styles.actionsContainer}>
+                  {errorMessage ? (
+                    <View style={styles.errorBox}>
+                      <Ionicons name="alert-circle-outline" size={18} color="#ff6b6b" />
+                      <Text style={styles.errorText}>{errorMessage}</Text>
+                    </View>
+                  ) : null}
+
                   <TouchableOpacity
-                    style={[styles.loginBtn, { backgroundColor: theme.secondary }]}
-                    onPress={async () => {
-                      if (!email.trim() || !senha.trim()) {
-                        Alert.alert("Erro", "Por favor, preencha todos os campos.");
-                        return;
-                      }
-                      try {
-                        await AsyncStorage.setItem("@BolaoCopa:token", "jwt-token-mock-12345");
-                        router.replace("/(tabs)");
-                      } catch (error) {
-                        Alert.alert("Erro", "Não foi possível realizar o login.");
-                      }
-                    }}
+                    style={[
+                      styles.loginBtn,
+                      { backgroundColor: theme.secondary, opacity: loading ? 0.7 : 1 },
+                    ]}
+                    onPress={handleLogin}
+                    disabled={loading}
                   >
-                    <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
+                    {loading ? (
+                      <ActivityIndicator color={theme.background} />
+                    ) : (
+                      <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
+                    )}
                   </TouchableOpacity>
 
                   <View style={styles.dividerRow}>
@@ -129,6 +168,7 @@ export default function Login() {
                   <TouchableOpacity
                     style={[styles.registerBtn, { borderColor: theme.border }]}
                     onPress={() => router.push("/auth/cadastro")}
+                    disabled={loading}
                   >
                     <Text style={[styles.registerBtnText, { color: theme.text }]}>CRIAR CONTA</Text>
                   </TouchableOpacity>
@@ -159,6 +199,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
+    padding:20,
   },
   safeArea: {
     flex: 1,
@@ -244,6 +285,22 @@ const styles = StyleSheet.create({
   actionsContainer: {
     marginTop: 10,
     gap: 12,
+  },
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(255, 107, 107, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 107, 0.4)",
+    borderRadius: 10,
+    padding: 12,
+  },
+  errorText: {
+    flex: 1,
+    color: "#ff6b6b",
+    fontSize: 13,
+    fontWeight: "600",
   },
   loginBtn: {
     height: 54,

@@ -6,70 +6,150 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  Alert,
   SafeAreaView,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
-
-// Dados mockados das partidas para a interface visual
-const DADOS_PARTIDAS: Record<string, any> = {
-  "1": {
-    selecaoA: { nome: "Brasil", bandeiraUrl: "https://flagcdn.com/w160/br.png" },
-    selecaoB: { nome: "Argentina", bandeiraUrl: "https://flagcdn.com/w160/ar.png" },
-    dataHora: "21/06/2026 • 16:00",
-    estadio: "MetLife Stadium",
-    fase: "Fase de Grupos • Grupo C",
-  },
-  "2": {
-    selecaoA: { nome: "França", bandeiraUrl: "https://flagcdn.com/w160/fr.png" },
-    selecaoB: { nome: "Alemanha", bandeiraUrl: "https://flagcdn.com/w160/de.png" },
-    dataHora: "21/06/2026 • 13:00",
-    estadio: "Rose Bowl",
-    fase: "Fase de Grupos • Grupo D",
-  },
-  "3": {
-    selecaoA: { nome: "Portugal", bandeiraUrl: "https://flagcdn.com/w160/pt.png" },
-    selecaoB: { nome: "Espanha", bandeiraUrl: "https://flagcdn.com/w160/es.png" },
-    dataHora: "22/06/2026 • 10:00",
-    estadio: "SoFi Stadium",
-    fase: "Fase de Grupos • Grupo E",
-  }
-};
+import { Partida } from "@/types/Partida";
+import { Palpite } from "@/types/Palpite";
+import { buscarPartidaPorId } from "@/services/partidaService";
+import { editarPalpite, listarMeusPalpites, registrarPalpite } from "@/services/palpiteService";
+import { getApiErrorMessage } from "@/services/api";
+import { formatarDataPartida } from "@/util/formatDate";
+import { resolveImageUrl } from "@/util/imageUrl";
+import { toastError, toastSuccess } from "@/util/toast";
 
 export default function FazerPalpite() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = Colors.dark;
 
-  const partida = DADOS_PARTIDAS[id || "1"] || DADOS_PARTIDAS["1"];
+  const partidaId = Number(Array.isArray(id) ? id[0] : id);
 
-  const [golsA, setGolsA] = useState("2");
-  const [golsB, setGolsB] = useState("1");
+  const [partida, setPartida] = useState<Partida | null>(null);
+  const [palpiteExistente, setPalpiteExistente] = useState<Palpite | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSavePalpite = () => {
-    // Validação de inputs
-    if (golsA.trim() === "" || golsB.trim() === "") {
-      Alert.alert("Erro", "Por favor, digite os gols de ambas as seleções.");
+  const [golsA, setGolsA] = useState("");
+  const [golsB, setGolsB] = useState("");
+
+  useEffect(() => {
+    if (!partidaId || Number.isNaN(partidaId)) {
+      setErrorMessage("Partida inválida.");
+      setLoading(false);
       return;
     }
 
-    // Validação de horário mockada (RF-022 Bloqueio pós início)
-    // Se a data do jogo já passou, deve retornar erro.
-    // Aqui mostramos a mensagem de sucesso
-    Alert.alert(
-      "Palpite Salvo",
-      `Seu palpite de ${partida.selecaoA.nome} ${golsA} x ${golsB} ${partida.selecaoB.nome} foi registrado com sucesso!`,
-      [{ text: "OK", onPress: () => router.back() }]
-    );
+    (async () => {
+      setLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const [partidaData, meusPalpites] = await Promise.all([
+          buscarPartidaPorId(partidaId),
+          listarMeusPalpites(),
+        ]);
+
+        setPartida(partidaData);
+
+        const palpiteDaPartida = meusPalpites.find(
+          (p) => p.partida.id === partidaId
+        );
+
+        if (palpiteDaPartida) {
+          setPalpiteExistente(palpiteDaPartida);
+          setGolsA(String(palpiteDaPartida.golsSelecaoA));
+          setGolsB(String(palpiteDaPartida.golsSelecaoB));
+        }
+      } catch (error) {
+        setErrorMessage(getApiErrorMessage(error, "Erro ao carregar partida."));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [partidaId]);
+
+  const podePalpitar = partida?.status === "AGENDADA";
+
+  const renderBandeira = (bandeiraUrl?: string | null) => {
+    const uri = resolveImageUrl(bandeiraUrl);
+    if (!uri) {
+      return <View style={[styles.flagImg, { backgroundColor: theme.border }]} />;
+    }
+    return <Image source={{ uri }} style={styles.flagImg} resizeMode="cover" />;
   };
+
+  const handleSavePalpite = async () => {
+    if (!partida || !podePalpitar) return;
+
+    if (golsA.trim() === "" || golsB.trim() === "") {
+      toastError("Digite os gols de ambas as seleções.");
+      return;
+    }
+
+    const payload = {
+      partidaId: partida.id,
+      golsSelecaoA: Number(golsA),
+      golsSelecaoB: Number(golsB),
+    };
+
+    setSaving(true);
+    try {
+      if (palpiteExistente) {
+        const atualizado = await editarPalpite(palpiteExistente.id, payload);
+        setPalpiteExistente(atualizado);
+        toastSuccess("Palpite atualizado com sucesso!");
+      } else {
+        const criado = await registrarPalpite(payload);
+        setPalpiteExistente(criado);
+        toastSuccess("Palpite registrado com sucesso!");
+      }
+      router.back();
+    } catch (error) {
+      toastError(getApiErrorMessage(error, "Erro ao salvar palpite."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!partida) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.centerContent}>
+          <Text style={{ color: theme.text }}>
+            {errorMessage ?? "Partida não encontrada."}
+          </Text>
+          <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+            <Text style={{ color: theme.primary }}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const faseLabel = `FASE DE ${partida.fase}${partida.grupo ? ` • GRUPO ${partida.grupo}` : ""}`;
+  const dataHora = formatarDataPartida(partida.dataHora);
+  const mostrarPlacarReal =
+    partida.status === "EM_ANDAMENTO" || partida.status === "ENCERRADA";
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* TopAppBar */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -82,16 +162,14 @@ export default function FazerPalpite() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Stadium Backdrop Banner */}
         <View style={styles.stadiumBanner}>
           <Text style={[styles.bannerCopa, { color: theme.primary }]}>Copa do Mundo 2026</Text>
-          <Text style={[styles.bannerFase, { color: theme.textSecondary }]}>{partida.fase}</Text>
+          <Text style={[styles.bannerFase, { color: theme.textSecondary }]}>{faseLabel}</Text>
 
-          {/* Teams Flags VS */}
           <View style={styles.vsRow}>
             <View style={styles.teamSeat}>
               <View style={styles.flagCircle}>
-                <Image source={{ uri: partida.selecaoA.bandeiraUrl }} style={styles.flagImg} />
+                {renderBandeira(partida.selecaoA.bandeiraUrl)}
               </View>
               <Text style={[styles.teamLabel, { color: theme.text }]}>{partida.selecaoA.nome}</Text>
             </View>
@@ -100,18 +178,17 @@ export default function FazerPalpite() {
 
             <View style={styles.teamSeat}>
               <View style={styles.flagCircle}>
-                <Image source={{ uri: partida.selecaoB.bandeiraUrl }} style={styles.flagImg} />
+                {renderBandeira(partida.selecaoB.bandeiraUrl)}
               </View>
               <Text style={[styles.teamLabel, { color: theme.text }]}>{partida.selecaoB.nome}</Text>
             </View>
           </View>
         </View>
 
-        {/* Match details card */}
         <View style={[styles.detailsCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
           <View style={styles.detailRow}>
             <Ionicons name="calendar-outline" size={16} color={theme.secondary} />
-            <Text style={[styles.detailText, { color: theme.text }]}>{partida.dataHora}</Text>
+            <Text style={[styles.detailText, { color: theme.text }]}>{dataHora}</Text>
           </View>
           <View style={styles.detailRow}>
             <Ionicons name="location-outline" size={16} color={theme.secondary} />
@@ -119,72 +196,111 @@ export default function FazerPalpite() {
           </View>
         </View>
 
-        {/* Prediction inputs */}
-        <View style={styles.predictionSection}>
-          <Text style={[styles.predictionTitle, { color: theme.text }]}>Qual será o placar?</Text>
-          <View style={styles.inputsContainer}>
-            {/* Team A gols */}
-            <View style={styles.inputBox}>
-              <TextInput
-                value={golsA}
-                onChangeText={(text) => setGolsA(text.replace(/[^0-9]/g, "").slice(0, 2))}
-                keyboardType="number-pad"
-                style={[styles.bigInput, { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-                maxLength={2}
-                selectTextOnFocus
-              />
-              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
-                Gols do {partida.selecaoA.nome}
-              </Text>
-            </View>
-
-            <Text style={[styles.xSeparator, { color: theme.textSecondary }]}>X</Text>
-
-            {/* Team B gols */}
-            <View style={styles.inputBox}>
-              <TextInput
-                value={golsB}
-                onChangeText={(text) => setGolsB(text.replace(/[^0-9]/g, "").slice(0, 2))}
-                keyboardType="number-pad"
-                style={[styles.bigInput, { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-                maxLength={2}
-                selectTextOnFocus
-              />
-              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
-                Gols do {partida.selecaoB.nome}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Rules explanation */}
-        <View style={[styles.rulesCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-          <View style={styles.rulesHeader}>
-            <Ionicons name="information-circle" size={20} color={theme.primary} />
-            <Text style={[styles.rulesTitle, { color: theme.text }]}>Como funciona a pontuação</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <Text style={[styles.ruleText, { color: theme.textSecondary }]}>Placar exato</Text>
-            <Text style={[styles.rulePoints, { color: theme.secondary }]}>10 pontos</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <Text style={[styles.ruleText, { color: theme.textSecondary }]}>Acertar apenas o vencedor</Text>
-            <Text style={[styles.rulePoints, { color: theme.primary }]}>5 pontos</Text>
-          </View>
-        </View>
-
-        {/* Action Button */}
-        <View style={styles.actionContainer}>
-          <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: theme.secondary }]}
-            onPress={handleSavePalpite}
+        {mostrarPlacarReal && (
+          <View
+            style={[
+              styles.detailsCard,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.border,
+                marginTop: 16,
+                justifyContent: "center",
+              },
+            ]}
           >
-            <Text style={[styles.saveBtnText, { color: theme.background }]}>SALVAR PALPITE</Text>
-          </TouchableOpacity>
-          <Text style={[styles.disclaimer, { color: theme.textSecondary }]}>
-            Você pode editar seu palpite até o início da partida.
-          </Text>
-        </View>
+            <Text style={[styles.detailText, { color: theme.text }]}>
+              Placar: {partida.golsSelecaoA ?? 0} x {partida.golsSelecaoB ?? 0}
+            </Text>
+          </View>
+        )}
+
+        {podePalpitar ? (
+          <>
+            <View style={styles.predictionSection}>
+              <Text style={[styles.predictionTitle, { color: theme.text }]}>Qual será o placar?</Text>
+              <View style={styles.inputsContainer}>
+                <View style={styles.inputBox}>
+                  <TextInput
+                    value={golsA}
+                    onChangeText={(text) => setGolsA(text.replace(/[^0-9]/g, "").slice(0, 2))}
+                    keyboardType="number-pad"
+                    style={[
+                      styles.bigInput,
+                      { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                    ]}
+                    maxLength={2}
+                    selectTextOnFocus
+                  />
+                  <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+                    Gols do {partida.selecaoA.nome}
+                  </Text>
+                </View>
+
+                <Text style={[styles.xSeparator, { color: theme.textSecondary }]}>X</Text>
+
+                <View style={styles.inputBox}>
+                  <TextInput
+                    value={golsB}
+                    onChangeText={(text) => setGolsB(text.replace(/[^0-9]/g, "").slice(0, 2))}
+                    keyboardType="number-pad"
+                    style={[
+                      styles.bigInput,
+                      { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                    ]}
+                    maxLength={2}
+                    selectTextOnFocus
+                  />
+                  <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+                    Gols do {partida.selecaoB.nome}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.rulesCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+              <View style={styles.rulesHeader}>
+                <Ionicons name="information-circle" size={20} color={theme.primary} />
+                <Text style={[styles.rulesTitle, { color: theme.text }]}>Como funciona a pontuação</Text>
+              </View>
+              <View style={styles.ruleItem}>
+                <Text style={[styles.ruleText, { color: theme.textSecondary }]}>Placar exato</Text>
+                <Text style={[styles.rulePoints, { color: theme.secondary }]}>10 pontos</Text>
+              </View>
+              <View style={styles.ruleItem}>
+                <Text style={[styles.ruleText, { color: theme.textSecondary }]}>Acertar apenas o vencedor</Text>
+                <Text style={[styles.rulePoints, { color: theme.primary }]}>5 pontos</Text>
+              </View>
+            </View>
+
+            <View style={styles.actionContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.saveBtn,
+                  { backgroundColor: theme.secondary, opacity: saving ? 0.7 : 1 },
+                ]}
+                onPress={handleSavePalpite}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator color={theme.background} />
+                ) : (
+                  <Text style={[styles.saveBtnText, { color: theme.background }]}>
+                    {palpiteExistente ? "ATUALIZAR PALPITE" : "SALVAR PALPITE"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+              <Text style={[styles.disclaimer, { color: theme.textSecondary }]}>
+                Você pode editar seu palpite até o início da partida.
+              </Text>
+            </View>
+          </>
+        ) : (
+          <View style={styles.predictionSection}>
+            <Text style={[styles.predictionTitle, { color: theme.textSecondary }]}>
+              Palpites encerrados para esta partida.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -193,6 +309,12 @@ export default function FazerPalpite() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
   },
   header: {
     flexDirection: "row",
@@ -266,7 +388,6 @@ const styles = StyleSheet.create({
   flagImg: {
     width: "100%",
     height: "100%",
-    resizeMode: "cover",
   },
   teamLabel: {
     fontSize: 14,

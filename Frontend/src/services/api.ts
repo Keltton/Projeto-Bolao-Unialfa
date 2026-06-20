@@ -1,12 +1,18 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { ErroResponse } from '@/types/Usuario';
 
-const API_URL = Platform.select({
-  ios: 'http://localhost:8080',
-  android: 'http://10.0.2.2:8080', // Endereço de loopback para a máquina host no emulador Android
-  default: 'http://localhost:8080',
-});
+const TOKEN_KEY = '@BolaoCopa:token';
+const USER_KEY = '@BolaoCopa:usuario';
+
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ??
+  Platform.select({
+    ios: 'http://localhost:8080',
+    android: 'http://10.0.2.2:8080',
+    default: 'http://localhost:8080',
+  });
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -15,17 +21,61 @@ export const api = axios.create({
   },
 });
 
-// Interceptor de requisição para injetar automaticamente o cabeçalho Authorization
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('@BolaoCopa:token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const isAuthRoute = config.url?.startsWith('/api/auth/');
+
+    if (!isAuthRoute) {
+      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+
     return config;
   },
-  (error) => {
+  (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+    }
     return Promise.reject(error);
   }
 );
+
+export function getApiErrorMessage(error: unknown, fallback = 'Erro inesperado'): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const message = (data as ErroResponse).message;
+      if (message) return message;
+    }
+
+    if (typeof data === 'string' && data.trim()) {
+      return data;
+    }
+
+    if (error.code === 'ERR_NETWORK') {
+      return 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.';
+    }
+
+    if (error.response?.status === 401) {
+      return 'Sessão expirada. Faça login novamente.';
+    }
+
+    if (error.response?.status === 403) {
+      return 'Acesso negado. Faça login para continuar.';
+    }
+
+    return error.message || fallback;
+  }
+
+  return fallback;
+}
+
 export default api;

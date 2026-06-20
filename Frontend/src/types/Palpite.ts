@@ -1,7 +1,7 @@
 import { Partida } from './Partida';
 import { Usuario } from './Usuario';
 
-export type CriterioPontuacao = 'PLACAR_EXATO' | 'VENCEDOR_EMPATE' | 'NENHUM';
+export type CriterioPontuacao = 'PENDENTE' | 'PLACAR_EXATO' | 'VENCEDOR_EMPATE' | 'ERROU';
 
 export interface Palpite {
   id: number;

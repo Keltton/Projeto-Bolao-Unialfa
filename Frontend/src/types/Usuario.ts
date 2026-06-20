@@ -1,4 +1,4 @@
-export type PerfilUsuario = 'USER' | 'ADMIN';
+export type PerfilUsuario = 'USUARIO' | 'ADMIN';
 export type StatusUsuario = 'ATIVO' | 'BLOQUEADO';
 
 export interface Usuario {
@@ -22,4 +22,16 @@ export interface UsuarioRanking {
   pontuacaoTotal: number;
   placaresExatos: number;
   posicao: number;
+}
+
+
+export interface LoginResponse {
+  token: string;
+  usuario: Usuario;
+}
+export interface ErroResponse {
+  timestamp: string;
+  status: number;
+  error: string;
+  message: string;
 }
