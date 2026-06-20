@@ -10,31 +10,36 @@ import {
   SafeAreaView,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
 
-// Dados mockados das partidas para a interface visual
-const DADOS_PARTIDAS: Record<string, any> = {
+// Fallback estático caso a API esteja offline
+const PARTIDAS_FALLBACK: Record<string, any> = {
   "1": {
-    selecaoA: { nome: "Brasil", bandeiraUrl: "https://flagcdn.com/w160/br.png" },
-    selecaoB: { nome: "Argentina", bandeiraUrl: "https://flagcdn.com/w160/ar.png" },
-    dataHora: "21/06/2026 • 16:00",
+    id: 1,
+    selecaoMandante: { nome: "Brasil", bandeiraUrl: "https://flagcdn.com/w160/br.png" },
+    selecaoVisitante: { nome: "Argentina", bandeiraUrl: "https://flagcdn.com/w160/ar.png" },
+    dataHora: "2026-06-21T16:00:00",
     estadio: "MetLife Stadium",
     fase: "Fase de Grupos • Grupo C",
   },
   "2": {
-    selecaoA: { nome: "França", bandeiraUrl: "https://flagcdn.com/w160/fr.png" },
-    selecaoB: { nome: "Alemanha", bandeiraUrl: "https://flagcdn.com/w160/de.png" },
-    dataHora: "21/06/2026 • 13:00",
+    id: 2,
+    selecaoMandante: { nome: "França", bandeiraUrl: "https://flagcdn.com/w160/fr.png" },
+    selecaoVisitante: { nome: "Alemanha", bandeiraUrl: "https://flagcdn.com/w160/de.png" },
+    dataHora: "2026-06-21T13:00:00",
     estadio: "Rose Bowl",
     fase: "Fase de Grupos • Grupo D",
   },
   "3": {
-    selecaoA: { nome: "Portugal", bandeiraUrl: "https://flagcdn.com/w160/pt.png" },
-    selecaoB: { nome: "Espanha", bandeiraUrl: "https://flagcdn.com/w160/es.png" },
-    dataHora: "22/06/2026 • 10:00",
+    id: 3,
+    selecaoMandante: { nome: "Portugal", bandeiraUrl: "https://flagcdn.com/w160/pt.png" },
+    selecaoVisitante: { nome: "Espanha", bandeiraUrl: "https://flagcdn.com/w160/es.png" },
+    dataHora: "2026-06-22T10:00:00",
     estadio: "SoFi Stadium",
     fase: "Fase de Grupos • Grupo E",
   }
@@ -45,39 +50,159 @@ export default function FazerPalpite() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = Colors.dark;
 
-  const partida = DADOS_PARTIDAS[id || "1"] || DADOS_PARTIDAS["1"];
+  const [partida, setPartida] = useState<any>(null);
+  const [golsA, setGolsA] = useState("");
+  const [golsB, setGolsB] = useState("");
+  const [palpiteExistenteId, setPalpiteExistenteId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [golsA, setGolsA] = useState("2");
-  const [golsB, setGolsB] = useState("1");
+  const formatarData = (dataStr: string) => {
+    try {
+      const data = new Date(dataStr);
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const horas = String(data.getHours()).padStart(2, "0");
+      const minutos = String(data.getMinutes()).padStart(2, "0");
+      return `${dia}/${mes}/${data.getFullYear()} • ${horas}:${minutos}`;
+    } catch {
+      return dataStr;
+    }
+  };
 
-  const handleSavePalpite = () => {
-    // Validação de inputs
+  const carregarDadosPartida = async () => {
+    setIsLoading(true);
+    try {
+      // 1. Carregar detalhes da partida
+      const responsePartida = await api.get(`/api/partidas/${id}`);
+      const p = responsePartida.data;
+      
+      const partidaMapeada = {
+        id: p.id,
+        selecaoMandante: p.selecaoMandante || p.selecaoA,
+        selecaoVisitante: p.selecaoVisitante || p.selecaoB,
+        dataHora: p.dataHora,
+        estadio: p.estadio,
+        fase: `${p.fase} ${p.grupo ? `• Grupo ${p.grupo}` : ""}`,
+      };
+
+      setPartida(partidaMapeada);
+
+      // 2. Verificar se o usuário possui palpite prévio cadastrado nesta partida
+      try {
+        const responsePalpites = await api.get("/api/palpites/meus");
+        const meusPalpites = responsePalpites.data;
+        const palpitePrevio = meusPalpites.find((palp: any) => palp.partida.id === Number(id));
+        
+        if (palpitePrevio) {
+          setPalpiteExistenteId(palpitePrevio.id);
+          setGolsA(String(palpitePrevio.golsMandante));
+          setGolsB(String(palpitePrevio.golsVisitante));
+        }
+      } catch (err) {
+        console.log("Erro ao carregar lista de palpites para busca de histórico:", err);
+      }
+
+    } catch (error: any) {
+      console.log("Erro ao buscar partida da API, usando mock:", error.message);
+      // Fallback offline
+      const fallback = PARTIDAS_FALLBACK[id || "1"] || PARTIDAS_FALLBACK["1"];
+      setPartida(fallback);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarDadosPartida();
+  }, [id]);
+
+  const handleSavePalpite = async () => {
     if (golsA.trim() === "" || golsB.trim() === "") {
       Alert.alert("Erro", "Por favor, digite os gols de ambas as seleções.");
       return;
     }
 
-    // Validação de horário mockada (RF-022 Bloqueio pós início)
-    // Se a data do jogo já passou, deve retornar erro.
-    // Aqui mostramos a mensagem de sucesso
-    Alert.alert(
-      "Palpite Salvo",
-      `Seu palpite de ${partida.selecaoA.nome} ${golsA} x ${golsB} ${partida.selecaoB.nome} foi registrado com sucesso!`,
-      [{ text: "OK", onPress: () => router.back() }]
-    );
+    // Validação de horário preventiva (RF-022)
+    if (partida && partida.dataHora) {
+      const dataJogo = new Date(partida.dataHora);
+      if (new Date() >= dataJogo) {
+        Alert.alert("Erro de Validação", "Não é permitido registrar ou alterar palpites após o início oficial da partida.");
+        return;
+      }
+    }
+
+    setIsSaving(true);
+    try {
+      const body = {
+        partidaId: Number(id),
+        golsSelecaoA: Number(golsA),
+        golsSelecaoB: Number(golsB),
+      };
+
+      if (palpiteExistenteId) {
+        // Editar palpite existente
+        await api.put(`/api/palpites/${palpiteExistenteId}`, body);
+        Alert.alert(
+          "Palpite Atualizado",
+          "Seu palpite foi alterado com sucesso no servidor!",
+          [{ text: "OK", onPress: () => router.back() }]
+        );
+      } else {
+        // Registrar novo palpite
+        await api.post("/api/palpites", body);
+        Alert.alert(
+          "Palpite Registrado",
+          "Seu palpite foi salvo com sucesso no servidor!",
+          [{ text: "OK", onPress: () => router.back() }]
+        );
+      }
+    } catch (error: any) {
+      console.log("Erro ao salvar palpite na API:", error);
+      const isNetworkError = !error.response;
+
+      if (isNetworkError) {
+        Alert.alert(
+          "Sucesso (Modo Offline)",
+          `O backend está offline. Seu palpite de ${partida.selecaoMandante.nome} ${golsA} x ${golsB} ${partida.selecaoVisitante.nome} foi simulado com sucesso localmente.`,
+          [{ text: "OK", onPress: () => router.back() }]
+        );
+      } else {
+        const msg = error.response?.data?.mensagem || error.response?.data?.message || "Não foi possível registrar o palpite.";
+        Alert.alert("Erro ao Salvar", msg);
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading || !partida) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background, justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* TopAppBar */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/(tabs)");
+            }
+          }}
           style={[styles.backButton, { backgroundColor: theme.backgroundElement }]}
         >
           <Ionicons name="arrow-back" size={22} color={theme.primary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.secondary }]}>Fazer Palpite</Text>
+        <Text style={[styles.headerTitle, { color: theme.secondary }]}>
+          {palpiteExistenteId ? "Editar Palpite" : "Fazer Palpite"}
+        </Text>
         <View style={styles.placeholderBtn} />
       </View>
 
@@ -91,18 +216,18 @@ export default function FazerPalpite() {
           <View style={styles.vsRow}>
             <View style={styles.teamSeat}>
               <View style={styles.flagCircle}>
-                <Image source={{ uri: partida.selecaoA.bandeiraUrl }} style={styles.flagImg} />
+                <Image source={{ uri: partida.selecaoMandante.bandeiraUrl }} style={styles.flagImg} />
               </View>
-              <Text style={[styles.teamLabel, { color: theme.text }]}>{partida.selecaoA.nome}</Text>
+              <Text style={[styles.teamLabel, { color: theme.text }]} numberOfLines={1}>{partida.selecaoMandante.nome}</Text>
             </View>
 
             <Text style={[styles.vsItalic, { color: theme.secondary }]}>VS</Text>
 
             <View style={styles.teamSeat}>
               <View style={styles.flagCircle}>
-                <Image source={{ uri: partida.selecaoB.bandeiraUrl }} style={styles.flagImg} />
+                <Image source={{ uri: partida.selecaoVisitante.bandeiraUrl }} style={styles.flagImg} />
               </View>
-              <Text style={[styles.teamLabel, { color: theme.text }]}>{partida.selecaoB.nome}</Text>
+              <Text style={[styles.teamLabel, { color: theme.text }]} numberOfLines={1}>{partida.selecaoVisitante.nome}</Text>
             </View>
           </View>
         </View>
@@ -111,7 +236,7 @@ export default function FazerPalpite() {
         <View style={[styles.detailsCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
           <View style={styles.detailRow}>
             <Ionicons name="calendar-outline" size={16} color={theme.secondary} />
-            <Text style={[styles.detailText, { color: theme.text }]}>{partida.dataHora}</Text>
+            <Text style={[styles.detailText, { color: theme.text }]}>{formatarData(partida.dataHora)}</Text>
           </View>
           <View style={styles.detailRow}>
             <Ionicons name="location-outline" size={16} color={theme.secondary} />
@@ -133,8 +258,8 @@ export default function FazerPalpite() {
                 maxLength={2}
                 selectTextOnFocus
               />
-              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
-                Gols do {partida.selecaoA.nome}
+              <Text style={[styles.inputLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+                Gols do {partida.selecaoMandante.nome}
               </Text>
             </View>
 
@@ -150,8 +275,8 @@ export default function FazerPalpite() {
                 maxLength={2}
                 selectTextOnFocus
               />
-              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
-                Gols do {partida.selecaoB.nome}
+              <Text style={[styles.inputLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+                Gols do {partida.selecaoVisitante.nome}
               </Text>
             </View>
           </View>
@@ -178,8 +303,13 @@ export default function FazerPalpite() {
           <TouchableOpacity
             style={[styles.saveBtn, { backgroundColor: theme.secondary }]}
             onPress={handleSavePalpite}
+            disabled={isSaving}
           >
-            <Text style={[styles.saveBtnText, { color: theme.background }]}>SALVAR PALPITE</Text>
+            {isSaving ? (
+              <ActivityIndicator size="small" color={theme.background} />
+            ) : (
+              <Text style={[styles.saveBtnText, { color: theme.background }]}>SALVAR PALPITE</Text>
+            )}
           </TouchableOpacity>
           <Text style={[styles.disclaimer, { color: theme.textSecondary }]}>
             Você pode editar seu palpite até o início da partida.
@@ -248,6 +378,7 @@ const styles = StyleSheet.create({
   },
   teamSeat: {
     alignItems: "center",
+    width: 100,
   },
   flagCircle: {
     width: 76,
@@ -269,11 +400,12 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   teamLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "800",
     marginTop: 10,
     textTransform: "uppercase",
     letterSpacing: 0.5,
+    textAlign: "center",
   },
   vsItalic: {
     fontSize: 32,
@@ -341,6 +473,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
     textAlign: "center",
+    width: 100,
   },
   xSeparator: {
     fontSize: 20,
@@ -381,6 +514,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginTop: 35,
     alignItems: "center",
+    width: "100%",
   },
   saveBtn: {
     width: "100%",

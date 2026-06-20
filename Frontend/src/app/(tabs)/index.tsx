@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,18 +8,125 @@ import {
   Image,
   SafeAreaView,
   Platform,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
+
+// Fallback estático caso a API esteja offline
+const PROXIMAS_FALLBACK = [
+  {
+    id: 1,
+    selecaoMandante: { nome: "Brasil", codigoFifa: "BRA", bandeiraUrl: "https://flagcdn.com/w160/br.png" },
+    selecaoVisitante: { nome: "Argentina", codigoFifa: "ARG", bandeiraUrl: "https://flagcdn.com/w160/ar.png" },
+    dataHora: "2026-06-21T16:00:00",
+    estadio: "MetLife Stadium",
+    fase: "GRUPOS",
+    grupo: "C",
+  },
+  {
+    id: 2,
+    selecaoMandante: { nome: "França", codigoFifa: "FRA", bandeiraUrl: "https://flagcdn.com/w80/fr.png" },
+    selecaoVisitante: { nome: "Alemanha", codigoFifa: "GER", bandeiraUrl: "https://flagcdn.com/w80/de.png" },
+    dataHora: "2026-06-21T13:00:00",
+    estadio: "Rose Bowl",
+    fase: "GRUPOS",
+    grupo: "D",
+  },
+  {
+    id: 3,
+    selecaoMandante: { nome: "Portugal", codigoFifa: "POR", bandeiraUrl: "https://flagcdn.com/w80/pt.png" },
+    selecaoVisitante: { nome: "Espanha", codigoFifa: "ESP", bandeiraUrl: "https://flagcdn.com/w80/es.png" },
+    dataHora: "2026-06-22T10:00:00",
+    estadio: "SoFi Stadium",
+    fase: "GRUPOS",
+    grupo: "E",
+  }
+];
 
 export default function Home() {
   const router = useRouter();
   const theme = Colors.dark; // Forçar visual escuro premium conforme mockups
 
+  const [usuario, setUsuario] = useState<any>({
+    nome: "Usuário",
+    pontuacaoTotal: 0,
+    posicao: "—",
+  });
+  const [proximasPartidas, setProximasPartidas] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Formatar data hora para exibição
+  const formatarData = (dataStr: string) => {
+    try {
+      const data = new Date(dataStr);
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const horas = String(data.getHours()).padStart(2, "0");
+      const minutos = String(data.getMinutes()).padStart(2, "0");
+      return `${dia}/${mes} • ${horas}:${minutos}`;
+    } catch {
+      return dataStr;
+    }
+  };
+
+  const carregarDados = async () => {
+    setIsLoading(true);
+    
+    // 1. Carregar usuário do storage local
+    try {
+      const userStr = await AsyncStorage.getItem("@BolaoCopa:usuario");
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        setUsuario({
+          nome: u.nome || "Usuário",
+          pontuacaoTotal: u.pontuacaoTotal ?? 0,
+          posicao: u.posicao ?? "—",
+        });
+      }
+    } catch (e) {
+      console.log("Erro ao carregar usuário do storage", e);
+    }
+
+    // 2. Carregar partidas da API
+    try {
+      const response = await api.get("/api/partidas/proximas");
+      
+      // Ajustar mapeamento caso a API retorne DTO com selecaoA e selecaoB
+      const partidasMapeadas = response.data.map((p: any) => ({
+        id: p.id,
+        selecaoMandante: p.selecaoMandante || p.selecaoA,
+        selecaoVisitante: p.selecaoVisitante || p.selecaoB,
+        dataHora: p.dataHora,
+        estadio: p.estadio,
+        fase: p.fase,
+        grupo: p.grupo,
+      }));
+
+      setProximasPartidas(partidasMapeadas);
+    } catch (error: any) {
+      console.log("API offline, carregando fallback das proximas partidas:", error.message);
+      // Fallback offline silencioso para testes do desenvolvedor
+      setProximasPartidas(PROXIMAS_FALLBACK);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
+  const partidaDestaque = proximasPartidas[0];
+  const listaSecundaria = proximasPartidas.slice(1);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Sticky Top Bar / Header */}
+      {/* Top Bar / Header */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <View style={[styles.avatarBorder, { borderColor: theme.primary }]}>
@@ -29,147 +136,151 @@ export default function Home() {
             />
           </View>
           <View>
-            <Text style={[styles.welcomeText, { color: theme.text }]}>Olá, Rafael! 👋</Text>
+            <Text style={[styles.welcomeText, { color: theme.text }]}>Olá, {usuario.nome}! 👋</Text>
             <Text style={[styles.subWelcomeText, { color: theme.textSecondary }]}>Que venham os jogos!</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.notificationButton}>
-          <Ionicons name="notifications-outline" size={24} color={theme.textSecondary} />
-          <View style={[styles.notificationBadge, { backgroundColor: theme.secondary }]} />
+        <TouchableOpacity style={styles.notificationButton} onPress={carregarDados}>
+          <Ionicons name="refresh-outline" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Stats Bento Grid */}
-        <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Sua pontuação</Text>
-            <View style={styles.statNumberContainer}>
-              <Text style={[styles.statNumber, { color: theme.primary }]}>125</Text>
-              <Text style={[styles.statUnit, { color: theme.primary }]}>pontos</Text>
-            </View>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Sua posição</Text>
-            <View style={styles.statNumberContainer}>
-              <Text style={[styles.statNumber, { color: theme.secondary }]}>12º</Text>
-              <Text style={[styles.statUnit, { color: theme.secondary }]}>de 1.234</Text>
-            </View>
-          </View>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Carregando partidas...</Text>
         </View>
-
-        {/* Featured Match Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas partidas</Text>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/partidas")}>
-            <Text style={[styles.seeAllButton, { color: theme.primary }]}>Ver todas</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Featured Match Card */}
-        <View style={[styles.featuredCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-          <View style={styles.badgeContainer}>
-            <Text style={[styles.featuredBadge, { backgroundColor: theme.secondary, color: theme.text }]}>
-              EM DESTAQUE
-            </Text>
-          </View>
-
-          <View style={styles.teamsRow}>
-            {/* Team A */}
-            <View style={styles.teamContainer}>
-              <Image
-                source={{ uri: "https://flagcdn.com/w160/br.png" }}
-                style={styles.flag}
-              />
-              <Text style={[styles.teamName, { color: theme.text }]}>BRASIL</Text>
-            </View>
-
-            {/* VS Box */}
-            <View style={styles.vsContainer}>
-              <View style={[styles.scoreBox, { backgroundColor: theme.border }]}>
-                <Text style={[styles.scoreText, { color: theme.textSecondary }]}>—</Text>
-              </View>
-              <Text style={[styles.vsText, { color: theme.primary }]}>VS</Text>
-              <View style={[styles.scoreBox, { backgroundColor: theme.border }]}>
-                <Text style={[styles.scoreText, { color: theme.textSecondary }]}>—</Text>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Stats Grid */}
+          <View style={styles.statsGrid}>
+            <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Sua pontuação</Text>
+              <View style={styles.statNumberContainer}>
+                <Text style={[styles.statNumber, { color: theme.primary }]}>{usuario.pontuacaoTotal}</Text>
+                <Text style={[styles.statUnit, { color: theme.primary }]}>pontos</Text>
               </View>
             </View>
 
-            {/* Team B */}
-            <View style={styles.teamContainer}>
-              <Image
-                source={{ uri: "https://flagcdn.com/w160/ar.png" }}
-                style={styles.flag}
-              />
-              <Text style={[styles.teamName, { color: theme.text }]}>ARGENTINA</Text>
+            <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Sua posição</Text>
+              <View style={styles.statNumberContainer}>
+                <Text style={[styles.statNumber, { color: theme.secondary }]}>{usuario.posicao}</Text>
+                <Text style={[styles.statUnit, { color: theme.secondary }]}>º lugar</Text>
+              </View>
             </View>
           </View>
 
-          <View style={styles.matchMeta}>
-            <View style={styles.metaRow}>
-              <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
-              <Text style={[styles.metaText, { color: theme.textSecondary }]}> 21/06 • 16:00</Text>
-            </View>
-            <Text style={[styles.groupText, { color: theme.primary }]}>Grupo C</Text>
+          {/* Section Title */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas partidas</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/partidas")}>
+              <Text style={[styles.seeAllButton, { color: theme.primary }]}>Ver todas</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={[styles.palpiteButton, { backgroundColor: theme.secondary }]}
-            onPress={() => router.push("/partidas/1")}
-          >
-            <Ionicons name="create-outline" size={20} color={theme.background} />
-            <Text style={[styles.palpiteButtonText, { color: theme.background }]}>FAZER PALPITE</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Destaque */}
+          {partidaDestaque && (
+            <View style={[styles.featuredCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+              <View style={styles.badgeContainer}>
+                <Text style={[styles.featuredBadge, { backgroundColor: theme.secondary, color: theme.text }]}>
+                  EM DESTAQUE
+                </Text>
+              </View>
 
-        {/* Secondary Match List */}
-        <View style={styles.listContainer}>
-          {/* Match 2 */}
-          <TouchableOpacity
-            style={[styles.matchRow, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-            onPress={() => router.push("/partidas/2")}
-          >
-            <View style={styles.rowTeam}>
-              <Image source={{ uri: "https://flagcdn.com/w80/fr.png" }} style={styles.smallFlag} />
-              <Text style={[styles.rowTeamText, { color: theme.text }]}>França</Text>
-            </View>
+              <View style={styles.teamsRow}>
+                {/* Team A */}
+                <View style={styles.teamContainer}>
+                  <Image
+                    source={{ uri: partidaDestaque.selecaoMandante.bandeiraUrl || "https://flagcdn.com/w160/br.png" }}
+                    style={styles.flag}
+                  />
+                  <Text style={[styles.teamName, { color: theme.text }]}>
+                    {partidaDestaque.selecaoMandante.nome.toUpperCase()}
+                  </Text>
+                </View>
 
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowDate, { color: theme.text }]}>21/06 • 13:00</Text>
-              <Text style={[styles.rowGroup, { color: theme.textSecondary }]}>Grupo D</Text>
-            </View>
+                {/* VS Box */}
+                <View style={styles.vsContainer}>
+                  <View style={[styles.scoreBox, { backgroundColor: theme.border }]}>
+                    <Text style={[styles.scoreText, { color: theme.textSecondary }]}>—</Text>
+                  </View>
+                  <Text style={[styles.vsText, { color: theme.primary }]}>VS</Text>
+                  <View style={[styles.scoreBox, { backgroundColor: theme.border }]}>
+                    <Text style={[styles.scoreText, { color: theme.textSecondary }]}>—</Text>
+                  </View>
+                </View>
 
-            <View style={[styles.rowTeam, styles.alignRight]}>
-              <Text style={[styles.rowTeamText, { color: theme.text }]}>Alemanha</Text>
-              <Image source={{ uri: "https://flagcdn.com/w80/de.png" }} style={styles.smallFlag} />
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} style={styles.chevron} />
-          </TouchableOpacity>
+                {/* Team B */}
+                <View style={styles.teamContainer}>
+                  <Image
+                    source={{ uri: partidaDestaque.selecaoVisitante.bandeiraUrl || "https://flagcdn.com/w160/ar.png" }}
+                    style={styles.flag}
+                  />
+                  <Text style={[styles.teamName, { color: theme.text }]}>
+                    {partidaDestaque.selecaoVisitante.nome.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
 
-          {/* Match 3 */}
-          <TouchableOpacity
-            style={[styles.matchRow, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-            onPress={() => router.push("/partidas/3")}
-          >
-            <View style={styles.rowTeam}>
-              <Image source={{ uri: "https://flagcdn.com/w80/pt.png" }} style={styles.smallFlag} />
-              <Text style={[styles.rowTeamText, { color: theme.text }]}>Portugal</Text>
-            </View>
+              <View style={styles.matchMeta}>
+                <View style={styles.metaRow}>
+                  <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
+                  <Text style={[styles.metaText, { color: theme.textSecondary }]}>
+                    {" "}{formatarData(partidaDestaque.dataHora)}
+                  </Text>
+                </View>
+                <Text style={[styles.groupText, { color: theme.primary }]}>
+                  {partidaDestaque.fase} {partidaDestaque.grupo ? `• Grupo ${partidaDestaque.grupo}` : ""}
+                </Text>
+              </View>
 
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowDate, { color: theme.text }]}>22/06 • 10:00</Text>
-              <Text style={[styles.rowGroup, { color: theme.textSecondary }]}>Grupo E</Text>
+              <TouchableOpacity
+                style={[styles.palpiteButton, { backgroundColor: theme.secondary }]}
+                onPress={() => router.push(`/partidas/${partidaDestaque.id}`)}
+              >
+                <Ionicons name="create-outline" size={20} color={theme.background} />
+                <Text style={[styles.palpiteButtonText, { color: theme.background }]}>FAZER PALPITE</Text>
+              </TouchableOpacity>
             </View>
+          )}
 
-            <View style={[styles.rowTeam, styles.alignRight]}>
-              <Text style={[styles.rowTeamText, { color: theme.text }]}>Espanha</Text>
-              <Image source={{ uri: "https://flagcdn.com/w80/es.png" }} style={styles.smallFlag} />
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} style={styles.chevron} />
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+          {/* Lista Secundária */}
+          <View style={styles.listContainer}>
+            {listaSecundaria.map((partida) => (
+              <TouchableOpacity
+                key={partida.id}
+                style={[styles.matchRow, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+                onPress={() => router.push(`/partidas/${partida.id}`)}
+              >
+                <View style={styles.rowTeam}>
+                  <Image source={{ uri: partida.selecaoMandante.bandeiraUrl }} style={styles.smallFlag} />
+                  <Text style={[styles.rowTeamText, { color: theme.text }]} numberOfLines={1}>
+                    {partida.selecaoMandante.nome}
+                  </Text>
+                </View>
+
+                <View style={styles.rowInfo}>
+                  <Text style={[styles.rowDate, { color: theme.text }]}>
+                    {formatarData(partida.dataHora)}
+                  </Text>
+                  <Text style={[styles.rowGroup, { color: theme.textSecondary }]} numberOfLines={1}>
+                    {partida.fase} {partida.grupo ? `• Gp ${partida.grupo}` : ""}
+                  </Text>
+                </View>
+
+                <View style={[styles.rowTeam, styles.alignRight]}>
+                  <Text style={[styles.rowTeamText, { color: theme.text }]} numberOfLines={1}>
+                    {partida.selecaoVisitante.nome}
+                  </Text>
+                  <Image source={{ uri: partida.selecaoVisitante.bandeiraUrl }} style={styles.smallFlag} />
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} style={styles.chevron} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -214,16 +325,17 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   notificationButton: {
-    position: "relative",
     padding: 8,
   },
-  notificationBadge: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -415,14 +527,17 @@ const styles = StyleSheet.create({
   rowInfo: {
     alignItems: "center",
     paddingHorizontal: 8,
+    width: 100,
   },
   rowDate: {
     fontSize: 11,
     fontWeight: "700",
+    textAlign: "center",
   },
   rowGroup: {
     fontSize: 9,
     marginTop: 1,
+    textAlign: "center",
   },
   chevron: {
     marginLeft: 6,

@@ -9,11 +9,13 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
 
 export default function Login() {
   const router = useRouter();
@@ -22,6 +24,57 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email.trim() || !senha.trim()) {
+      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const response = await api.post("/api/auth/login", { email, senha });
+      const { token, usuario } = response.data;
+      
+      await AsyncStorage.setItem("@BolaoCopa:token", token);
+      await AsyncStorage.setItem("@BolaoCopa:usuario", JSON.stringify(usuario));
+      
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      console.log("Login error:", error);
+      const isNetworkError = !error.response;
+      
+      if (isNetworkError) {
+        Alert.alert(
+          "Conexão Recusada",
+          "O backend não respondeu. Certifique-se de que a API do Spring Boot está rodando. Deseja entrar no Modo Offline/Demo para testar?",
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Entrar no Modo Demo",
+              onPress: async () => {
+                await AsyncStorage.setItem("@BolaoCopa:token", "jwt-token-mock-demo-12345");
+                await AsyncStorage.setItem("@BolaoCopa:usuario", JSON.stringify({
+                  id: 999,
+                  nome: "Rafael Martins (Demo)",
+                  email: email,
+                  avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
+                  pontuacaoTotal: 125,
+                  placaresExatos: 5
+                }));
+                router.replace("/(tabs)");
+              }
+            }
+          ]
+        );
+      } else {
+        const msg = error.response?.data?.mensagem || error.response?.data?.message || "Credenciais inválidas.";
+        Alert.alert("Falha no Login", msg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -65,6 +118,7 @@ export default function Login() {
                       placeholder="nome@exemplo.com"
                       placeholderTextColor="rgba(189, 202, 185, 0.5)"
                       keyboardType="email-address"
+                      autoCapitalize="none"
                       style={[styles.textInput, { color: theme.text }]}
                     />
                   </View>
@@ -104,20 +158,14 @@ export default function Login() {
                 <View style={styles.actionsContainer}>
                   <TouchableOpacity
                     style={[styles.loginBtn, { backgroundColor: theme.secondary }]}
-                    onPress={async () => {
-                      if (!email.trim() || !senha.trim()) {
-                        Alert.alert("Erro", "Por favor, preencha todos os campos.");
-                        return;
-                      }
-                      try {
-                        await AsyncStorage.setItem("@BolaoCopa:token", "jwt-token-mock-12345");
-                        router.replace("/(tabs)");
-                      } catch (error) {
-                        Alert.alert("Erro", "Não foi possível realizar o login.");
-                      }
-                    }}
+                    onPress={handleLogin}
+                    disabled={isLoading}
                   >
-                    <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color={theme.background} />
+                    ) : (
+                      <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
+                    )}
                   </TouchableOpacity>
 
                   <View style={styles.dividerRow}>

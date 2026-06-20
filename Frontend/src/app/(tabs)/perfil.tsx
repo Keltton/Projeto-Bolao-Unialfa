@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,28 +9,79 @@ import {
   Alert,
   SafeAreaView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
 
 export default function Perfil() {
   const router = useRouter();
   const theme = Colors.dark;
 
-  const [nome, setNome] = useState("Rafael Martins");
+  const [usuario, setUsuario] = useState<any>({
+    id: null,
+    nome: "",
+    email: "",
+    avatarUrl: "",
+  });
   const [isEditing, setIsEditing] = useState(false);
-  const [editNome, setEditNome] = useState(nome);
+  const [editNome, setEditNome] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSaveNome = () => {
+  const carregarUsuario = async () => {
+    try {
+      const userStr = await AsyncStorage.getItem("@BolaoCopa:usuario");
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        setUsuario(u);
+        setEditNome(u.nome || "");
+      }
+    } catch (e) {
+      console.log("Erro ao carregar usuário do AsyncStorage", e);
+    }
+  };
+
+  useEffect(() => {
+    carregarUsuario();
+  }, []);
+
+  const handleSaveNome = async () => {
     if (!editNome.trim()) {
       Alert.alert("Erro", "O nome não pode estar em branco.");
       return;
     }
-    setNome(editNome);
-    setIsEditing(false);
-    Alert.alert("Sucesso", "Nome de exibição atualizado com sucesso.");
+
+    setIsLoading(true);
+    try {
+      const response = await api.put("/api/usuarios/me", {
+        nome: editNome,
+        avatarUrl: usuario.avatarUrl || null,
+        email: usuario.email,
+        senhaAtual: null,
+        novaSenha: null,
+      });
+
+      const usuarioAtualizado = response.data;
+      setUsuario(usuarioAtualizado);
+      await AsyncStorage.setItem("@BolaoCopa:usuario", JSON.stringify(usuarioAtualizado));
+      
+      setIsEditing(false);
+      Alert.alert("Sucesso", "Nome de exibição atualizado com sucesso.");
+    } catch (error: any) {
+      console.log("Erro ao salvar perfil no backend:", error.message);
+      
+      // Fallback local se estiver offline
+      const uMock = { ...usuario, nome: editNome };
+      setUsuario(uMock);
+      await AsyncStorage.setItem("@BolaoCopa:usuario", JSON.stringify(uMock));
+      setIsEditing(false);
+      Alert.alert("Sucesso (Modo Offline)", "Nome atualizado localmente no dispositivo.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -44,6 +95,7 @@ export default function Perfil() {
           style: "destructive",
           onPress: async () => {
             await AsyncStorage.removeItem("@BolaoCopa:token");
+            await AsyncStorage.removeItem("@BolaoCopa:usuario");
             router.replace("/auth/login");
           },
         },
@@ -61,10 +113,26 @@ export default function Perfil() {
           text: "Excluir",
           style: "destructive",
           onPress: async () => {
-            // Em produção aqui chama DELETE /api/usuarios/me
-            await AsyncStorage.removeItem("@BolaoCopa:token");
-            Alert.alert("Conta Excluída", "Sua conta foi removida com sucesso de acordo com a LGPD.");
-            router.replace("/auth/login");
+            setIsLoading(true);
+            try {
+              // Deletar na API
+              await api.delete("/api/usuarios/me");
+              
+              await AsyncStorage.removeItem("@BolaoCopa:token");
+              await AsyncStorage.removeItem("@BolaoCopa:usuario");
+              Alert.alert("Conta Excluída", "Sua conta foi removida com sucesso de acordo com a LGPD.");
+              router.replace("/auth/login");
+            } catch (error: any) {
+              console.log("Erro ao deletar conta no backend:", error.message);
+              
+              // Simular exclusão offline
+              await AsyncStorage.removeItem("@BolaoCopa:token");
+              await AsyncStorage.removeItem("@BolaoCopa:usuario");
+              Alert.alert("Conta Removida (Modo Offline)", "Conta limpa localmente no dispositivo.");
+              router.replace("/auth/login");
+            } finally {
+              setIsLoading(false);
+            }
           },
         },
       ]
@@ -80,7 +148,7 @@ export default function Perfil() {
       <View style={styles.profileCard}>
         <View style={[styles.avatarBorder, { borderColor: theme.primary }]}>
           <Image
-            source={{ uri: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80" }}
+            source={{ uri: usuario.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80" }}
             style={styles.avatar}
           />
         </View>
@@ -93,8 +161,12 @@ export default function Perfil() {
               style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
               autoFocus
             />
-            <TouchableOpacity onPress={handleSaveNome} style={[styles.saveBtn, { backgroundColor: theme.primary }]}>
-              <Ionicons name="checkmark" size={20} color={theme.background} />
+            <TouchableOpacity onPress={handleSaveNome} style={[styles.saveBtn, { backgroundColor: theme.primary }]} disabled={isLoading}>
+              {isLoading ? (
+                <ActivityIndicator size="small" color={theme.background} />
+              ) : (
+                <Ionicons name="checkmark" size={20} color={theme.background} />
+              )}
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setIsEditing(false)} style={[styles.cancelBtn, { borderColor: theme.border }]}>
               <Ionicons name="close" size={20} color={theme.text} />
@@ -102,13 +174,13 @@ export default function Perfil() {
           </View>
         ) : (
           <View style={styles.nameRow}>
-            <Text style={[styles.nameText, { color: theme.text }]}>{nome}</Text>
-            <TouchableOpacity onPress={() => { setEditNome(nome); setIsEditing(true); }}>
+            <Text style={[styles.nameText, { color: theme.text }]}>{usuario.nome || "Rafael Martins"}</Text>
+            <TouchableOpacity onPress={() => { setEditNome(usuario.nome); setIsEditing(true); }}>
               <Ionicons name="create-outline" size={18} color={theme.primary} />
             </TouchableOpacity>
           </View>
         )}
-        <Text style={[styles.emailText, { color: theme.textSecondary }]}>rafael.martins@email.com</Text>
+        <Text style={[styles.emailText, { color: theme.textSecondary }]}>{usuario.email || "rafael.martins@email.com"}</Text>
       </View>
 
       {/* Menu Options */}

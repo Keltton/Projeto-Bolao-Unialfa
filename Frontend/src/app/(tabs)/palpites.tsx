@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,11 +8,14 @@ import {
   Image,
   SafeAreaView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
 
+// Fallback estático caso a API esteja offline
 const PALPITES_MOCK = [
   {
     id: 101,
@@ -24,7 +27,7 @@ const PALPITES_MOCK = [
       id: 1,
       selecaoA: { nome: "Brasil", bandeiraUrl: "https://flagcdn.com/w80/br.png" },
       selecaoB: { nome: "Argentina", bandeiraUrl: "https://flagcdn.com/w80/ar.png" },
-      dataHora: "21/06 • 16:00",
+      dataHora: "2026-06-21T16:00:00",
       fase: "GRUPOS",
       status: "AGENDADA",
     },
@@ -39,7 +42,7 @@ const PALPITES_MOCK = [
       id: 4,
       selecaoA: { nome: "Inglaterra", bandeiraUrl: "https://flagcdn.com/w80/gb-eng.png" },
       selecaoB: { nome: "Itália", bandeiraUrl: "https://flagcdn.com/w80/it.png" },
-      dataHora: "18/06 • 18:00",
+      dataHora: "2026-06-18T18:00:00",
       fase: "GRUPOS",
       status: "ENCERRADA",
       golsMandanteReal: 3,
@@ -48,7 +51,7 @@ const PALPITES_MOCK = [
   },
   {
     id: 103,
-    golsMandante: 1,
+    golsMandante: 0,
     golsVisitante: 1,
     pontos: 5,
     criterio: "VENCEDOR_EMPATE",
@@ -56,25 +59,73 @@ const PALPITES_MOCK = [
       id: 5,
       selecaoA: { nome: "Uruguai", bandeiraUrl: "https://flagcdn.com/w80/uy.png" },
       selecaoB: { nome: "Holanda", bandeiraUrl: "https://flagcdn.com/w80/nl.png" },
-      dataHora: "19/06 • 15:00",
+      dataHora: "2026-06-19T15:00:00",
       fase: "GRUPOS",
       status: "ENCERRADA",
       golsMandanteReal: 0,
-      golsVisitanteReal: 2, // Ele apostou em empate (1x1), mas a Holanda ganhou (0x2). Espera, se a Holanda ganhou e ele apostou empate, ele pontua 0!
-      // Vamos ajustar o mock: aposta 0x1, real 0x2 -> acertou vencedor (Holanda) -> 5 pts
+      golsVisitanteReal: 2,
     },
   }
 ];
-
-// Corrigindo o mock do palpite 103 para fazer sentido matemático:
-PALPITES_MOCK[2].golsMandante = 0;
-PALPITES_MOCK[2].golsVisitante = 1;
 
 export default function Palpites() {
   const router = useRouter();
   const theme = Colors.dark;
 
-  const renderPalpite = ({ item }: { item: typeof PALPITES_MOCK[0] }) => {
+  const [palpites, setPalpites] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const formatarData = (dataStr: string) => {
+    try {
+      const data = new Date(dataStr);
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const horas = String(data.getHours()).padStart(2, "0");
+      const minutos = String(data.getMinutes()).padStart(2, "0");
+      return `${dia}/${mes} • ${horas}:${minutos}`;
+    } catch {
+      return dataStr;
+    }
+  };
+
+  const carregarPalpites = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get("/api/palpites/meus");
+      
+      const palpitesMapeados = response.data.map((p: any) => ({
+        id: p.id,
+        golsMandante: p.golsMandante,
+        golsVisitante: p.golsVisitante,
+        pontos: p.pontuacaoObtida !== undefined ? p.pontuacaoObtida : p.pontos,
+        criterio: p.criterioAplicado || p.criterio,
+        partida: {
+          id: p.partida.id,
+          selecaoA: p.partida.selecaoMandante || p.partida.selecaoA,
+          selecaoB: p.partida.selecaoVisitante || p.partida.selecaoB,
+          dataHora: p.partida.dataHora,
+          fase: p.partida.fase,
+          status: p.partida.status,
+          golsMandanteReal: p.partida.golsMandante !== undefined ? p.partida.golsMandante : p.partida.golsMandanteReal,
+          golsVisitanteReal: p.partida.golsVisitante !== undefined ? p.partida.golsVisitante : p.partida.golsVisitanteReal,
+        }
+      }));
+
+      setPalpites(palpitesMapeados);
+    } catch (error: any) {
+      console.log("Erro ao carregar palpites da API, usando mock:", error.message);
+      // Fallback offline
+      setPalpites(PALPITES_MOCK);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarPalpites();
+  }, []);
+
+  const renderPalpite = ({ item }: { item: any }) => {
     const isEncerrada = item.partida.status === "ENCERRADA";
     const temPontuacao = item.pontos !== null;
 
@@ -83,11 +134,11 @@ export default function Palpites() {
     let PontosTexto = "—";
 
     if (isEncerrada && temPontuacao) {
-      if (item.criterio === "PLACAR_EXATO") {
+      if (item.criterio === "PLACAR_EXATO" || item.criterio === "EXATO") {
         BadgeColor = theme.secondary + "20"; // Amarelo translúcido
         CriterioTexto = "Placar Exato! 🎯";
         PontosTexto = `+${item.pontos}`;
-      } else if (item.criterio === "VENCEDOR_EMPATE") {
+      } else if (item.criterio === "VENCEDOR_EMPATE" || item.criterio === "PARCIAL") {
         BadgeColor = theme.primary + "20"; // Verde translúcido
         CriterioTexto = "Acertou Vencedor/Empate 👍";
         PontosTexto = `+${item.pontos}`;
@@ -104,8 +155,8 @@ export default function Palpites() {
           <Text style={[styles.phaseText, { color: theme.textSecondary }]}>
             FASE DE {item.partida.fase}
           </Text>
-          <View style={[styles.pointsBadge, { backgroundColor: temPontuacao && item.pontos! > 0 ? theme.primary : theme.border }]}>
-            <Text style={[styles.pointsText, { color: temPontuacao && item.pontos! > 0 ? theme.background : theme.text }]}>
+          <View style={[styles.pointsBadge, { backgroundColor: temPontuacao && item.pontos > 0 ? theme.primary : theme.border }]}>
+            <Text style={[styles.pointsText, { color: temPontuacao && item.pontos > 0 ? theme.background : theme.text }]}>
               {PontosTexto} pts
             </Text>
           </View>
@@ -178,13 +229,21 @@ export default function Palpites() {
         <Text style={[styles.headerTitle, { color: theme.text }]}>Meus Palpites</Text>
       </View>
 
-      <FlatList
-        data={PALPITES_MOCK}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderPalpite}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={palpites}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderPalpite}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshing={isLoading}
+          onRefresh={carregarPalpites}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -208,6 +267,11 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   card: {
     borderWidth: 1,

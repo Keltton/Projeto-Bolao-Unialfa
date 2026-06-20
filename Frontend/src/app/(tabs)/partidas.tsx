@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,87 +9,142 @@ import {
   Image,
   SafeAreaView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
 
-// Mock de partidas para a visualização inicial
+// Fallback estático caso a API esteja offline
 const PARTIDAS_MOCK = [
   {
     id: 1,
     selecaoA: { nome: "Brasil", codigoFifa: "BRA", bandeiraUrl: "https://flagcdn.com/w80/br.png" },
     selecaoB: { nome: "Argentina", codigoFifa: "ARG", bandeiraUrl: "https://flagcdn.com/w80/ar.png" },
-    dataHora: "21/06 • 16:00",
+    dataHora: "2026-06-21T16:00:00",
     estadio: "MetLife Stadium",
     fase: "GRUPOS",
     grupo: "C",
     status: "AGENDADA",
-    golsSelecaoA: null,
-    golsSelecaoB: null,
+    golsA: null,
+    golsB: null,
   },
   {
     id: 2,
     selecaoA: { nome: "França", codigoFifa: "FRA", bandeiraUrl: "https://flagcdn.com/w80/fr.png" },
     selecaoB: { nome: "Alemanha", codigoFifa: "GER", bandeiraUrl: "https://flagcdn.com/w80/de.png" },
-    dataHora: "21/06 • 13:00",
+    dataHora: "2026-06-21T13:00:00",
     estadio: "Rose Bowl",
     fase: "GRUPOS",
     grupo: "D",
     status: "AGENDADA",
-    golsSelecaoA: null,
-    golsSelecaoB: null,
+    golsA: null,
+    golsB: null,
   },
   {
     id: 3,
     selecaoA: { nome: "Portugal", codigoFifa: "POR", bandeiraUrl: "https://flagcdn.com/w80/pt.png" },
     selecaoB: { nome: "Espanha", codigoFifa: "ESP", bandeiraUrl: "https://flagcdn.com/w80/es.png" },
-    dataHora: "22/06 • 10:00",
+    dataHora: "2026-06-22T10:00:00",
     estadio: "SoFi Stadium",
     fase: "GRUPOS",
     grupo: "E",
     status: "AGENDADA",
-    golsSelecaoA: null,
-    golsSelecaoB: null,
+    golsA: null,
+    golsB: null,
   },
   {
     id: 4,
     selecaoA: { nome: "Inglaterra", codigoFifa: "ENG", bandeiraUrl: "https://flagcdn.com/w80/gb-eng.png" },
     selecaoB: { nome: "Itália", codigoFifa: "ITA", bandeiraUrl: "https://flagcdn.com/w80/it.png" },
-    dataHora: "18/06 • 18:00",
+    dataHora: "2026-06-18T18:00:00",
     estadio: "Mercedes-Benz Stadium",
     fase: "GRUPOS",
     grupo: "A",
     status: "ENCERRADA",
-    golsSelecaoA: 2,
-    golsSelecaoB: 1,
+    golsA: 2,
+    golsB: 1,
   },
   {
     id: 5,
     selecaoA: { nome: "Uruguai", codigoFifa: "URU", bandeiraUrl: "https://flagcdn.com/w80/uy.png" },
     selecaoB: { nome: "Holanda", codigoFifa: "NED", bandeiraUrl: "https://flagcdn.com/w80/nl.png" },
-    dataHora: "19/06 • 15:00",
+    dataHora: "2026-06-19T15:00:00",
     estadio: "Hard Rock Stadium",
     fase: "GRUPOS",
     grupo: "B",
     status: "ENCERRADA",
-    golsSelecaoA: 0,
-    golsSelecaoB: 2,
+    golsA: 0,
+    golsB: 2,
   }
 ];
 
 export default function Partidas() {
   const router = useRouter();
   const theme = Colors.dark;
+  
   const [faseAtiva, setFaseAtiva] = useState("TODAS");
+  const [partidas, setPartidas] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fases = ["TODAS", "GRUPOS", "OITAVAS", "QUARTAS", "SEMI", "FINAL"];
 
-  const partidasFiltradas = faseAtiva === "TODAS" 
-    ? PARTIDAS_MOCK 
-    : PARTIDAS_MOCK.filter(p => p.fase === faseAtiva);
+  const formatarData = (dataStr: string) => {
+    try {
+      const data = new Date(dataStr);
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const horas = String(data.getHours()).padStart(2, "0");
+      const minutos = String(data.getMinutes()).padStart(2, "0");
+      return `${dia}/${mes} • ${horas}:${minutos}`;
+    } catch {
+      return dataStr;
+    }
+  };
 
-  const renderPartida = ({ item }: { item: typeof PARTIDAS_MOCK[0] }) => {
+  const carregarPartidas = async () => {
+    setIsLoading(true);
+    try {
+      // Filtrar por fase ativa caso seja diferente de "TODAS"
+      const params: any = {};
+      if (faseAtiva !== "TODAS") {
+        params.fase = faseAtiva;
+      }
+      
+      const response = await api.get("/api/partidas", { params });
+      
+      const partidasMapeadas = response.data.map((p: any) => ({
+        id: p.id,
+        selecaoA: p.selecaoMandante || p.selecaoA,
+        selecaoB: p.selecaoVisitante || p.selecaoB,
+        dataHora: p.dataHora,
+        estadio: p.estadio,
+        fase: p.fase,
+        grupo: p.grupo,
+        status: p.status,
+        golsA: p.golsMandante !== undefined ? p.golsMandante : p.golsA,
+        golsB: p.golsVisitante !== undefined ? p.golsVisitante : p.golsB,
+      }));
+
+      setPartidas(partidasMapeadas);
+    } catch (error: any) {
+      console.log("Erro ao buscar partidas, usando mock:", error.message);
+      // Fallback offline filtrado localmente
+      const filtrados = faseAtiva === "TODAS" 
+        ? PARTIDAS_MOCK 
+        : PARTIDAS_MOCK.filter(p => p.fase === faseAtiva);
+      setPartidas(filtrados);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarPartidas();
+  }, [faseAtiva]);
+
+  const renderPartida = ({ item }: { item: any }) => {
     const isEncerrada = item.status === "ENCERRADA";
 
     return (
@@ -103,7 +158,7 @@ export default function Partidas() {
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: isEncerrada ? theme.border : theme.primary + "20" }]}>
             <Text style={[styles.statusText, { color: isEncerrada ? theme.textSecondary : theme.primary }]}>
-              {isEncerrada ? "ENCERRADA" : "AGENDADA"}
+              {item.status}
             </Text>
           </View>
         </View>
@@ -112,16 +167,16 @@ export default function Partidas() {
           {/* Team A */}
           <View style={styles.teamContainer}>
             <Image source={{ uri: item.selecaoA.bandeiraUrl }} style={styles.flag} />
-            <Text style={[styles.teamName, { color: theme.text }]}>{item.selecaoA.nome}</Text>
+            <Text style={[styles.teamName, { color: theme.text }]} numberOfLines={1}>{item.selecaoA.nome}</Text>
           </View>
 
           {/* Scores/VS */}
           <View style={styles.vsContainer}>
             {isEncerrada ? (
               <View style={styles.scoreRow}>
-                <Text style={[styles.scoreNumber, { color: theme.text }]}>{item.golsSelecaoA}</Text>
+                <Text style={[styles.scoreNumber, { color: theme.text }]}>{item.golsA}</Text>
                 <Text style={[styles.vsText, { color: theme.textSecondary }]}>x</Text>
-                <Text style={[styles.scoreNumber, { color: theme.text }]}>{item.golsSelecaoB}</Text>
+                <Text style={[styles.scoreNumber, { color: theme.text }]}>{item.golsB}</Text>
               </View>
             ) : (
               <View style={[styles.vsBadge, { backgroundColor: theme.border }]}>
@@ -133,14 +188,14 @@ export default function Partidas() {
           {/* Team B */}
           <View style={styles.teamContainer}>
             <Image source={{ uri: item.selecaoB.bandeiraUrl }} style={styles.flag} />
-            <Text style={[styles.teamName, { color: theme.text }]}>{item.selecaoB.nome}</Text>
+            <Text style={[styles.teamName, { color: theme.text }]} numberOfLines={1}>{item.selecaoB.nome}</Text>
           </View>
         </View>
 
         <View style={styles.matchFooter}>
           <View style={styles.footerInfo}>
             <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
-            <Text style={[styles.footerText, { color: theme.textSecondary }]}> {item.dataHora}</Text>
+            <Text style={[styles.footerText, { color: theme.textSecondary }]}> {formatarData(item.dataHora)}</Text>
           </View>
           <View style={styles.footerInfo}>
             <Ionicons name="pin-outline" size={14} color={theme.textSecondary} />
@@ -196,13 +251,21 @@ export default function Partidas() {
       </View>
 
       {/* Match List */}
-      <FlatList
-        data={partidasFiltradas}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderPartida}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={partidas}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderPartida}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshing={isLoading}
+          onRefresh={carregarPartidas}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -240,6 +303,11 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   matchCard: {
     borderWidth: 1,

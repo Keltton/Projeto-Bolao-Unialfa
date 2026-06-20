@@ -10,22 +10,26 @@ import {
   StatusBar,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
 
 export default function NovaSenha() {
   const router = useRouter();
   const theme = Colors.dark; // Visual escuro premium da Copa
 
+  const [tokenValidador, setTokenValidador] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [confirmarSenhaVisivel, setConfirmarSenhaVisivel] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSalvarSenha = () => {
-    if (!senha.trim() || !confirmarSenha.trim()) {
+  const handleSalvarSenha = async () => {
+    if (!tokenValidador.trim() || !senha.trim() || !confirmarSenha.trim()) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
       return;
     }
@@ -34,11 +38,41 @@ export default function NovaSenha() {
       return;
     }
 
-    Alert.alert(
-      "Senha Salva",
-      "Sua nova senha foi registrada com sucesso! Faça login para continuar.",
-      [{ text: "OK", onPress: () => router.push("/auth/login") }]
-    );
+    setIsLoading(true);
+    try {
+      await api.post("/api/auth/redefinir-senha", {
+        token: tokenValidador,
+        novaSenha: senha,
+      });
+
+      Alert.alert(
+        "Senha Salva",
+        "Sua nova senha foi registrada com sucesso! Faça login para continuar.",
+        [{ text: "OK", onPress: () => router.push("/auth/login") }]
+      );
+    } catch (error: any) {
+      console.log("Reset password error:", error);
+      const isNetworkError = !error.response;
+
+      if (isNetworkError) {
+        Alert.alert(
+          "Modo Offline / Testes",
+          "O backend está desligado. Deseja simular a alteração da senha e ir para o login?",
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Simular e Ir para o Login",
+              onPress: () => router.push("/auth/login")
+            }
+          ]
+        );
+      } else {
+        const msg = error.response?.data?.mensagem || error.response?.data?.message || "Erro ao redefinir senha.";
+        Alert.alert("Erro", msg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,6 +110,22 @@ export default function NovaSenha() {
 
                 {/* Form Fields */}
                 <View style={styles.form}>
+                  {/* Token Field */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.label, { color: theme.textSecondary }]}>Token Validador</Text>
+                    <View style={[styles.glassInput, { borderColor: theme.border }]}>
+                      <Ionicons name="key-outline" size={20} color={theme.textSecondary} />
+                      <TextInput
+                        value={tokenValidador}
+                        onChangeText={setTokenValidador}
+                        placeholder="Cole o token recebido"
+                        placeholderTextColor="rgba(189, 202, 185, 0.5)"
+                        autoCapitalize="none"
+                        style={[styles.textInput, { color: theme.text }]}
+                      />
+                    </View>
+                  </View>
+
                   {/* Password Field */}
                   <View style={styles.inputGroup}>
                     <Text style={[styles.label, { color: theme.textSecondary }]}>Nova Senha</Text>
@@ -127,8 +177,13 @@ export default function NovaSenha() {
                     <TouchableOpacity
                       style={[styles.saveBtn, { backgroundColor: theme.secondary }]}
                       onPress={handleSalvarSenha}
+                      disabled={isLoading}
                     >
-                      <Text style={[styles.saveBtnText, { color: theme.background }]}>SALVAR SENHA</Text>
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color={theme.background} />
+                      ) : (
+                        <Text style={[styles.saveBtnText, { color: theme.background }]}>SALVAR SENHA</Text>
+                      )}
                     </TouchableOpacity>
 
                     <TouchableOpacity

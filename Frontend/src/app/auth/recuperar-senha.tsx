@@ -10,28 +10,58 @@ import {
   StatusBar,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import api from "@/services/api";
 
 export default function RecuperarSenha() {
   const router = useRouter();
   const theme = Colors.dark; // Visual escuro premium da Copa
 
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRecuperar = () => {
+  const handleRecuperar = async () => {
     if (!email.trim()) {
       Alert.alert("Erro", "Por favor, digite seu e-mail.");
       return;
     }
 
-    Alert.alert(
-      "E-mail Enviado",
-      "Um link de redefinição de senha foi enviado para seu e-mail. Vamos configurar sua nova senha.",
-      [{ text: "OK", onPress: () => router.push("/auth/nova-senha") }]
-    );
+    setIsLoading(true);
+    try {
+      await api.post("/api/auth/recuperar-senha", { email });
+
+      Alert.alert(
+        "E-mail Enviado",
+        "Se o e-mail estiver cadastrado, você receberá em instantes as instruções de recuperação.",
+        [{ text: "Configurar Nova Senha", onPress: () => router.push("/auth/nova-senha") }]
+      );
+    } catch (error: any) {
+      console.log("Password recovery error:", error);
+      const isNetworkError = !error.response;
+
+      if (isNetworkError) {
+        Alert.alert(
+          "Modo Offline / Testes",
+          "O backend está desligado. Deseja simular o envio do e-mail e ir para a tela de redefinição de senha?",
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Simular e Avançar",
+              onPress: () => router.push("/auth/nova-senha")
+            }
+          ]
+        );
+      } else {
+        const msg = error.response?.data?.mensagem || error.response?.data?.message || "Erro ao solicitar recuperação.";
+        Alert.alert("Erro", msg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -91,8 +121,13 @@ export default function RecuperarSenha() {
                     <TouchableOpacity
                       style={[styles.sendBtn, { backgroundColor: theme.secondary }]}
                       onPress={handleRecuperar}
+                      disabled={isLoading}
                     >
-                      <Text style={[styles.sendBtnText, { color: theme.background }]}>ENVIAR LINK</Text>
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color={theme.background} />
+                      ) : (
+                        <Text style={[styles.sendBtnText, { color: theme.background }]}>ENVIAR LINK</Text>
+                      )}
                     </TouchableOpacity>
 
                     <TouchableOpacity
