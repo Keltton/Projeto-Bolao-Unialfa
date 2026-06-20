@@ -98,13 +98,41 @@ public class UsuarioService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario não encontrado"));
 
         if (request.nome() != null && !request.nome().isBlank()) {
-            usuario.setNome(request.nome());
+            usuario.setNome(request.nome().trim());
         }
         if (request.avatarUrl() != null) {
             usuario.setAvatarUrl(request.avatarUrl());
         }
+        if (request.email() != null && !request.email().isBlank()) {
+            String email = request.email().trim();
+            if (!email.equalsIgnoreCase(usuario.getEmail())) {
+                if (usuarioRepository.existsByEmail(email)) {
+                    throw new IllegalArgumentException("Este e-mail já está cadastrado.");
+                }
+                usuario.setEmail(email);
+            }
+        }
+
+        boolean trocarSenha = request.novaSenha() != null && !request.novaSenha().isBlank();
+        if (trocarSenha) {
+            if (request.senhaAtual() == null || request.senhaAtual().isBlank()) {
+                throw new IllegalArgumentException("Informe a senha atual para definir uma nova senha.");
+            }
+            if (!passwordEncoder.matches(request.senhaAtual(), usuario.getSenhaHash())) {
+                throw new IllegalArgumentException("Senha atual incorreta.");
+            }
+            if (request.novaSenha().length() < 6) {
+                throw new IllegalArgumentException("A nova senha deve ter no mínimo 6 caracteres.");
+            }
+            usuario.setSenhaHash(passwordEncoder.encode(request.novaSenha()));
+        }
 
         return UsuarioResponse.from(usuarioRepository.save(usuario));
+    }
+
+    public Usuario buscarEntidadePorId(Long id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario não encontrado"));
     }
 
     public void excluirContaPropria(Long id) {

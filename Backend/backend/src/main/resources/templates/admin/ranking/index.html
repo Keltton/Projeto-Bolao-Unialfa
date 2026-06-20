@@ -1,0 +1,127 @@
+<html xmlns:th="http://www.thymeleaf.org" data-theme="light"
+      th:replace="~{admin/template :: layout(
+          'Ranking — Bolão Copa 2026',
+          'Ranking',
+          'Classificação geral dos participantes',
+          'ranking',
+          ~{::content}
+      )}">
+
+<th:block th:fragment="content">
+
+    <!-- Cabeçalho -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-slate-800">Ranking</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                <span th:text="${totalElementos} + ' participante(s)'">0 participante(s)</span>
+                · <span id="live-clock"></span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-slate-800">Classificação</h3>
+                    <p class="text-xs text-slate-500">Ordenado por pontos e placares exatos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="table table-zebra min-w-[720px]">
+                <thead class="bg-slate-50">
+                    <tr class="border-b border-slate-200">
+                        <th class="text-slate-500 font-semibold text-center w-20">#</th>
+                        <th class="text-slate-500 font-semibold">Participante</th>
+                        <th class="text-slate-500 font-semibold text-center w-28">Exatos</th>
+                        <th class="text-slate-500 font-semibold text-center w-32">Pontuação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="u : ${ranking}" class="hover:bg-slate-50 transition-colors">
+                        <td class="text-center font-bold text-slate-700 tabular-nums"
+                            th:text="${u.posicao()}">1</td>
+
+                        <td>
+                            <div class="flex items-center gap-4">
+                                <div class="avatar placeholder">
+                                    <div class="bg-slate-200 text-slate-700 rounded-full w-10 font-bold text-xs border border-slate-300 overflow-hidden">
+                                        <img th:if="${u.avatarUrl() != null and !#strings.isEmpty(u.avatarUrl())}"
+                                             th:src="${u.avatarUrl()}"
+                                             th:alt="${u.nome()}"
+                                             class="w-full h-full object-cover"/>
+                                        <span th:if="${u.avatarUrl() == null or #strings.isEmpty(u.avatarUrl())}"
+                                              th:text="${#strings.toUpperCase(#strings.substring(u.nome(), 0, 2))}">US</span>
+                                    </div>
+                                </div>
+
+                                <div class="min-w-0">
+                                    <div class="font-semibold text-slate-800 truncate" th:text="${u.nome()}">Usuário</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="text-center">
+                            <span class="badge badge-ghost font-semibold tabular-nums"
+                                  th:text="${u.placaresExatos()}">0</span>
+                        </td>
+
+                        <td class="text-center">
+                            <span class="badge badge-success badge-outline font-bold tabular-nums"
+                                  th:text="${u.pontuacaoTotal()} + ' pts'">0 pts</span>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(ranking)}">
+                        <td colspan="4">
+                            <div class="py-20 text-center">
+                                <i data-lucide="trophy" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i>
+                                <h3 class="font-semibold text-slate-600 text-lg">Nenhum participante no ranking</h3>
+                                <p class="text-sm text-slate-400 mt-2">
+                                    O ranking aparece quando houver usuários ativos com palpites.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginação -->
+        <div class="px-6 py-5 border-t border-slate-100 bg-white"
+             th:if="${totalPaginas > 1}">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <p class="text-sm text-slate-500">
+                    Página <span th:text="${paginaAtual + 1}">1</span> de <span th:text="${totalPaginas}">1</span>
+                </p>
+
+                <div class="join">
+                    <a th:href="@{/admin/ranking(pagina=${paginaAtual - 1})}"
+                       th:class="${paginaAtual == 0} ? 'btn btn-sm btn-ghost join-item pointer-events-none opacity-40' : 'btn btn-sm btn-ghost join-item'">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    </a>
+
+                    <a th:each="i : ${#numbers.sequence(0, totalPaginas - 1)}"
+                       th:href="@{/admin/ranking(pagina=${i})}"
+                       th:text="${i + 1}"
+                       th:class="${i == paginaAtual} ? 'btn btn-sm btn-success join-item min-w-9' : 'btn btn-sm btn-ghost join-item min-w-9'">
+                        1
+                    </a>
+
+                    <a th:href="@{/admin/ranking(pagina=${paginaAtual + 1})}"
+                       th:class="${paginaAtual >= totalPaginas - 1} ? 'btn btn-sm btn-ghost join-item pointer-events-none opacity-40' : 'btn btn-sm btn-ghost join-item'">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+
+</html>
+
