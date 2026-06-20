@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
-//este é o coracao da autenticacao de usuario, serviço responsavel pela geração e validação dos tokens JWT
 @Component
 public class JwtService {
 
@@ -20,12 +19,10 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
-    //gera a chave criptografica utilizada para assinar e validar os tokens
     private SecretKey getKey(){
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    //gera token pro usuario autenticado
     public String gerarToken(UserDetails usuario){
         return Jwts.builder()
                 .subject(usuario.getUsername())
@@ -35,7 +32,6 @@ public class JwtService {
                 .compact();
     }
 
-    //extrai as informações (email) do corpo do token
     public String extrairEmail(String token) {
         return Jwts.parser()
                 .verifyWith(getKey())
@@ -45,14 +41,12 @@ public class JwtService {
                 .getSubject();
     }
 
-    //valida se já expirou e retorna um BOOLEAN informando se está ou não expirado
     private boolean tokenExpirado(String token) {
         Date exp = Jwts.parser().verifyWith(getKey()).build()
                 .parseSignedClaims(token).getPayload().getExpiration();
         return exp.before(new Date());
     }
 
-       //valida se o email confere e não está expirado
     public boolean tokenValido(String token, UserDetails usuario) {
         try {
                 String email = extrairEmail(token);

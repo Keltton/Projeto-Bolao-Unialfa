@@ -8,7 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-//CONTROLLER da API direcionamento da rota pra consumo de API voltada ao usuario admin
+
 @RestController
 @RequestMapping("/api/admin/usuarios")
 public class AdminUsuarioApiController {
@@ -19,7 +19,6 @@ public class AdminUsuarioApiController {
         this.usuarioService = usuarioService;
     }
 
-    //lista usuarios com paginação e filtro opcional por nome ou email
     @GetMapping
     public ResponseEntity<Page<UsuarioResponse>> listar(
             @RequestParam(required = false) String busca,
@@ -30,22 +29,25 @@ public class AdminUsuarioApiController {
         return ResponseEntity.ok(usuarioService.listarUsuarios(busca, StatusUsuario.ATIVO, pageable));
     }
 
-    //retorna os detalhes de um usuario especifico
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioResponse> obterDetalhes(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.obterDetalhesUsuario(id));
     }
 
-    //altera o status de um usuario
     @PatchMapping("/{id}/status")
+
     public ResponseEntity<UsuarioResponse> alterarStatus(
+
             @PathVariable Long id,
+
             @RequestParam StatusUsuario status
+
     ) {
         return ResponseEntity.ok(usuarioService.alterarStatusUsuario(id, status));
     }
 
-    // remove um usuario do sistema
+
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> remover(@PathVariable Long id) {
         usuarioService.remover(id);
