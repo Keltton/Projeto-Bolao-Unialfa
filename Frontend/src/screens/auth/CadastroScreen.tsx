@@ -8,6 +8,7 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  
 } from "react-native";
 
 export default function Cadastro() {
