@@ -11,18 +11,14 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
-
-//entidade do Usuario, é aqui que fica definido os atributos da tabela e os construtores utilizado pelo backend
 @Entity
 @Table(
-        //define as caracteristicas da tabela e um indice para consulta de ranking ordenado
     name = "usuarios",
     indexes = {
         @Index(name = "idx_usuario_ranking", columnList = "perfil, status, pontuacaoTotal DESC, placaresExatos DESC, criadoEm ASC")
     }
 )
 public class Usuario implements UserDetails {
-    //atributos e suas anotações
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,9 +59,6 @@ public class Usuario implements UserDetails {
 
     public Usuario() {}
 
-    //construtores dos atributos
-
-    //executa antes da entidade ser inserida na banco, pega a data e hora do momento e registra nos atributos
     @PrePersist
     public void aoCriar() {
         LocalDateTime agora = LocalDateTime.now();
@@ -79,13 +72,11 @@ public class Usuario implements UserDetails {
         }
     }
 
-    //mesma coisa de cima, mas este acontece antes de atualizar a informação
     @PreUpdate
     public void aoAtualizar() {
         atualizadoEm = LocalDateTime.now();
     }
 
-    //get e setters
     public Long getId() {
         return id;
     }
@@ -193,7 +184,6 @@ public class Usuario implements UserDetails {
     @Override
     public String getUsername() { return email; }
 
-    //verificações de segurança: esta bloqueada? ativa? expirada?
     @Override
     public boolean isAccountNonLocked() { return true; }
 
