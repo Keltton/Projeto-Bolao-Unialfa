@@ -19,6 +19,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     //verifica se ja existe um usuario cadastrado com este email
     boolean existsByEmail(String email);
+    long countByStatus(StatusUsuario status);
+    long countByUltimoLoginEmAfter(LocalDateTime dataHora);
 
     //uma pesquisa por perfil e status em ordem de pontuação
     Page<Usuario> findByPerfilAndStatusOrderByPontuacaoTotalDescPlacaresExatosDescCriadoEmAsc(

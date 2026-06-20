@@ -15,7 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 
-export default function login() {
+export default function Login() {
   const router = useRouter();
   const theme = Colors.dark; // Visual escuro premium da Copa
 
@@ -65,7 +65,6 @@ export default function login() {
                       placeholder="nome@exemplo.com"
                       placeholderTextColor="rgba(189, 202, 185, 0.5)"
                       keyboardType="email-address"
-                      autoCapitalize="none"
                       style={[styles.textInput, { color: theme.text }]}
                     />
                   </View>
@@ -75,7 +74,7 @@ export default function login() {
                 <View style={styles.inputGroup}>
                   <View style={styles.labelRow}>
                     <Text style={[styles.label, { color: theme.textSecondary }]}>Senha</Text>
-                    <TouchableOpacity onPress={() => router.push("/auth/ForgotPassword")}>
+                    <TouchableOpacity onPress={() => router.push("/auth/recuperar-senha")}>
                       <Text style={[styles.forgotPassword, { color: theme.secondary }]}>
                         Esqueci minha senha
                       </Text>
@@ -106,7 +105,16 @@ export default function login() {
                   <TouchableOpacity
                     style={[styles.loginBtn, { backgroundColor: theme.secondary }]}
                     onPress={async () => {
-                      // Simulate login logic here
+                      if (!email.trim() || !senha.trim()) {
+                        Alert.alert("Erro", "Por favor, preencha todos os campos.");
+                        return;
+                      }
+                      try {
+                        await AsyncStorage.setItem("@BolaoCopa:token", "jwt-token-mock-12345");
+                        router.replace("/(tabs)");
+                      } catch (error) {
+                        Alert.alert("Erro", "Não foi possível realizar o login.");
+                      }
                     }}
                   >
                     <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
@@ -120,7 +128,7 @@ export default function login() {
 
                   <TouchableOpacity
                     style={[styles.registerBtn, { borderColor: theme.border }]}
-                    onPress={() => router.push("/auth/Cadastro")}
+                    onPress={() => router.push("/auth/cadastro")}
                   >
                     <Text style={[styles.registerBtnText, { color: theme.text }]}>CRIAR CONTA</Text>
                   </TouchableOpacity>
