@@ -15,7 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 
-export default function Login() {
+export default function login() {
   const router = useRouter();
   const theme = Colors.dark; // Visual escuro premium da Copa
 
@@ -105,7 +105,9 @@ export default function Login() {
                 <View style={styles.actionsContainer}>
                   <TouchableOpacity
                     style={[styles.loginBtn, { backgroundColor: theme.secondary }]}
-                    onPress={handleLogin}
+                    onPress={async () => {
+                      // Simulate login logic here
+                    }}
                   >
                     <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
                   </TouchableOpacity>
