@@ -9,9 +9,10 @@
 
 <th:block th:fragment="content">
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- Cabeçalho -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold">Palpites</h2>
+            <h2 class="text-2xl font-bold text-slate-800">Palpites</h2>
             <p class="text-sm text-slate-500 mt-1">
                 <span th:text="${#lists.size(palpites)} + ' palpite(s)'">0 palpite(s)</span>
                 · <span id="live-clock"></span>
@@ -19,76 +20,110 @@
         </div>
     </div>
 
-    <div class="card-panel rounded-2xl p-4">
-        <form method="get" th:action="@{/admin/palpites}" class="flex flex-col gap-3">
-            <div class="flex flex-col sm:flex-row gap-3">
-                <div class="relative flex-1">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input type="search" name="busca" th:value="${busca}"
-                           placeholder="Buscar por nome ou e-mail do participante..."
-                           class="admin-input w-full pl-10"/>
+    <!-- Filtros -->
+    <div class="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6">
+            <form method="get" th:action="@{/admin/palpites}">
+                <div class="flex flex-col lg:flex-row gap-4">
+                    <div class="flex-1">
+                        <label class="text-sm font-medium text-slate-600 mb-2 block">
+                            Filtrar Palpites
+                        </label>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                            <div class="relative">
+                                <i data-lucide="search"
+                                   class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                                <input type="search"
+                                       name="busca"
+                                       th:value="${busca}"
+                                       placeholder="Nome ou e-mail do participante..."
+                                       class="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none"/>
+                            </div>
+                            <select name="partidaId"
+                                    class="w-full h-12 px-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none">
+                                <option value="">Todas as partidas</option>
+                                <option th:each="p : ${partidas}"
+                                        th:value="${p.id}"
+                                        th:selected="${partidaFiltro != null and partidaFiltro == p.id}"
+                                        th:text="${p.selecaoA.nome + ' x ' + p.selecaoB.nome + ' — ' + #temporals.format(p.dataHora, 'dd/MM/yyyy HH:mm')}">
+                                    Brasil x Argentina — 15/06/2026 20:00
+                                </option>
+                            </select>
+                            <select name="criterio"
+                                    class="w-full h-12 px-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none">
+                                <option value="">Todos os critérios</option>
+                                <option th:each="c : ${criterios}"
+                                        th:value="${c.name()}"
+                                        th:selected="${criterioFiltro != null and criterioFiltro == c}"
+                                        th:text="${c.name() == 'PENDENTE' ? 'Pendente' :
+                                            (c.name() == 'PLACAR_EXATO' ? 'Placar exato' :
+                                            (c.name() == 'VENCEDOR_EMPATE' ? 'Vencedor/Empate' : 'Errou'))}">
+                                    Pendente
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button type="submit" class="btn btn-primary px-6 gap-2">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                            Filtrar
+                        </button>
+                        <a th:href="@{/admin/palpites}"
+                           class="btn btn-outline border-slate-300 text-slate-600 hover:bg-slate-100">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            Limpar
+                        </a>
+                    </div>
                 </div>
-                <select name="partidaId" class="admin-input w-full sm:w-64">
-                    <option value="">Todas as partidas</option>
-                    <option th:each="p : ${partidas}"
-                            th:value="${p.id}"
-                            th:selected="${partidaFiltro != null and partidaFiltro == p.id}"
-                            th:text="${p.selecaoA.nome + ' x ' + p.selecaoB.nome + ' — ' + #temporals.format(p.dataHora, 'dd/MM/yyyy HH:mm')}">
-                        Brasil x Argentina — 15/06/2026 20:00
-                    </option>
-                </select>
-                <select name="criterio" class="admin-input w-full sm:w-48">
-                    <option value="">Todos os critérios</option>
-                    <option th:each="c : ${criterios}"
-                            th:value="${c.name()}"
-                            th:selected="${criterioFiltro != null and criterioFiltro == c}"
-                            th:text="${c.name() == 'PENDENTE' ? 'Pendente' :
-                                (c.name() == 'PLACAR_EXATO' ? 'Placar exato' :
-                                (c.name() == 'VENCEDOR_EMPATE' ? 'Vencedor/Empate' : 'Errou'))}">
-                        Pendente
-                    </option>
-                </select>
-            </div>
-            <div class="flex gap-2 sm:justify-end">
-                <button type="submit" class="btn btn-success flex-1 sm:flex-none sm:min-w-32">Filtrar</button>
-                <a th:href="@{/admin/palpites}" class="btn btn-ghost flex-1 sm:flex-none sm:min-w-32">Limpar</a>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
-    <div class="card-panel rounded-2xl overflow-hidden">
+    <!-- Tabela -->
+    <div class="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-100 bg-slate-50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg">Palpites Registrados</h3>
+                    <p class="text-sm text-slate-500">Palpites enviados pelos participantes</p>
+                </div>
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="admin-table min-w-[960px]">
-                <thead>
+            <table class="table table-zebra min-w-[960px]">
+                <thead class="bg-slate-50">
                     <tr>
-                        <th class="pl-6 min-w-[200px]">Participante</th>
-                        <th class="min-w-[220px]">Partida</th>
-                        <th class="whitespace-nowrap text-center">Palpite</th>
-                        <th class="whitespace-nowrap text-center">Resultado</th>
-                        <th class="whitespace-nowrap text-center">Pontos</th>
-                        <th class="whitespace-nowrap">Critério</th>
-                        <th class="whitespace-nowrap pr-6">Registrado em</th>
+                        <th class="text-slate-500 font-semibold min-w-[200px]">Participante</th>
+                        <th class="text-slate-500 font-semibold min-w-[220px]">Partida</th>
+                        <th class="text-center text-slate-500 font-semibold whitespace-nowrap">Palpite</th>
+                        <th class="text-center text-slate-500 font-semibold whitespace-nowrap">Resultado</th>
+                        <th class="text-center text-slate-500 font-semibold whitespace-nowrap">Pontos</th>
+                        <th class="text-slate-500 font-semibold whitespace-nowrap">Critério</th>
+                        <th class="text-slate-500 font-semibold whitespace-nowrap">Registrado em</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="palpite : ${palpites}">
-                        <td class="pl-6">
+                    <tr th:each="palpite : ${palpites}" class="hover:bg-slate-50 transition-colors">
+                        <td>
                             <div class="flex items-center gap-3">
                                 <div class="avatar placeholder">
-                                    <div class="bg-slate-100 text-slate-600 rounded-full w-9"
-                                         th:if="${palpite.usuario.avatarUrl == null}">
+                                    <div th:if="${palpite.usuario.avatarUrl == null}"
+                                         class="bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-full w-10">
                                         <span class="text-sm font-medium"
                                               th:text="${#strings.toUpperCase(#strings.substring(palpite.usuario.nome, 0, 1))}">
                                             C
                                         </span>
                                     </div>
-                                    <div class="rounded-full w-9" th:if="${palpite.usuario.avatarUrl != null}">
-                                        <img th:src="${palpite.usuario.avatarUrl}" th:alt="${palpite.usuario.nome}"/>
+                                    <div th:if="${palpite.usuario.avatarUrl != null}" class="w-10 rounded-full overflow-hidden">
+                                        <img th:src="${palpite.usuario.avatarUrl}"
+                                             th:alt="${palpite.usuario.nome}"
+                                             class="object-cover"/>
                                     </div>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="font-medium truncate" th:text="${palpite.usuario.nome}">Nome</p>
-                                    <p class="text-sm text-slate-500 truncate" th:text="${palpite.usuario.email}">email</p>
+                                    <p class="font-semibold text-slate-800 truncate" th:text="${palpite.usuario.nome}">Nome</p>
+                                    <p class="text-xs text-slate-500 truncate" th:text="${palpite.usuario.email}">email</p>
                                 </div>
                             </div>
                         </td>
@@ -141,15 +176,18 @@
                                 Pendente
                             </span>
                         </td>
-                        <td class="pr-6 text-sm text-slate-500 whitespace-nowrap"
+                        <td class="text-sm text-slate-500 whitespace-nowrap"
                             th:text="${#temporals.format(palpite.criadoEm, 'dd/MM/yyyy HH:mm')}">
                             01/06/2026 14:30
                         </td>
                     </tr>
-
                     <tr th:if="${#lists.isEmpty(palpites)}">
-                        <td colspan="7" class="text-center text-slate-500 py-12">
-                            Nenhum palpite encontrado.
+                        <td colspan="7">
+                            <div class="py-20 text-center">
+                                <i data-lucide="target" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i>
+                                <h3 class="font-semibold text-slate-600 text-lg">Nenhum palpite encontrado</h3>
+                                <p class="text-sm text-slate-400 mt-2">Ajuste os filtros para continuar.</p>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -158,25 +196,14 @@
     </div>
 
     <script th:inline="javascript">
-        (function () {
-            const el = document.getElementById('live-clock');
-            if (!el) return;
+        function initPalpitesPage() {
+            initLiveClock();
+            lucide.createIcons();
+        }
 
-            function tick() {
-                const now = new Date();
-                el.textContent = now.toLocaleString('pt-BR', {
-                    weekday: 'short',
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-
-            tick();
-            setInterval(tick, 30000);
-        })();
+        document.addEventListener('DOMContentLoaded', initPalpitesPage);
     </script>
 
 </th:block>
+
 </html>

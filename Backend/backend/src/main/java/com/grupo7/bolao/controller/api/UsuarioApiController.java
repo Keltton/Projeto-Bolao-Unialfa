@@ -26,8 +26,8 @@ public class UsuarioApiController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> excluirConta(@AuthenticationPrincipal Usuario usuarioLogado) {
-        usuarioService.excluirContaPropria(usuarioLogado.getId());
+    public ResponseEntity<Void> remover(@PathVariable Long id) {
+        usuarioService.remover(id);
         return ResponseEntity.noContent().build();
     }
 

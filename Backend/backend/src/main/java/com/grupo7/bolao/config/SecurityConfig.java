@@ -109,6 +109,7 @@ public class SecurityConfig {
                 || uri.startsWith("/resetar-senha/")
                 || uri.startsWith("/css/")
                 || uri.startsWith("/js/")
+                || uri.startsWith("/assets/")
                 || uri.startsWith("/webjars/")
                 || uri.startsWith("/uploads/")
                 || uri.equals("/error");
