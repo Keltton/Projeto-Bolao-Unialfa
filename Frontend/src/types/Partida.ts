@@ -1,4 +1,4 @@
-export type FasePartida = 'GRUPOS' | 'OITAVAS' | 'QUARTAS' | 'SEMI' | 'FINAL';
+export type FasePartida = 'GRUPOS' | 'OITAVAS' | 'QUARTAS' | 'SEMIFINAL' | 'FINAL';
 export type StatusPartida = 'AGENDADA' | 'EM_ANDAMENTO' | 'ENCERRADA';
 
 export interface Selecao {

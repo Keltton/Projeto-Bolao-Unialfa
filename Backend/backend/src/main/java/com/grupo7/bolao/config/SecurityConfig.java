@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -53,13 +54,15 @@ public class SecurityConfig {
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/**")
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/selecoes/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/partidas/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/ranking/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/selecoes/**").hasAnyRole("USUARIO", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/partidas/**").hasAnyRole("USUARIO", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/ranking/**").hasAnyRole("USUARIO", "ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

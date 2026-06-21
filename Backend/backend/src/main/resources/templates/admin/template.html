@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light"
+<html lang="pt-BR"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:fragment="layout (pageTitle, pageHeading, pageSubtitle, activeSection, content)">
@@ -33,46 +33,100 @@
     </script>
 
     <div class="drawer-content flex flex-col min-h-screen lg:min-h-0 lg:h-full">
+        <header class="navbar bg-white border-b border-green-100 px-4 py-3 lg:px-6 sticky top-0 z-30 shadow-sm">
 
-        <header class="navbar bg-white border-b border-slate-200 px-4 py-3 lg:px-6 sticky top-0 z-30 shadow-sm">
+            <!-- Menu -->
             <div class="flex-none">
-                <label for="sidebar-toggle" class="btn btn-square btn-ghost" title="Abrir/fechar menu">
-                    <i data-lucide="panel-left-close" class="w-5 h-5" id="menu-icon"></i>
+                <label for="sidebar-toggle"
+                       class="btn btn-square btn-ghost hover:bg-green-50"
+                       title="Abrir/fechar menu">
+                    <i data-lucide="panel-left-close"
+                       class="w-5 h-5 text-slate-600"
+                       id="menu-icon"></i>
                 </label>
             </div>
 
+            <!-- Título -->
             <div class="flex-1">
                 <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex w-9 h-9 rounded-xl bg-slate-200 border border-slate-300 items-center justify-center">
-                        <i data-lucide="trophy" class="w-5 h-5 text-slate-600"></i>
+                    <div class="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-br from-green-600 to-green-700 items-center justify-center shadow-md">
+                        <i data-lucide="trophy" class="w-5 h-5 text-amber-300"></i>
                     </div>
+
                     <div>
-                        <h1 class="text-lg font-semibold leading-tight text-slate-700" th:text="${pageHeading}">Dashboard</h1>
-                        <p class="text-xs text-slate-500 hidden sm:block" th:text="${pageSubtitle}">
+                        <h1 class="text-lg font-bold leading-tight text-slate-800"
+                            th:text="${pageHeading}">
+                            Dashboard
+                        </h1>
+                        <p class="text-xs text-slate-500 hidden sm:block"
+                           th:text="${pageSubtitle}">
                             Bolão Copa 2026 — Painel Administrativo
                         </p>
                     </div>
                 </div>
             </div>
 
+            <!-- Ações -->
             <div class="flex-none flex items-center gap-2">
-                <button class="btn btn-ghost btn-circle btn-sm" id="btn-refresh" title="Atualizar dados" type="button">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+
+                <!-- Atualizar -->
+                <button class="btn btn-ghost btn-circle btn-sm hover:bg-green-50"
+                        id="btn-refresh"
+                        title="Atualizar dados"
+                        type="button">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-600"></i>
                 </button>
 
+                <!-- Status -->
+                <div class="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-green-50 border border-green-100">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span class="text-xs font-medium text-green-700">Sistema Online</span>
+                </div>
+
+                <!-- Usuário -->
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
-                        <div class="bg-slate-200 text-slate-700 rounded-full w-9 font-bold text-sm border border-slate-300">
-                            <span th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">AD</span>
+                    <div tabindex="0"
+                         role="button"
+                         class="btn btn-ghost hover:bg-green-50 rounded-xl">
+                        <div class="avatar placeholder">
+                            <div class="bg-green-600 text-white rounded-full w-9 font-bold text-sm">
+                                <span th:text="${usuarioAtual != null ? #strings.toUpperCase(#strings.substring(usuarioAtual.nome(), 0, 2)) : #strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">
+                                    AD
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="hidden md:block text-left ml-2">
+                            <p class="text-sm font-semibold text-slate-700"
+                               th:text="${usuarioAtual != null ? usuarioAtual.nome() : 'Administrador'}">
+                                Admin
+                            </p>
                         </div>
                     </div>
+
                     <ul tabindex="0"
-                        class="dropdown-content menu bg-white rounded-box z-50 w-52 p-2 shadow-xl border border-slate-200 mt-2">
-                        <li class="menu-title" sec:authentication="name">Administrador</li>
+                        class="dropdown-content menu bg-white rounded-2xl z-50 w-60 p-2 shadow-xl border border-green-100 mt-3">
+                        <li class="menu-title">
+                            <span sec:authentication="name">admin@copa2026.com.br</span>
+                        </li>
+                        <li>
+                            <button type="button" id="btn-meu-perfil" class="flex items-center gap-2 w-full">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                                Meu Perfil
+                            </button>
+                        </li>
+
+                        <div class="divider my-1"></div>
+
                         <li>
                             <form th:action="@{/logout}" method="post">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <button type="submit">Sair</button>
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
+                                <button type="submit" class="text-error flex items-center gap-2">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                    Sair
+                                </button>
                             </form>
                         </li>
                     </ul>
@@ -80,13 +134,18 @@
             </div>
         </header>
 
-        <main class="flex-1 p-4 lg:p-6 animate-fade-in flex flex-col gap-6 w-full mx-auto"
+        <main class="flex-1 p-4 lg:p-6 animate-fade-in flex flex-col gap-6 w-full mx-auto bg-gray-200/20"
               th:insert="${content}"></main>
 
-        <footer class="footer footer-center p-4 mt-auto bg-white border-t border-slate-200 text-slate-400 text-xs">
-            <aside>
-                <p>Bolão Copa 2026 — v1.0.0
-                    <span class="badge badge-info badge-xs badge-outline ml-1">BETA</span>
+        <footer class="footer footer-center mt-auto border-t border-base-300 bg-base-100 px-6 py-4 text-base-content/60">
+            <aside class="flex flex-col items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold">Bolão Copa 2026</span>
+                    <span class="badge badge-primary badge-sm">v1.0.0</span>
+                    <span class="badge badge-warning badge-sm">BETA</span>
+                </div>
+                <p class="text-xs opacity-70">
+                    © 2026 Grupo 7 • Sistema de gerenciamento do Bolão da Copa do Mundo
                 </p>
             </aside>
         </footer>
@@ -94,20 +153,24 @@
 
     <div class="drawer-side z-40">
         <label for="sidebar-toggle" aria-label="Fechar menu" class="drawer-overlay"></label>
-        <aside id="sidebar" class="bg-white w-64 min-h-full border-r border-slate-200 flex flex-col shadow-sm">
 
-            <div class="p-4 border-b border-slate-200">
+        <aside id="sidebar"
+               class="bg-white w-64 min-h-full border-r border-green-100 flex flex-col shadow-lg">
+
+            <!-- Logo -->
+            <div class="p-4 border-b border-green-100">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-slate-200 to-slate-300 border border-slate-300 flex items-center justify-center">
-                        <i data-lucide="trophy" class="w-5 h-5 text-slate-700"></i>
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-green-600 to-green-700 shadow-md flex items-center justify-center">
+                        <i data-lucide="trophy" class="w-5 h-5 text-amber-300"></i>
                     </div>
                     <div class="min-w-0">
-                        <p class="font-bold text-sm leading-tight">BOLÃO</p>
-                        <p class="text-slate-700 text-xs font-semibold">COPA 2026</p>
+                        <p class="font-extrabold text-sm leading-tight text-green-700">BOLÃO</p>
+                        <p class="text-amber-500 text-xs font-bold tracking-wide">COPA 2026</p>
                     </div>
                 </div>
             </div>
 
+            <!-- Menu -->
             <nav class="flex-1 p-3">
                 <ul class="menu menu-sm gap-1 p-0">
                     <li>
@@ -142,43 +205,232 @@
                             Usuários
                         </a>
                     </li>
-                     <li>
+                    <li>
                         <a th:href="@{/admin/selecoes}"
                            class="sidebar-link"
                            th:classappend="${activeSection == 'selecoes'} ? 'active' : _">
-                            <i data-lucide="target" class="w-4 h-4 shrink-0"></i>
+                            <i data-lucide="flag" class="w-4 h-4 shrink-0"></i>
                             Seleções
                         </a>
                     </li>
                     <li>
-                        <span class="sidebar-link disabled" title="Em breve">
+                        <a th:href="@{/admin/ranking}"
+                           class="sidebar-link"
+                           th:classappend="${activeSection == 'ranking'} ? 'active' : _">
                             <i data-lucide="trophy" class="w-4 h-4 shrink-0"></i>
                             Ranking
-                            <span class="badge badge-xs badge-ghost ml-auto">breve</span>
-                        </span>
+                        </a>
                     </li>
                 </ul>
             </nav>
 
-            <div class="p-4 border-t border-slate-200">
-                <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-100 border border-slate-300">
+            <!-- Usuário -->
+            <div class="p-4 border-t border-green-100">
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
                     <div class="avatar placeholder">
-                        <div class="bg-slate-200 text-slate-700 rounded-full w-9 font-bold text-xs border border-slate-300">
-                            <span th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">AD</span>
+                        <div class="bg-green-600 text-white rounded-full w-9 font-bold text-xs">
+                            <span th:text="${usuarioAtual != null ? #strings.toUpperCase(#strings.substring(usuarioAtual.nome(), 0, 2)) : #strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">
+                                AD
+                            </span>
                         </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">Administrador</p>
-                        <p class="text-xs text-slate-500 truncate" sec:authentication="name">admin@copa2026.com.br</p>
+                        <p class="text-sm font-semibold truncate text-slate-700"
+                           th:text="${usuarioAtual != null ? usuarioAtual.nome() : 'Administrador'}">
+                            Administrador
+                        </p>
+                        <p class="text-xs text-slate-500 truncate" sec:authentication="name">
+                            admin@copa2026.com.br
+                        </p>
                     </div>
+                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
                 </div>
             </div>
-
         </aside>
     </div>
 </div>
 
-<div class="toast toast-end toast-top z-50" id="toast-container"
+<div id="page-perfil"
+     class="hidden"
+     th:if="${usuarioAtual != null}"
+     th:attr="data-nome=${usuarioAtual.nome()},
+              data-email=${usuarioAtual.email()},
+              data-avatar=${usuarioAtual.avatarUrl()},
+              data-abrir-modal=${abrirModalPerfil}"></div>
+
+<!-- Modal Perfil -->
+<dialog id="modal-perfil" class="modal" th:if="${usuarioAtual != null}">
+    <div class="modal-box max-w-4xl p-0 overflow-hidden bg-white max-h-[90vh] overflow-y-auto">
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-green-700 via-green-600 to-green-500 px-8 py-6 text-white">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <i data-lucide="user-circle" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold">Meu Perfil</h3>
+                    <p class="text-green-100 text-sm">
+                        Atualize seus dados pessoais e informações da conta
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <form id="form-perfil"
+              th:action="@{/admin/perfil}"
+              method="post"
+              enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden"
+                   id="perfil-avatar-url-atual"
+                   name="avatarUrlAtual"
+                   th:value="${usuarioAtual.avatarUrl()}"/>
+
+            <div class="p-6 space-y-6">
+
+                <!-- Avatar -->
+                <div class="flex flex-col items-center gap-4">
+                    <div class="avatar">
+                        <div class="w-28 rounded-full ring ring-green-200 ring-offset-4 ring-offset-white overflow-hidden shadow-lg bg-green-50">
+                            <img id="perfil-preview-avatar"
+                                 th:src="${usuarioAtual.avatarUrl()}"
+                                 alt="Avatar"
+                                 class="w-full h-full object-cover"
+                                 th:classappend="${usuarioAtual.avatarUrl() == null or #strings.isEmpty(usuarioAtual.avatarUrl())} ? 'hidden' : _"/>
+                            <div id="perfil-preview-inicial"
+                                 class="w-full h-full flex items-center justify-center bg-green-100 text-green-700 font-bold text-3xl"
+                                 th:classappend="${usuarioAtual.avatarUrl() != null and !#strings.isEmpty(usuarioAtual.avatarUrl())} ? 'hidden' : _">
+                                <span th:text="${#strings.toUpperCase(#strings.substring(usuarioAtual.nome(), 0, 2))}">
+                                    AD
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="badge badge-success badge-outline">Perfil Ativo</span>
+                </div>
+
+                <!-- Nome -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">Nome</span>
+                    </label>
+                    <label class="input input-bordered flex items-center gap-2 focus-within:border-green-500">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                        <input type="text"
+                               id="perfil-nome"
+                               name="nome"
+                               maxlength="120"
+                               required
+                               th:value="${usuarioAtual.nome()}"
+                               class="grow"/>
+                    </label>
+                </div>
+
+                <!-- Email -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">E-mail</span>
+                    </label>
+                    <label class="input input-bordered flex items-center gap-2 focus-within:border-green-500">
+                        <i data-lucide="mail" class="w-4 h-4 text-slate-400"></i>
+                        <input type="email"
+                               id="perfil-email"
+                               name="email"
+                               maxlength="180"
+                               required
+                               th:value="${usuarioAtual.email()}"
+                               class="grow"/>
+                    </label>
+                </div>
+
+                <!-- Segurança -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-green-600"></i>
+                        <h4 class="font-semibold">Segurança da Conta</h4>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-5">
+                        Preencha os campos abaixo apenas se desejar alterar sua senha.
+                    </p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="perfil-senha-atual"
+                                   class="block text-sm font-medium text-slate-600 mb-2">
+                                Senha Atual
+                            </label>
+                            <input type="password"
+                                   id="perfil-senha-atual"
+                                   name="senhaAtual"
+                                   autocomplete="current-password"
+                                   class="input input-bordered w-full focus:input-success"/>
+                        </div>
+                        <div>
+                            <label for="perfil-nova-senha"
+                                   class="block text-sm font-medium text-slate-600 mb-2">
+                                Nova Senha
+                            </label>
+                            <input type="password"
+                                   id="perfil-nova-senha"
+                                   name="novaSenha"
+                                   minlength="6"
+                                   autocomplete="new-password"
+                                   class="input input-bordered w-full focus:input-success"/>
+                        </div>
+                        <div>
+                            <label for="perfil-confirmar-senha"
+                                   class="block text-sm font-medium text-slate-600 mb-2">
+                                Confirmar Nova Senha
+                            </label>
+                            <input type="password"
+                                   id="perfil-confirmar-senha"
+                                   name="confirmarSenha"
+                                   minlength="6"
+                                   autocomplete="new-password"
+                                   class="input input-bordered w-full focus:input-success"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload -->
+                <div class="bg-green-50 border border-green-100 rounded-2xl p-4">
+                    <label for="perfil-avatar"
+                           class="block text-sm font-semibold text-slate-700 mb-2">
+                        Foto de Perfil
+                    </label>
+                    <input type="file"
+                           id="perfil-avatar"
+                           name="avatar"
+                           accept="image/png,image/jpeg,image/webp,image/gif"
+                           class="file-input file-input-bordered file-input-success w-full"/>
+                    <p class="text-xs text-slate-500 mt-2">
+                        PNG, JPG, WEBP ou GIF • Máximo 2MB
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                <span class="text-xs text-slate-500">Bolão Copa 2026</span>
+                <div class="flex gap-3">
+                    <button type="button" id="btn-cancelar-perfil" class="btn btn-ghost">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success px-8 gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button type="button">Fechar</button>
+    </form>
+</dialog>
+
+<div class="toast toast-end toast-top z-50"
+     id="toast-container"
      th:attr="data-sucesso=${sucesso}, data-erro=${erro}"></div>
 
 </body>
