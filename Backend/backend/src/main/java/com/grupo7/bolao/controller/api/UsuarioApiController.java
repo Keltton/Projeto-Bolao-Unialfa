@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+//CONTROLLER da API direcionamento da rota pra consumo de API voltada ao usuario comum
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioApiController {
@@ -27,7 +28,7 @@ public class UsuarioApiController {
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> excluirMinhaConta(@AuthenticationPrincipal Usuario usuarioLogado) {
-        usuarioService.excluirContaPropria(usuarioLogado.getId());
+        usuarioService.remover(usuarioLogado.getId());
     return ResponseEntity.noContent().build();
 }
 
