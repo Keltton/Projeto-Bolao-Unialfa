@@ -29,6 +29,8 @@ public interface SelecaoRepository extends JpaRepository<Selecao, Long> {
      * @return true se o código já estiver cadastrado, false caso contrário.
      */
     boolean existsByCodigoFifa(String codigoFifa);
+    boolean existsByNomeIgnoreCase(String nome);
+    boolean existsByNomeIgnoreCaseAndIdNot(String nome, Long id);
 
     /**
      * Lista todas as seleções que pertencem a um determinado grupo na primeira fase.
