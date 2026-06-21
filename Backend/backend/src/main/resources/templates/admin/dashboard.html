@@ -15,7 +15,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-sm text-slate-500">Usuários</p>
-                    <p class="text-3xl font-bold mt-1">—</p>
+                    <p class="text-3xl font-bold mt-1" th:text="${dashboard.totalUsuarios}">—</p>
                 </div>
                 <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                     <i data-lucide="users" class="w-5 h-5"></i>
@@ -27,7 +27,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-sm text-slate-500">Palpites</p>
-                    <p class="text-3xl font-bold mt-1">—</p>
+                    <p class="text-3xl font-bold mt-1" th:text="${dashboard.totalPalpites}">—</p>
                 </div>
                 <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
                     <i data-lucide="target" class="w-5 h-5"></i>
@@ -39,7 +39,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-sm text-slate-500">Partidas pendentes</p>
-                    <p class="text-3xl font-bold mt-1">—</p>
+                    <p class="text-3xl font-bold mt-1" th:text="${dashboard.partidasPendentes}">—</p>
                 </div>
                 <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
                     <i data-lucide="swords" class="w-5 h-5"></i>
@@ -51,7 +51,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-sm text-slate-500">Usuários ativos</p>
-                    <p class="text-3xl font-bold mt-1">—</p>
+                    <p class="text-3xl font-bold mt-1" th:text="${dashboard.usuariosAtivos}">—</p>
                 </div>
                 <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
                     <i data-lucide="activity" class="w-5 h-5"></i>
