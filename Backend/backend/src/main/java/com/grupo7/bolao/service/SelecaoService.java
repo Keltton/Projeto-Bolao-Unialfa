@@ -3,6 +3,7 @@ package com.grupo7.bolao.service;
 import com.grupo7.bolao.dto.request.SelecaoRequest;
 import com.grupo7.bolao.dto.response.SelecaoResponse;
 import com.grupo7.bolao.model.Selecao;
+import com.grupo7.bolao.repository.PartidaRepository;
 import com.grupo7.bolao.repository.SelecaoRepository;
 import org.springframework.stereotype.Service;
 
@@ -10,37 +11,44 @@ import java.util.List;
 
 /**
  * Serviço responsável por encapsular as regras de negócio e persistência associadas às Seleções.
- * Realiza validações de unicidade de código FIFA, normalização de dados e listagem com filtros.
+ * Realiza validações de unicidade de nome/código FIFA, normalização de dados e listagem com filtros.
  */
 @Service
 public class SelecaoService {
     private final SelecaoRepository selecaoRepository;
+    private final PartidaRepository partidaRepository;
 
     /**
      * Construtor da classe SelecaoService com injeção de dependências.
      *
      * @param selecaoRepository Repositório de seleções.
      */
-    public SelecaoService(SelecaoRepository selecaoRepository) {
+    public SelecaoService(SelecaoRepository selecaoRepository, PartidaRepository partidaRepository) {
         this.selecaoRepository = selecaoRepository;
+        this.partidaRepository = partidaRepository;
     }
 
     /**
-     * Cadastra uma nova seleção no banco de dados após normalizar e validar a unicidade do código FIFA.
+     * Cadastra uma nova seleção no banco de dados após normalizar e validar a unicidade do nome e código FIFA.
      *
      * @param request DTO contendo os dados da seleção a ser cadastrada.
      * @return DTO contendo os dados da seleção criada.
      * @throws IllegalArgumentException Se o código FIFA já estiver em uso.
      */
     public SelecaoResponse cadastrarSelecao(SelecaoRequest request) {
+        String nome = normalizarNome(request.nome());
         String codigoFifa = normalizarCodigoFifa(request.codigoFifa());
+
+        if (selecaoRepository.existsByNomeIgnoreCase(nome)) {
+            throw new IllegalArgumentException("Ja existe uma selecao com esse nome");
+        }
 
         if (selecaoRepository.existsByCodigoFifa(codigoFifa)) {
             throw new IllegalArgumentException("Ja existe uma selecao com esse codigo FIFA");
         }
 
         Selecao selecao = new Selecao();
-        selecao.setNome(request.nome());
+        selecao.setNome(nome);
         selecao.setCodigoFifa(codigoFifa);
         selecao.setBandeiraUrl(request.bandeiraUrl());
         selecao.setGrupo(request.grupo());
@@ -140,14 +148,19 @@ public class SelecaoService {
      */
     public SelecaoResponse atualizarSelecao(Long id, SelecaoRequest request) {
         Selecao selecao = buscarEntidadePorId(id);
+        String nome = normalizarNome(request.nome());
         String codigoFifa = normalizarCodigoFifa(request.codigoFifa());
+
+        if (selecaoRepository.existsByNomeIgnoreCaseAndIdNot(nome, id)) {
+            throw new IllegalArgumentException("Ja existe uma selecao com esse nome");
+        }
 
         if (!selecao.getCodigoFifa().equals(codigoFifa)
                 && selecaoRepository.existsByCodigoFifa(codigoFifa)) {
             throw new IllegalArgumentException("Ja existe uma selecao com esse codigo FIFA");
         }
 
-        selecao.setNome(request.nome());
+        selecao.setNome(nome);
         selecao.setCodigoFifa(codigoFifa);
         selecao.setBandeiraUrl(request.bandeiraUrl());
         selecao.setGrupo(request.grupo());
@@ -163,6 +176,11 @@ public class SelecaoService {
      */
     public void remover(Long id) {
         Selecao selecao = buscarEntidadePorId(id);
+
+        if (partidaRepository.existsBySelecaoAIdOrSelecaoBId(id, id)) {
+            throw new IllegalArgumentException("Nao e possivel excluir selecao vinculada a partidas cadastradas.");
+        }
+
         selecaoRepository.delete(selecao);
     }
 
@@ -171,6 +189,13 @@ public class SelecaoService {
      */
     private String normalizarCodigoFifa(String codigoFifa) {
         return codigoFifa.trim().toUpperCase();
+    }
+
+    /**
+     * Auxiliar para remover espaços extras do nome antes de validar e salvar.
+     */
+    private String normalizarNome(String nome) {
+        return nome.trim();
     }
 
     /**

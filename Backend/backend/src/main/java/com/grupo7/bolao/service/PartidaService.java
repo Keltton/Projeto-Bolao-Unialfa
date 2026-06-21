@@ -55,6 +55,7 @@ public class PartidaService {
     public PartidaResponse cadastrarPartida(PartidaRequest request) {
         validarSelecoesDiferentes(request.selecaoAId(), request.selecaoBId());
         validarDataEStatus(request);
+        validarConflitoHorarioCadastro(request);
 
         Selecao selecaoA = selecaoService.buscarEntidadePorId(request.selecaoAId());
         Selecao selecaoB = selecaoService.buscarEntidadePorId(request.selecaoBId());
@@ -182,6 +183,7 @@ public class PartidaService {
     public PartidaResponse atualizarPartida(Long id, PartidaRequest request) {
         validarSelecoesDiferentes(request.selecaoAId(), request.selecaoBId());
         validarDataEStatus(request);
+        validarConflitoHorarioAtualizacao(id, request);
 
         Partida partida = buscarEntidadePorId(id);
         Selecao selecaoA = selecaoService.buscarEntidadePorId(request.selecaoAId());
@@ -275,6 +277,31 @@ public class PartidaService {
             if (request.status() != StatusPartida.ENCERRADA) {
                 throw new IllegalArgumentException("Partidas no passado devem ser cadastradas com o status ENCERRADA.");
             }
+        }
+    }
+
+    /**
+     * Garante que uma seleção não participe de duas partidas no mesmo horário.
+     */
+    private void validarConflitoHorarioCadastro(PartidaRequest request) {
+        if (partidaRepository.existsConflitoHorario(
+                request.selecaoAId(),
+                request.selecaoBId(),
+                request.dataHora())) {
+            throw new IllegalArgumentException("Uma das selecoes ja possui partida cadastrada neste mesmo horario.");
+        }
+    }
+
+    /**
+     * Garante que uma atualização não gere conflito de horário com outra partida.
+     */
+    private void validarConflitoHorarioAtualizacao(Long partidaId, PartidaRequest request) {
+        if (partidaRepository.existsConflitoHorarioIgnorandoPartida(
+                partidaId,
+                request.selecaoAId(),
+                request.selecaoBId(),
+                request.dataHora())) {
+            throw new IllegalArgumentException("Uma das selecoes ja possui partida cadastrada neste mesmo horario.");
         }
     }
 

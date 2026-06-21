@@ -4,6 +4,8 @@ import com.grupo7.bolao.enums.FasePartida;
 import com.grupo7.bolao.enums.StatusPartida;
 import com.grupo7.bolao.model.Partida;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,4 +69,41 @@ public interface PartidaRepository extends JpaRepository<Partida, Long> {
      * @return Lista de partidas com a seleção.
      */
     List<Partida> findBySelecaoAIdOrSelecaoBId(Long selecaoAId, Long selecaoBId);
+    boolean existsBySelecaoAIdOrSelecaoBId(Long selecaoAId, Long selecaoBId);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END
+            FROM Partida p
+            WHERE p.dataHora = :dataHora
+              AND (
+                  p.selecaoA.id = :selecaoAId
+                  OR p.selecaoB.id = :selecaoAId
+                  OR p.selecaoA.id = :selecaoBId
+                  OR p.selecaoB.id = :selecaoBId
+              )
+            """)
+    boolean existsConflitoHorario(
+            @Param("selecaoAId") Long selecaoAId,
+            @Param("selecaoBId") Long selecaoBId,
+            @Param("dataHora") LocalDateTime dataHora
+    );
+
+    @Query("""
+            SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END
+            FROM Partida p
+            WHERE p.id <> :partidaId
+              AND p.dataHora = :dataHora
+              AND (
+                  p.selecaoA.id = :selecaoAId
+                  OR p.selecaoB.id = :selecaoAId
+                  OR p.selecaoA.id = :selecaoBId
+                  OR p.selecaoB.id = :selecaoBId
+              )
+            """)
+    boolean existsConflitoHorarioIgnorandoPartida(
+            @Param("partidaId") Long partidaId,
+            @Param("selecaoAId") Long selecaoAId,
+            @Param("selecaoBId") Long selecaoBId,
+            @Param("dataHora") LocalDateTime dataHora
+    );
 }
