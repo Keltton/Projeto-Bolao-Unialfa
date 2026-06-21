@@ -43,7 +43,7 @@ export default function Home() {
       const euNoRanking = rankingData.ranking.find((r) => r.id === user?.id);
       setPontuacao(euNoRanking?.pontuacaoTotal ?? user?.pontuacaoTotal ?? 0);
     } catch (error) {
-      console.error(getApiErrorMessage("Erro ao carregar home."));
+      console.error(getApiErrorMessage(error, "Erro ao carregar home."));
     } finally {
       setLoading(false);
     }

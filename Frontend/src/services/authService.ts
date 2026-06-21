@@ -1,9 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
+import { invalidateSession, TOKEN_KEY, USER_KEY, getStoredToken, getStoredUserJson } from './authSession';
 import { LoginResponse, Usuario } from '@/types/Usuario';
-
-const TOKEN_KEY = '@BolaoCopa:token';
-const USER_KEY = '@BolaoCopa:usuario';
 
 export async function login(email: string, senha: string): Promise<LoginResponse> {
   const { data } = await api.post<LoginResponse>('/api/auth/login', { email, senha });
@@ -15,7 +13,7 @@ export async function login(email: string, senha: string): Promise<LoginResponse
 }
 
 export async function logout(): Promise<void> {
-  await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+  await invalidateSession();
 }
 
 export async function updateStoredUser(usuario: Usuario): Promise<void> {
@@ -23,11 +21,11 @@ export async function updateStoredUser(usuario: Usuario): Promise<void> {
 }
 
 export async function getStoredSession(): Promise<LoginResponse | null> {
-  const [[, token], [, userJson]] = await AsyncStorage.multiGet([TOKEN_KEY, USER_KEY]);
+  const token = await getStoredToken();
+  const userJson = await getStoredUserJson();
   if (!token || !userJson) return null;
   return { token, usuario: JSON.parse(userJson) };
 }
-
 
 export async function register(nome: string, email: string, senha: string): Promise<Usuario> {
   const { data } = await api.post<Usuario>('/api/auth/register', {

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {Text,TextInput,TouchableOpacity,ImageBackground,View,SafeAreaView,StatusBar,ActivityIndicator} from "react-native";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,7 +9,7 @@ import { styles } from "@/styles/auth/loginStyle";
 
 export default function Login() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, isAuthenticated, isLoading } = useAuth();
   const theme = Colors.dark;
 
   const [email, setEmail] = useState("");
@@ -17,6 +17,18 @@ export default function Login() {
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.background }}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   const clearError = () => {
     if (errorMessage) setErrorMessage(null);

@@ -1,19 +1,33 @@
-import { Tabs } from "expo-router";
-import { Platform } from "react-native";
+import { Redirect, Tabs } from "expo-router";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function TabsLayout() {
-  const themeColors = Colors.dark; // Forçar visual escuro premium conforme mockups
+  const themeColors = Colors.dark;
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: themeColors.background }}>
+        <ActivityIndicator size="large" color={themeColors.primary} />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href="/auth/login" />;
+  }
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: themeColors.secondary, // Amarelo Copa
-        tabBarInactiveTintColor: themeColors.textSecondary, // Cinza/Verde fosco
+        tabBarActiveTintColor: themeColors.secondary,
+        tabBarInactiveTintColor: themeColors.textSecondary,
         tabBarStyle: {
-          backgroundColor: themeColors.backgroundElement, // Azul estádio escuro card
+          backgroundColor: themeColors.backgroundElement,
           borderTopColor: themeColors.border,
           height: Platform.OS === 'ios' ? 88 : 68,
           paddingBottom: Platform.OS === 'ios' ? 30 : 10,

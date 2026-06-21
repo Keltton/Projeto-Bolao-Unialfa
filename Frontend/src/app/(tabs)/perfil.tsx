@@ -6,7 +6,7 @@ import { resolveImageUrl } from "@/util/imageUrl";
 import { toastError, toastSuccess } from "@/util/toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { styles } from "@/styles/tabs/perfilStyle";
 
@@ -23,6 +23,12 @@ export default function Perfil() {
   const [confirmacao, setConfirmacao] = useState<"logout" | "delete" | null>(null);
 
   const avatarUri = resolveImageUrl(user?.avatarUrl);
+
+  useEffect(() => {
+    if (user && !isEditing) {
+      setEditNome(user.nome);
+    }
+  }, [user, isEditing]);
 
   const handleSaveNome = async () => {
     if (!editNome.trim()) {

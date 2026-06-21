@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as authService from '@/services/authService';
+import { registerSessionExpiredCallback } from '@/services/authSession';
 import { Usuario } from '@/types/Usuario';
 
 type AuthContextData = {
@@ -17,8 +18,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Usuario | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Ao abrir o app, restaura sessão salva
   useEffect(() => {
+    registerSessionExpiredCallback(() => setUser(null));
+
     authService.getStoredSession()
       .then((session) => setUser(session?.usuario ?? null))
       .finally(() => setIsLoading(false));
@@ -34,7 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }
 
-  
   async function updateUser(usuario: Usuario) {
     await authService.updateStoredUser(usuario);
     setUser(usuario);

@@ -1,10 +1,7 @@
 import axios, { AxiosError } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { ErroResponse } from '@/types/Usuario';
-
-const TOKEN_KEY = '@BolaoCopa:token';
-const USER_KEY = '@BolaoCopa:usuario';
+import { invalidateSession, getStoredToken } from './authSession';
 
 export const API_URL =
   process.env.EXPO_PUBLIC_API_URL ??
@@ -26,7 +23,7 @@ api.interceptors.request.use(
     const isAuthRoute = config.url?.startsWith('/api/auth/');
 
     if (!isAuthRoute) {
-      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      const token = await getStoredToken();
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -40,8 +37,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+    if (error.response?.status === 401) {
+      await invalidateSession();
     }
     return Promise.reject(error);
   }

@@ -1,5 +1,5 @@
 export type PerfilUsuario = 'USUARIO' | 'ADMIN';
-export type StatusUsuario = 'ATIVO' | 'BLOQUEADO';
+export type StatusUsuario = 'ATIVO' | 'BLOQUEADO' | 'EXCLUIDO';
 
 export interface Usuario {
   id: number;
