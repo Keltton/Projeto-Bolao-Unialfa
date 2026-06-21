@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
-import { styles } from "./loginStyle";
+import { styles } from "@/styles/auth/loginStyle";
 
 export default function Login() {
   const router = useRouter();

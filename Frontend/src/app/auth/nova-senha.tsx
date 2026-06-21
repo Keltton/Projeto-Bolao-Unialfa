@@ -3,7 +3,7 @@ import {Text,TextInput, TouchableOpacity, ImageBackground, View, SafeAreaView, S
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
-import { styles } from "./nova-senhaStyle";
+import { styles } from "@/styles/auth/nova-senhaStyle";
 
 
 export default function NovaSenha() {

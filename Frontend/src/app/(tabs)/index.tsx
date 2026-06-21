@@ -12,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Image, ImageStyle, SafeAreaView, ScrollView, StyleProp, Text, TouchableOpacity, View } from "react-native";
-import { styles } from "./indexStyle";
+import { styles } from "@/styles/tabs/indexStyle";
 
 export default function Home() {
   const router = useRouter();

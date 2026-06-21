@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, Image, ImageStyle, SafeAreaView, StyleProp, Text, View } from "react-native";
-import { styles } from "./rankingStyle";
+import { styles } from "@/styles/tabs/rankingStyle";
 
 export default function Ranking() {
   const theme = Colors.dark;

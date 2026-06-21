@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { styles } from "./partidaStyle";
+import { styles } from "@/styles/tabs/partidaStyle";
 
 const FASES: Array<{ label: string; value: "TODAS" | FasePartida }> = [
   { label: "TODAS", value: "TODAS" },

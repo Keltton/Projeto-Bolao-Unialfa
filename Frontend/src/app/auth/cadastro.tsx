@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, ImageBackground, SafeAreaView, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { styles } from "./cadastroStyle";
+import { styles } from "@/styles/auth/cadastroStyle";
 
 export default function Cadastro() {
   const router = useRouter();

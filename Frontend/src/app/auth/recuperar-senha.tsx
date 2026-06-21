@@ -3,7 +3,7 @@ import { Text, TextInput, TouchableOpacity, ImageBackground, View, SafeAreaView,
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
-import { styles } from "./recuperar-senhaStyle";
+import { styles } from "@/styles/auth/recuperar-senhaStyle";
 
 export default function RecuperarSenha() {
   const router = useRouter();

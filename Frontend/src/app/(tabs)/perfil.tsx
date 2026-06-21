@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { styles } from "./perfilStyle";
+import { styles } from "@/styles/tabs/perfilStyle";
 
 export default function Perfil() {
   const router = useRouter();

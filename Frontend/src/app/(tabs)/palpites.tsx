@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, Image, SafeAreaView, Text, TouchableOpacity, View } from "react-native";
-import { styles } from "./palpiteStyle";
+import { styles } from "@/styles/tabs/palpiteStyle";
 
 function podeEditarPalpite(partida: Partida): boolean {
   if (partida.status !== "AGENDADA") return false;
