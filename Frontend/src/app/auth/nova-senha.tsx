@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import {Text,TextInput, TouchableOpacity, ImageBackground, View, SafeAreaView, StatusBar, Alert, ScrollView } from "react-native";
+import {Text,TextInput, TouchableOpacity, ImageBackground, View, SafeAreaView, StatusBar, Alert, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
@@ -42,11 +42,15 @@ export default function NovaSenha() {
       >
         <View style={[styles.overlay, { backgroundColor: "rgba(9, 20, 33, 0.85)" }]}>
           <SafeAreaView style={styles.safeArea}>
-            <ScrollView
-              contentContainerStyle={styles.scroll}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              style={{ flex: 1 }}
             >
+              <ScrollView
+                contentContainerStyle={styles.scroll}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
               {/* Header Brand */}
               <View style={styles.brandContainer}>
                 <Ionicons name="football" size={56} color={theme.secondary} style={styles.logoIcon} />
@@ -133,7 +137,8 @@ export default function NovaSenha() {
                   </View>
                 </View>
               </View>
-            </ScrollView>
+              </ScrollView>
+            </KeyboardAvoidingView>
           </SafeAreaView>
         </View>
       </ImageBackground>

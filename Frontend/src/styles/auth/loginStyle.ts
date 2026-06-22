@@ -13,8 +13,12 @@ export const styles = StyleSheet.create({
     },
     safeArea: {
       flex: 1,
+    },
+    scroll: {
+      flexGrow: 1,
       justifyContent: "space-between",
       paddingHorizontal: 24,
+      paddingVertical: 20,
     },
     brandContainer: {
       alignItems: "center",

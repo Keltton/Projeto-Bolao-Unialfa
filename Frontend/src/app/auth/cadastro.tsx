@@ -5,7 +5,7 @@ import { toastError, toastSuccess } from "@/util/toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, ImageBackground, SafeAreaView, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ImageBackground, SafeAreaView, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
 import { styles } from "@/styles/auth/cadastroStyle";
 
 export default function Cadastro() {
@@ -73,11 +73,15 @@ export default function Cadastro() {
       >
         <View style={[styles.overlay, { backgroundColor: "rgba(9, 20, 33, 0.85)" }]}>
           <SafeAreaView style={styles.safeArea}>
-            <ScrollView
-              contentContainerStyle={styles.scroll}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              style={{ flex: 1 }}
             >
+              <ScrollView
+                contentContainerStyle={styles.scroll}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
               {/* Header Brand */}
               <View style={styles.brandContainer}>
                 <Ionicons name="football" size={56} color={theme.secondary} style={styles.logoIcon} />
@@ -229,7 +233,8 @@ export default function Cadastro() {
                   </View>
                 </View>
               </View>
-            </ScrollView>
+              </ScrollView>
+            </KeyboardAvoidingView>
           </SafeAreaView>
         </View>
       </ImageBackground>
