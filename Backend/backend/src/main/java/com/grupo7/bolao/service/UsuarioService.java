@@ -9,6 +9,7 @@ import com.grupo7.bolao.enums.StatusUsuario;
 import com.grupo7.bolao.model.Usuario;
 import com.grupo7.bolao.repository.PalpiteRepository;
 import com.grupo7.bolao.repository.UsuarioRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -170,10 +171,11 @@ public class UsuarioService {
         usuarioRepository.delete(usuario);
     }
 
+    @Transactional
     public void excluirContaPropria(Long id) {
         Usuario usuario = buscarEntidadePorId(id);
-        palpiteRepository.deleteByUsuarioId(id); // apaga os palpites primeiro
-        usuarioRepository.delete(usuario);        // aí apaga o usuário
+        palpiteRepository.deleteByUsuarioId(id);
+        usuarioRepository.delete(usuario);
     }
 
     //pra não precisar ficar fazendo esse monte de código toda hora, foi feito o toResponse, ai podemos chama-lo sempre que precisamos
