@@ -52,20 +52,20 @@ Para garantir performance nas buscas e recálculo, crie índices para as seguint
 
 ### 1. Configurar o Banco de Dados
 
-1. Certifique-se de que o servidor do MySQL está ativo na sua máquina.
+1. Certifique-se de que o servidor do MySQL/MariaDB está ativo na sua máquina.
 2. Crie uma base de dados vazia para o bolão:
    ```sql
-   CREATE DATABASE bolao_copa_2026;
+   CREATE DATABASE bolao_grupo7;
    ```
-3. No arquivo `src/main/resources/application.properties`, configure as credenciais do banco e a chave secreta do JWT:
+3. O arquivo `src/main/resources/application.properties` já vem configurado para se conectar à porta `3306` e ao banco `bolao_grupo7` com usuário `root` e senha vazia por padrão. Caso precise alterar, ajuste as propriedades:
    ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3305/bolao_copa_2026?useSSL=false&serverTimezone=UTC
+   spring.datasource.url=jdbc:mysql://localhost:3306/bolao_grupo7?useSSL=false&serverTimezone=America/Sao_Paulo&allowPublicKeyRetrieval=true
    spring.datasource.username=seu_usuario
    spring.datasource.password=sua_senha
-   
-   # Chave de segurança para assinatura do JWT (mínimo 256 bits)
-   jwt.secret=sua_chave_secreta_com_muitos_caracteres_e_segura_aqui
    ```
+4. **Usuário Administrador Pré-registrado**: Para entrar no sistema, já existe um administrador cadastrado no banco:
+   - **E-mail:** `daniel@admin.com`
+   - **Senha:** `admin123`
 
 ---
 

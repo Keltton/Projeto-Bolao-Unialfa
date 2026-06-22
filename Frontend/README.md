@@ -12,6 +12,7 @@ Este diretório contém o código-fonte da aplicação móvel do **Bolão Copa d
 *   **Roteamento:** Expo Router (File-based Routing)
 *   **Comunicação API:** Axios com interceptor para autenticação JWT
 *   **Persistência Local:** AsyncStorage (gerenciamento leve de token de sessão)
+*   **Responsividade Móvel:** Ajuste automático com `KeyboardAvoidingView` e `ScrollView` em todas as telas de autenticação para evitar que o teclado oculte os campos de texto.
 
 ---
 
