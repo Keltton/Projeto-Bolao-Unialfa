@@ -7,6 +7,7 @@ import com.grupo7.bolao.dto.response.UsuarioResponse;
 import com.grupo7.bolao.enums.PerfilUsuario;
 import com.grupo7.bolao.enums.StatusUsuario;
 import com.grupo7.bolao.model.Usuario;
+import com.grupo7.bolao.repository.PalpiteRepository;
 import com.grupo7.bolao.repository.UsuarioRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -23,11 +24,13 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PalpiteRepository palpiteRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioService(UsuarioRepository usuarioRepository, PalpiteRepository palpiteRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.palpiteRepository = palpiteRepository;
     }
 
     //pega o ranking por pontos e faz a paginação dos dados
@@ -167,6 +170,11 @@ public class UsuarioService {
         usuarioRepository.delete(usuario);
     }
 
+    public void excluirContaPropria(Long id) {
+        Usuario usuario = buscarEntidadePorId(id);
+        palpiteRepository.deleteByUsuarioId(id); // apaga os palpites primeiro
+        usuarioRepository.delete(usuario);        // aí apaga o usuário
+    }
 
     //pra não precisar ficar fazendo esse monte de código toda hora, foi feito o toResponse, ai podemos chama-lo sempre que precisamos
     private UsuarioResponse toResponse(Usuario usuario) {

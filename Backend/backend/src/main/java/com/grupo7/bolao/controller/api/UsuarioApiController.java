@@ -27,9 +27,9 @@ public class UsuarioApiController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> excluirMinhaConta(@AuthenticationPrincipal Usuario usuarioLogado) {
-        usuarioService.remover(usuarioLogado.getId());
-    return ResponseEntity.noContent().build();
-}
+    public ResponseEntity<Void> remover(@AuthenticationPrincipal Usuario usuarioLogado) {
+        usuarioService.excluirContaPropria(usuarioLogado.getId());
+        return ResponseEntity.noContent().build();
+    }
 
 }

@@ -17,6 +17,7 @@ public interface PalpiteRepository extends JpaRepository<Palpite, Long> {
     List<Palpite> findByCriterioPontuacaoOrderByCriadoEmDesc(CriterioPontuacao criterioPontuacao);
     List<Palpite> findByPartidaIdAndCriterioPontuacaoOrderByCriadoEmDesc(Long partidaId, CriterioPontuacao criterioPontuacao);
     Optional<Palpite> findByIdAndUsuarioId(Long id, Long usuarioId);
+    void deleteByUsuarioId(Long usuarioId);
     boolean existsByUsuarioIdAndPartidaId(Long usuarioId, Long partidaId);
     boolean existsByPartidaId(Long partidaId);
 
