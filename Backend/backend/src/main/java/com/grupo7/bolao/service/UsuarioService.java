@@ -8,6 +8,7 @@ import com.grupo7.bolao.enums.PerfilUsuario;
 import com.grupo7.bolao.enums.StatusUsuario;
 import com.grupo7.bolao.model.Usuario;
 import com.grupo7.bolao.repository.PalpiteRepository;
+import com.grupo7.bolao.repository.TokenRecuperacaoSenhaRepository;
 import com.grupo7.bolao.repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -27,11 +28,13 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final PalpiteRepository palpiteRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenRecuperacaoSenhaRepository tokenRecuperacaoSenhaRepository;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, PalpiteRepository palpiteRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioService(UsuarioRepository usuarioRepository, PalpiteRepository palpiteRepository, PasswordEncoder passwordEncoder, TokenRecuperacaoSenhaRepository tokenRecuperacaoSenhaRepository) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.palpiteRepository = palpiteRepository;
+        this.tokenRecuperacaoSenhaRepository = tokenRecuperacaoSenhaRepository;
     }
 
     //pega o ranking por pontos e faz a paginação dos dados
@@ -175,6 +178,7 @@ public class UsuarioService {
     public void excluirContaPropria(Long id) {
         Usuario usuario = buscarEntidadePorId(id);
         palpiteRepository.deleteByUsuarioId(id);
+        tokenRecuperacaoSenhaRepository.deleteByUsuarioId(id);
         usuarioRepository.delete(usuario);
     }
 
