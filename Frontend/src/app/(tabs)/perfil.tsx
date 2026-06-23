@@ -5,9 +5,17 @@ import { editarPerfil, excluirMinhaConta } from "@/services/usuarioService";
 import { resolveImageUrl } from "@/util/imageUrl";
 import { toastError, toastSuccess } from "@/util/toast";
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  SafeAreaView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { styles } from "@/styles/tabs/perfilStyle";
 
 export default function Perfil() {
@@ -20,7 +28,9 @@ export default function Perfil() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [confirmacao, setConfirmacao] = useState<"logout" | "delete" | null>(null);
+  const [confirmacao, setConfirmacao] = useState<"logout" | "delete" | null>(
+    null
+  );
 
   const avatarUri = resolveImageUrl(user?.avatarUrl);
 
@@ -37,6 +47,7 @@ export default function Perfil() {
     }
 
     setSaving(true);
+
     try {
       const usuarioAtualizado = await editarPerfil({ nome: editNome.trim() });
       await updateUser(usuarioAtualizado);
@@ -51,6 +62,7 @@ export default function Perfil() {
 
   const executarLogout = async () => {
     setLoggingOut(true);
+
     try {
       await signOut();
       router.replace("/auth/login");
@@ -64,6 +76,7 @@ export default function Perfil() {
 
   const executarExclusao = async () => {
     setDeleting(true);
+
     try {
       await excluirMinhaConta();
       await signOut();
@@ -78,12 +91,63 @@ export default function Perfil() {
   };
 
   if (!isAuthenticated) {
-  return <Redirect href="/auth/login" />;
-}
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Perfil
+          </Text>
+        </View>
+
+        <View style={styles.centerContent}>
+          <Ionicons
+            name="person-circle-outline"
+            size={54}
+            color={theme.textSecondary}
+          />
+
+          <Text
+            style={[
+              styles.footerText,
+              {
+                color: theme.textSecondary,
+                textAlign: "center",
+                marginTop: 16,
+                marginHorizontal: 24,
+              },
+            ]}
+          >
+            Entre na sua conta para acessar seu perfil, editar seus dados e
+            acompanhar sua pontuação.
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.menuItem,
+              {
+                borderColor: theme.primary,
+                marginTop: 24,
+                justifyContent: "center",
+              },
+            ]}
+            onPress={() => router.push("/auth/login")}
+          >
+            <Text style={[styles.menuText, { color: theme.primary }]}>
+              Entrar para acessar perfil
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!user) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={theme.primary} />
         </View>
@@ -94,7 +158,9 @@ export default function Perfil() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Meu Perfil</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          Meu Perfil
+        </Text>
       </View>
 
       <View style={styles.profileCard}>
@@ -105,7 +171,11 @@ export default function Perfil() {
             <View
               style={[
                 styles.avatar,
-                { backgroundColor: theme.border, justifyContent: "center", alignItems: "center" },
+                {
+                  backgroundColor: theme.border,
+                  justifyContent: "center",
+                  alignItems: "center",
+                },
               ]}
             >
               <Ionicons name="person" size={36} color={theme.textSecondary} />
@@ -120,14 +190,22 @@ export default function Perfil() {
               onChangeText={setEditNome}
               style={[
                 styles.input,
-                { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement },
+                {
+                  color: theme.text,
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundElement,
+                },
               ]}
               autoFocus
               editable={!saving}
             />
+
             <TouchableOpacity
               onPress={handleSaveNome}
-              style={[styles.saveBtn, { backgroundColor: theme.primary, opacity: saving ? 0.7 : 1 }]}
+              style={[
+                styles.saveBtn,
+                { backgroundColor: theme.primary, opacity: saving ? 0.7 : 1 },
+              ]}
               disabled={saving}
             >
               {saving ? (
@@ -136,6 +214,7 @@ export default function Perfil() {
                 <Ionicons name="checkmark" size={20} color={theme.background} />
               )}
             </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => {
                 setEditNome(user.nome);
@@ -149,7 +228,10 @@ export default function Perfil() {
           </View>
         ) : (
           <View style={styles.nameRow}>
-            <Text style={[styles.nameText, { color: theme.text }]}>{user.nome}</Text>
+            <Text style={[styles.nameText, { color: theme.text }]}>
+              {user.nome}
+            </Text>
+
             <TouchableOpacity
               onPress={() => {
                 setEditNome(user.nome);
@@ -161,12 +243,15 @@ export default function Perfil() {
           </View>
         )}
 
-        <Text style={[styles.emailText, { color: theme.textSecondary }]}>{user.email}</Text>
+        <Text style={[styles.emailText, { color: theme.textSecondary }]}>
+          {user.email}
+        </Text>
 
         <View style={styles.statsRow}>
           <Text style={[styles.statMini, { color: theme.primary }]}>
             {user.pontuacaoTotal} pts
           </Text>
+
           <Text style={[styles.statMini, { color: theme.textSecondary }]}>
             {user.placaresExatos} exatos
           </Text>
@@ -175,50 +260,95 @@ export default function Perfil() {
 
       <View style={styles.menuContainer}>
         <TouchableOpacity
-          style={[styles.menuItem, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+          style={[
+            styles.menuItem,
+            {
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.border,
+            },
+          ]}
           onPress={() => setConfirmacao("logout")}
           disabled={loggingOut || deleting}
         >
           <View style={styles.menuLeft}>
             <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-            <Text style={[styles.menuText, { color: "#FF3B30" }]}>Encerrar Sessão</Text>
+            <Text style={[styles.menuText, { color: "#FF3B30" }]}>
+              Encerrar Sessão
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={theme.textSecondary}
+          />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.menuItem, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+          style={[
+            styles.menuItem,
+            {
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.border,
+            },
+          ]}
           onPress={() => setConfirmacao("delete")}
           disabled={loggingOut || deleting}
         >
           <View style={styles.menuLeft}>
             <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-            <Text style={[styles.menuText, { color: "#FF3B30" }]}>Excluir Minha Conta</Text>
+            <Text style={[styles.menuText, { color: "#FF3B30" }]}>
+              Excluir Minha Conta
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={theme.textSecondary}
+          />
         </TouchableOpacity>
       </View>
 
       {confirmacao && (
-        <View style={[styles.confirmBox, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+        <View
+          style={[
+            styles.confirmBox,
+            {
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.border,
+            },
+          ]}
+        >
           <Text style={[styles.confirmTitle, { color: theme.text }]}>
             {confirmacao === "logout" ? "Encerrar sessão?" : "Excluir conta?"}
           </Text>
+
           <Text style={[styles.confirmMessage, { color: theme.textSecondary }]}>
             {confirmacao === "logout"
               ? "Você precisará fazer login novamente."
               : "Esta ação é permanente. Seus palpites serão removidos."}
           </Text>
+
           <View style={styles.confirmActions}>
             <TouchableOpacity
               style={[styles.confirmBtn, { borderColor: theme.border }]}
               onPress={() => setConfirmacao(null)}
               disabled={loggingOut || deleting}
             >
-              <Text style={{ color: theme.text, fontWeight: "600" }}>Cancelar</Text>
+              <Text style={{ color: theme.text, fontWeight: "600" }}>
+                Cancelar
+              </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={[styles.confirmBtn, { backgroundColor: "#FF3B30", borderColor: "#FF3B30" }]}
+              style={[
+                styles.confirmBtn,
+                {
+                  backgroundColor: "#FF3B30",
+                  borderColor: "#FF3B30",
+                },
+              ]}
               onPress={confirmacao === "logout" ? executarLogout : executarExclusao}
               disabled={loggingOut || deleting}
             >
@@ -235,7 +365,12 @@ export default function Perfil() {
       )}
 
       <View style={styles.footerBanner} pointerEvents="none">
-        <Ionicons name="shield-checkmark-outline" size={16} color={theme.textSecondary} />
+        <Ionicons
+          name="shield-checkmark-outline"
+          size={16}
+          color={theme.textSecondary}
+        />
+
         <Text style={[styles.footerText, { color: theme.textSecondary }]}>
           Seus dados estão protegidos em conformidade com a LGPD.
         </Text>
