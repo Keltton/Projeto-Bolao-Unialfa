@@ -62,7 +62,7 @@ export default function Login() {
         resizeMode="cover"
       >
         <View style={[styles.overlay, { backgroundColor: "rgba(9, 20, 33, 0.85)" }]}>
-          <SafeAreaView style={styles.safeArea}>
+          <SafeAreaView style={{ flex: 1 }}>
             <TouchableWithoutFeedback>
               
               <KeyboardAvoidingView

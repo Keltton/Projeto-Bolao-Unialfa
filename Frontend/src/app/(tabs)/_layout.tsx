@@ -15,12 +15,17 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarActiveTintColor: themeColors.secondary,
           tabBarInactiveTintColor: themeColors.textSecondary,
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: "600",
+            paddingBottom: Platform.OS === "ios" ? 0 : 4,
+          },
           tabBarStyle: {
             backgroundColor: themeColors.backgroundElement,
             borderTopColor: themeColors.border,
-            height: Platform.OS === "ios" ? 88 : 68,
-            paddingBottom: Platform.OS === "ios" ? 30 : 10,
-            paddingTop: 10,
+            height: Platform.OS === "ios" ? 88 : 72,
+            paddingBottom: Platform.OS === "ios" ? 30 : 8,
+            paddingTop: 8,
           },
         }}
       >
