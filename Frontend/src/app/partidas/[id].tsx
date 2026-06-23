@@ -41,6 +41,14 @@ export default function FazerPalpite() {
   const [golsA, setGolsA] = useState("");
   const [golsB, setGolsB] = useState("");
 
+  const voltar = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/partidas");
+    }
+  };
+
   useEffect(() => {
     if (!partidaId || Number.isNaN(partidaId)) {
       setErrorMessage("Partida inválida.");
@@ -109,7 +117,7 @@ export default function FazerPalpite() {
         setPalpiteExistente(criado);
         toastSuccess("Palpite registrado com sucesso!");
       }
-      router.back();
+      voltar();
     } catch (error) {
       toastError(getApiErrorMessage(error, "Erro ao salvar palpite."));
     } finally {
@@ -134,7 +142,7 @@ export default function FazerPalpite() {
           <Text style={{ color: theme.text }}>
             {errorMessage ?? "Partida não encontrada."}
           </Text>
-          <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <TouchableOpacity onPress={voltar} style={{ marginTop: 16 }}>
             <Text style={{ color: theme.primary }}>Voltar</Text>
           </TouchableOpacity>
         </View>
@@ -151,7 +159,7 @@ export default function FazerPalpite() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={voltar}
           style={[styles.backButton, { backgroundColor: theme.backgroundElement }]}
         >
           <Ionicons name="arrow-back" size={22} color={theme.primary} />
