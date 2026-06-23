@@ -22,7 +22,7 @@ export default function Index() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.primary} />
+        <ActivityIndicator size="large" color={theme.secondary} />
       </View>
     );
   }
@@ -40,7 +40,12 @@ export default function Index() {
         style={styles.container}
         resizeMode="cover"
       >
-        <View style={styles.overlay}>
+        <View
+          style={[
+            styles.overlay,
+            { backgroundColor: "rgba(9, 20, 33, 0.85)" },
+          ]}
+        >
           <SafeAreaView style={styles.safeArea}>
             <View style={styles.content}>
               <View style={styles.brandContainer}>
@@ -63,26 +68,62 @@ export default function Index() {
 
               <View style={styles.actionsContainer}>
                 <TouchableOpacity
-                  style={styles.primaryButton}
+                  style={[
+                    styles.primaryButton,
+                    { backgroundColor: theme.secondary },
+                  ]}
                   activeOpacity={0.85}
                   onPress={() => router.push("/auth/login")}
                 >
-                  <Text style={styles.primaryButtonText}>Entrar</Text>
-                  <Ionicons name="arrow-forward" size={18} color="#091421" />
+                  <Text
+                    style={[
+                      styles.primaryButtonText,
+                      { color: theme.background },
+                    ]}
+                  >
+                    Entrar
+                  </Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={18}
+                    color={theme.background}
+                  />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.secondaryButton}
+                  style={[
+                    styles.secondaryButton,
+                    { borderColor: theme.secondary },
+                  ]}
                   activeOpacity={0.85}
                   onPress={() => router.push("/auth/cadastro")}
                 >
-                  <Text style={styles.secondaryButtonText}>Criar conta</Text>
+                  <Text
+                    style={[
+                      styles.secondaryButtonText,
+                      { color: theme.secondary },
+                    ]}
+                  >
+                    Criar conta
+                  </Text>
                 </TouchableOpacity>
 
                 <View style={styles.dividerContainer}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>ou</Text>
-                  <View style={styles.dividerLine} />
+                  <View
+                    style={[
+                      styles.dividerLine,
+                      { backgroundColor: theme.border },
+                    ]}
+                  />
+                  <Text style={[styles.dividerText, { color: theme.textSecondary }]}>
+                    ou
+                  </Text>
+                  <View
+                    style={[
+                      styles.dividerLine,
+                      { backgroundColor: theme.border },
+                    ]}
+                  />
                 </View>
 
                 <TouchableOpacity
@@ -90,7 +131,12 @@ export default function Index() {
                   activeOpacity={0.85}
                   onPress={() => router.replace("/(tabs)/ranking")}
                 >
-                  <Text style={styles.visitorButtonText}>
+                  <Text
+                    style={[
+                      styles.visitorButtonText,
+                      { color: theme.textSecondary },
+                    ]}
+                  >
                     Continuar como visitante
                   </Text>
                 </TouchableOpacity>
