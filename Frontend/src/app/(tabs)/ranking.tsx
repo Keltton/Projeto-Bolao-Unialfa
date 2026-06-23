@@ -2,17 +2,26 @@ import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { obterRanking } from "@/services/rankingService";
+import { styles } from "@/styles/tabs/rankingStyle";
 import { UsuarioRanking } from "@/types/Usuario";
 import { resolveImageUrl } from "@/util/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, FlatList, Image, ImageStyle, SafeAreaView, StyleProp, Text, View } from "react-native";
-import { styles } from "@/styles/tabs/rankingStyle";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  ImageStyle,
+  SafeAreaView,
+  StyleProp,
+  Text,
+  View,
+} from "react-native";
 
 export default function Ranking() {
   const theme = Colors.dark;
-  const { user, isAuthenticated  } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [ranking, setRanking] = useState<UsuarioRanking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,24 +53,35 @@ export default function Ranking() {
   const terceiro = ranking.find((r) => r.posicao === 3);
   const listaRestante = ranking.filter((r) => r.posicao > 3);
 
+  const isUsuarioLogado = useCallback(
+    (id: number | string) => isAuthenticated && user?.id === id,
+    [isAuthenticated, user?.id]
+  );
+
   const renderAvatar = (
     avatarUrl: string | null | undefined,
     style: StyleProp<ImageStyle>,
     iconSize = 20
   ) => {
     const uri = resolveImageUrl(avatarUrl);
+
     if (!uri) {
       return (
         <View
           style={[
             style,
-            { backgroundColor: theme.border, justifyContent: "center", alignItems: "center" },
+            {
+              backgroundColor: theme.border,
+              justifyContent: "center",
+              alignItems: "center",
+            },
           ]}
         >
           <Ionicons name="person" size={iconSize} color={theme.textSecondary} />
         </View>
       );
     }
+
     return <Image source={{ uri }} style={style} />;
   };
 
@@ -77,6 +97,8 @@ export default function Ranking() {
       return <View style={[styles.podiumSeat, seatStyle]} />;
     }
 
+    const isLogado = isUsuarioLogado(usuario.id);
+
     return (
       <View style={[styles.podiumSeat, seatStyle]}>
         <View
@@ -88,21 +110,26 @@ export default function Ranking() {
         >
           {renderAvatar(
             usuario.avatarUrl,
-            isFirst ? [styles.podiumAvatar, styles.avatarImg1] : styles.podiumAvatar,
+            isFirst
+              ? [styles.podiumAvatar, styles.avatarImg1]
+              : styles.podiumAvatar,
             isFirst ? 28 : 22
           )}
+
           <View style={[styles.badgeMedal, { backgroundColor: medalColor }]}>
             <Text style={[styles.medalText, isFirst && { color: theme.background }]}>
               {medalLabel}
             </Text>
           </View>
         </View>
+
         <Text
           style={[styles.podiumName, isFirst && styles.name1, { color: theme.text }]}
           numberOfLines={1}
         >
-          {isAuthenticated && usuario.id === user?.id ? "Você" : usuario.nome}
+          {isLogado ? "Você" : usuario.nome}
         </Text>
+
         <Text style={[styles.podiumPoints, { color: theme.textSecondary }]}>
           <Text
             style={{
@@ -120,7 +147,7 @@ export default function Ranking() {
   };
 
   const renderUsuario = ({ item }: { item: UsuarioRanking }) => {
-    const isLogado = isAuthenticated && item.id === user?.id;
+    const isLogado = isUsuarioLogado(item.id);
 
     return (
       <View
@@ -138,10 +165,12 @@ export default function Ranking() {
 
         <View style={styles.userInfo}>
           {renderAvatar(item.avatarUrl, styles.rowAvatar, 18)}
+
           <View>
             <Text style={[styles.rowNome, { color: isLogado ? theme.background : theme.text }]}>
               {isLogado ? "Você" : item.nome}
             </Text>
+
             {isLogado && (
               <Text style={[styles.statusLogadoText, { color: theme.background }]}>
                 ● SUA POSIÇÃO
@@ -178,9 +207,15 @@ export default function Ranking() {
 
       <View style={styles.columnTitles}>
         <Text style={[styles.colTitle, styles.colPos, { color: theme.textSecondary }]}>#</Text>
-        <Text style={[styles.colTitle, styles.colUser, { color: theme.textSecondary }]}>USUÁRIO</Text>
-        <Text style={[styles.colTitle, styles.colPoints, { color: theme.textSecondary }]}>PONTOS</Text>
-        <Text style={[styles.colTitle, styles.colExatos, { color: theme.textSecondary }]}>EXATOS</Text>
+        <Text style={[styles.colTitle, styles.colUser, { color: theme.textSecondary }]}>
+          USUÁRIO
+        </Text>
+        <Text style={[styles.colTitle, styles.colPoints, { color: theme.textSecondary }]}>
+          PONTOS
+        </Text>
+        <Text style={[styles.colTitle, styles.colExatos, { color: theme.textSecondary }]}>
+          EXATOS
+        </Text>
       </View>
     </View>
   );
@@ -191,6 +226,7 @@ export default function Ranking() {
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: theme.text }]}>Ranking Geral</Text>
         </View>
+
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={theme.primary} />
         </View>
@@ -205,7 +241,9 @@ export default function Ranking() {
       </View>
 
       {errorMessage && (
-        <Text style={[styles.errorText, { color: theme.textSecondary }]}>{errorMessage}</Text>
+        <Text style={[styles.errorText, { color: theme.textSecondary }]}>
+          {errorMessage}
+        </Text>
       )}
 
       <FlatList

@@ -67,7 +67,6 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="ranking"
         options={{
-          href: isAuthenticated ? "/(tabs)/ranking" : null,
           title: "Ranking",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "trophy" : "trophy-outline"} color={color} size={size} />
