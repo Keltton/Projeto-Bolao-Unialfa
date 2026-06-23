@@ -36,17 +36,6 @@ export const styles = StyleSheet.create({
     marginBottom: 42,
   },
 
-  logoCircle: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    borderWidth: 1.5,
-    borderColor: "#ffe243",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 18,
-    backgroundColor: "rgba(9, 20, 33, 0.75)",
-  },
 
   title: {
     color: "#FFFFFF",
@@ -55,10 +44,6 @@ export const styles = StyleSheet.create({
     fontWeight: "900",
     textAlign: "center",
     fontStyle: "italic",
-  },
-
-  titleHighlight: {
-    color: "#ffe243",
   },
 
   subtitle: {
@@ -120,7 +105,7 @@ export const styles = StyleSheet.create({
   },
 
   dividerText: {
-    color: "#ffe243",
+    color: "#D6E3C4",
     fontSize: 11,
     fontWeight: "700",
     marginHorizontal: 14,
@@ -133,8 +118,15 @@ export const styles = StyleSheet.create({
   },
 
   visitorButtonText: {
-    color: "#ffe243",
+    color: "#D6E3C4",
     fontSize: 12,
     fontWeight: "800",
   },
+
+  logoIcon: {
+  marginBottom: 12,
+},
+ 
+
+
 });

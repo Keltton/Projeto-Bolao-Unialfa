@@ -44,16 +44,21 @@ export default function Index() {
           <SafeAreaView style={styles.safeArea}>
             <View style={styles.content}>
               <View style={styles.brandContainer}>
-                <View style={styles.logoCircle}>
-                  <Ionicons name="football" size={34} color={theme.primary} />
-                </View>
+                <Ionicons
+                  name="football"
+                  size={72}
+                  color={theme.secondary}
+                  style={styles.logoIcon}
+                />
 
-                <Text style={styles.title}>
+                <Text style={[styles.title, { color: theme.text }]}>
                   BOLÃO{"\n"}
-                  <Text style={styles.titleHighlight}>ESPORTIVO</Text>
+                  <Text style={{ color: theme.secondary }}>COPA 2026</Text>
                 </Text>
 
-                <Text style={styles.subtitle}>A ELITE DOS PALPITES</Text>
+                <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+                  RUMO AO HEXA!
+                </Text>
               </View>
 
               <View style={styles.actionsContainer}>
