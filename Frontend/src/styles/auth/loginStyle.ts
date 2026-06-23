@@ -1,24 +1,29 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-    outerContainer: {
-      flex: 1,
-    },
-    container: {
-      flex: 1,
-    },
-    overlay: {
-      flex: 1,
-      padding:20,
-    },
-    safeArea: {
-      flex: 1,
-    },
-    scroll: {
-      flexGrow: 1,
-      paddingHorizontal: 24,
-      paddingVertical: 20,
-    },
+outerContainer: {
+  flex: 1,
+  backgroundColor: "#091421",
+},
+
+container: {
+  flex: 1,
+  width: "100%",
+  height: "100%",
+},
+
+overlay: {
+  flex: 1,
+  backgroundColor: "rgba(9, 20, 33, 0.85)",
+},
+
+scroll: {
+  flexGrow: 1,
+  paddingHorizontal: 24,
+  paddingVertical: 20,
+  justifyContent: "center",
+},
+
     brandContainer: {
       alignItems: "center",
       marginTop: 40,
