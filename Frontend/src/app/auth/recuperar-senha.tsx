@@ -82,7 +82,7 @@ export default function RecuperarSenha() {
                       style={[styles.sendBtn, { backgroundColor: theme.secondary }]}
                       onPress={handleRecuperar}
                     >
-                      <Text style={[styles.sendBtnText, { color: theme.background }]}>ENVIAR LINK</Text>
+                      <Text style={[styles.sendBtnText, { color: theme.background }]}>ENVIAR CÓDIGO</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
