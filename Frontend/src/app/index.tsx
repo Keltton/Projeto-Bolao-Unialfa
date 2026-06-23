@@ -129,7 +129,7 @@ export default function Index() {
                 <TouchableOpacity
                   style={styles.visitorButton}
                   activeOpacity={0.85}
-                  onPress={() => router.replace("/(tabs)/ranking")}
+                  onPress={() => router.replace("/(tabs)/partidas")}
                 >
                   <Text
                     style={[

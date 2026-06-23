@@ -208,6 +208,24 @@ export default function Ranking() {
         <Text style={[styles.errorText, { color: theme.textSecondary }]}>{errorMessage}</Text>
       )}
 
+      {!isAuthenticated && (
+        <View
+          style={{
+            marginHorizontal: 16,
+            marginBottom: 8,
+            padding: 10,
+            borderRadius: 10,
+            backgroundColor: theme.backgroundElement,
+            borderWidth: 1,
+            borderColor: theme.border,
+          }}
+        >
+          <Text style={{ color: theme.textSecondary, fontSize: 12, textAlign: "center" }}>
+            Você está navegando como visitante. Entre para ver sua posição no ranking.
+          </Text>
+        </View>
+      )}
+
       <FlatList
         data={listaRestante}
         keyExtractor={(item) => item.id.toString()}

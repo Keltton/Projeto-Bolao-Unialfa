@@ -14,11 +14,12 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/AuthContext";
+import { getApiErrorMessage } from "@/services/api";
+import { editarPalpite, listarMeusPalpites, registrarPalpite } from "@/services/palpiteService";
+import { buscarPartidaPorId } from "@/services/partidaService";
 import { Partida } from "@/types/Partida";
 import { Palpite } from "@/types/Palpite";
-import { buscarPartidaPorId } from "@/services/partidaService";
-import { editarPalpite, listarMeusPalpites, registrarPalpite } from "@/services/palpiteService";
-import { getApiErrorMessage } from "@/services/api";
 import { formatarDataPartida } from "@/util/formatDate";
 import { resolveImageUrl } from "@/util/imageUrl";
 import { toastError, toastSuccess } from "@/util/toast";
@@ -26,6 +27,7 @@ import { toastError, toastSuccess } from "@/util/toast";
 export default function FazerPalpite() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { isAuthenticated } = useAuth();
   const theme = Colors.dark;
 
   const partidaId = Number(Array.isArray(id) ? id[0] : id);
@@ -51,21 +53,18 @@ export default function FazerPalpite() {
       setErrorMessage(null);
 
       try {
-        const [partidaData, meusPalpites] = await Promise.all([
-          buscarPartidaPorId(partidaId),
-          listarMeusPalpites(),
-        ]);
-
+        const partidaData = await buscarPartidaPorId(partidaId);
         setPartida(partidaData);
 
-        const palpiteDaPartida = meusPalpites.find(
-          (p) => p.partida.id === partidaId
-        );
+        if (isAuthenticated) {
+          const meusPalpites = await listarMeusPalpites();
+          const palpiteDaPartida = meusPalpites.find((p) => p.partida.id === partidaId);
 
-        if (palpiteDaPartida) {
-          setPalpiteExistente(palpiteDaPartida);
-          setGolsA(String(palpiteDaPartida.golsSelecaoA));
-          setGolsB(String(palpiteDaPartida.golsSelecaoB));
+          if (palpiteDaPartida) {
+            setPalpiteExistente(palpiteDaPartida);
+            setGolsA(String(palpiteDaPartida.golsSelecaoA));
+            setGolsB(String(palpiteDaPartida.golsSelecaoB));
+          }
         }
       } catch (error) {
         setErrorMessage(getApiErrorMessage(error, "Erro ao carregar partida."));
@@ -73,7 +72,7 @@ export default function FazerPalpite() {
         setLoading(false);
       }
     })();
-  }, [partidaId]);
+  }, [partidaId, isAuthenticated]);
 
   const podePalpitar = partida?.status === "AGENDADA";
 
@@ -157,7 +156,9 @@ export default function FazerPalpite() {
         >
           <Ionicons name="arrow-back" size={22} color={theme.primary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.secondary }]}>Fazer Palpite</Text>
+        <Text style={[styles.headerTitle, { color: theme.secondary }]}>
+          {isAuthenticated ? "Fazer Palpite" : "Detalhes da Partida"}
+        </Text>
         <View style={styles.placeholderBtn} />
       </View>
 
@@ -214,7 +215,36 @@ export default function FazerPalpite() {
           </View>
         )}
 
-        {podePalpitar ? (
+        {!isAuthenticated && podePalpitar ? (
+          <View style={styles.predictionSection}>
+            <View
+              style={[
+                styles.guestCard,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+              ]}
+            >
+              <Ionicons name="lock-closed-outline" size={36} color={theme.textSecondary} />
+              <Text style={[styles.guestTitle, { color: theme.text }]}>Entre para fazer seu palpite</Text>
+              <Text style={[styles.guestMessage, { color: theme.textSecondary }]}>
+                Modo visitante: você pode ver os jogos, mas precisa estar logado para palpitar.
+              </Text>
+
+              <TouchableOpacity
+                style={[styles.guestPrimaryBtn, { backgroundColor: theme.secondary }]}
+                onPress={() => router.push("/auth/login")}
+              >
+                <Text style={[styles.guestPrimaryBtnText, { color: theme.background }]}>Entrar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.guestSecondaryBtn}
+                onPress={() => router.push("/auth/cadastro")}
+              >
+                <Text style={[styles.guestSecondaryBtnText, { color: theme.secondary }]}>Criar conta</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : podePalpitar ? (
           <>
             <View style={styles.predictionSection}>
               <Text style={[styles.predictionTitle, { color: theme.text }]}>Qual será o placar?</Text>
@@ -522,5 +552,42 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: "center",
     marginTop: 10,
+  },
+  guestCard: {
+    width: "100%",
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: "center",
+    gap: 12,
+  },
+  guestTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  guestMessage: {
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 18,
+  },
+  guestPrimaryBtn: {
+    width: "100%",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  guestPrimaryBtnText: {
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  guestSecondaryBtn: {
+    paddingVertical: 8,
+  },
+  guestSecondaryBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

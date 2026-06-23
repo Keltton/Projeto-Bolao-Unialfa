@@ -1,4 +1,4 @@
-import { Redirect, Tabs } from "expo-router";
+import { Tabs } from "expo-router";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
@@ -10,17 +10,18 @@ export default function TabsLayout() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: themeColors.background }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: themeColors.background,
+        }}
+      >
         <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
-
-      
     );
-    
-    <ActivityIndicator size="large" color={themeColors.primary} />
   }
-
-  
 
   return (
     <Tabs
@@ -31,8 +32,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: themeColors.backgroundElement,
           borderTopColor: themeColors.border,
-          height: Platform.OS === 'ios' ? 88 : 68,
-          paddingBottom: Platform.OS === 'ios' ? 30 : 10,
+          height: Platform.OS === "ios" ? 88 : 68,
+          paddingBottom: Platform.OS === "ios" ? 30 : 10,
           paddingTop: 10,
         },
       }}
@@ -40,6 +41,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          title: "Início",
           href: isAuthenticated ? "/(tabs)" : null,
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "home" : "home-outline"} color={color} size={size} />
@@ -59,6 +61,7 @@ export default function TabsLayout() {
         name="palpites"
         options={{
           title: "Palpites",
+          href: isAuthenticated ? "/(tabs)/palpites" : null,
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "calendar" : "calendar-outline"} color={color} size={size} />
           ),
@@ -67,7 +70,6 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="ranking"
         options={{
-          href: isAuthenticated ? "/(tabs)/ranking" : null,
           title: "Ranking",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "trophy" : "trophy-outline"} color={color} size={size} />

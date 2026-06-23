@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/theme";
+import { GuestGate } from "@/components/GuestGate";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { listarMeusPalpites } from "@/services/palpiteService";
@@ -263,52 +264,14 @@ export default function Palpites() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: theme.background }]}
-      >
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
-            Palpites
-          </Text>
-        </View>
-
-        <View style={styles.centerContent}>
-          <Ionicons
-            name="lock-closed-outline"
-            size={44}
-            color={theme.textSecondary}
-          />
-
-          <Text
-            style={[
-              styles.emptyText,
-              {
-                color: theme.textSecondary,
-                textAlign: "center",
-                marginTop: 16,
-              },
-            ]}
-          >
-            Entre na sua conta para fazer e acompanhar seus palpites.
-          </Text>
-
-          <TouchableOpacity
-            style={[
-              styles.editButton,
-              {
-                borderColor: theme.primary,
-                marginTop: 20,
-                paddingHorizontal: 24,
-              },
-            ]}
-            onPress={() => router.push("/auth/login")}
-          >
-            <Text style={[styles.editButtonText, { color: theme.primary }]}>
-              Entrar para palpitar
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      <GuestGate
+        title="Palpites"
+        icon="lock-closed-outline"
+        message="Entre na sua conta para fazer e acompanhar seus palpites."
+        primaryLabel="Entrar para palpitar"
+        onPrimary={() => router.push("/auth/login")}
+        onSecondary={() => router.push("/auth/cadastro")}
+      />
     );
   }
 

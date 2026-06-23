@@ -60,9 +60,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/selecoes/**").hasAnyRole("USUARIO", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/partidas/**").hasAnyRole("USUARIO", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/ranking/**").hasAnyRole("USUARIO", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/selecoes/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/partidas/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ranking/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

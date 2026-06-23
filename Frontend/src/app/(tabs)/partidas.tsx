@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { listarPartidas } from "@/services/partidaService";
 import { FasePartida, Partida } from "@/types/Partida";
@@ -22,6 +23,7 @@ const FASES: Array<{ label: string; value: "TODAS" | FasePartida }> = [
 export default function Partidas() {
   const router = useRouter();
   const theme = Colors.dark;
+  const { isAuthenticated } = useAuth();
 
   const [partidas, setPartidas] = useState<Partida[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +155,24 @@ export default function Partidas() {
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Tabela de Jogos</Text>
       </View>
+
+      {!isAuthenticated && (
+        <View
+          style={{
+            marginHorizontal: 16,
+            marginBottom: 8,
+            padding: 10,
+            borderRadius: 10,
+            backgroundColor: theme.backgroundElement,
+            borderWidth: 1,
+            borderColor: theme.border,
+          }}
+        >
+          <Text style={{ color: theme.textSecondary, fontSize: 12, textAlign: "center" }}>
+            Modo visitante: você pode ver as partidas. Entre para fazer palpites.
+          </Text>
+        </View>
+      )}
 
       <View>
         <ScrollView

@@ -27,8 +27,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   if (!isAuthenticated) {
-  return <Redirect href="/(tabs)/ranking" />;
-} 
+    return <Redirect href="/(tabs)/partidas" />;
+  }
 
   const carregarHome = useCallback(async () => {
     setLoading(true);

@@ -1,9 +1,11 @@
+import { GuestGate } from "@/components/GuestGate";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { editarPerfil, excluirMinhaConta } from "@/services/usuarioService";
 import { resolveImageUrl } from "@/util/imageUrl";
 import { toastError, toastSuccess } from "@/util/toast";
+import { formStyles } from "@/styles/shared/formStyle";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -27,8 +29,11 @@ export default function Perfil() {
   const [nome, setNome] = useState(user?.nome ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
-  const [senha, setSenha] = useState("");
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [mostrarSenhaAtual, setMostrarSenhaAtual] = useState(false);
+  const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -51,18 +56,30 @@ export default function Perfil() {
       return;
     }
 
+    if (nome.trim().length < 3) {
+      toastError("O nome deve ter no mínimo 3 caracteres.");
+      return;
+    }
+
     if (!email.trim()) {
       toastError("O e-mail não pode estar em branco.");
       return;
     }
 
-    if (senha || confirmarSenha) {
-      if (senha.length < 6) {
-        toastError("A senha deve ter pelo menos 6 caracteres.");
+    const querTrocarSenha = novaSenha.trim() || confirmarSenha.trim() || senhaAtual.trim();
+
+    if (querTrocarSenha) {
+      if (!senhaAtual.trim()) {
+        toastError("Informe a senha atual para definir uma nova senha.");
         return;
       }
 
-      if (senha !== confirmarSenha) {
+      if (novaSenha.length < 6) {
+        toastError("A nova senha deve ter no mínimo 6 caracteres.");
+        return;
+      }
+
+      if (novaSenha !== confirmarSenha) {
         toastError("As senhas não conferem.");
         return;
       }
@@ -71,25 +88,22 @@ export default function Perfil() {
     setSaving(true);
 
     try {
-      const payload: {
-        nome: string;
-        email: string;
-        avatarUrl?: string;
-        senha?: string;
-      } = {
+      const usuarioAtualizado = await editarPerfil({
         nome: nome.trim(),
         email: email.trim(),
-        avatarUrl: avatarUrl.trim(),
-      };
+        avatarUrl: avatarUrl.trim() || null,
+        ...(querTrocarSenha
+          ? {
+              senhaAtual: senhaAtual.trim(),
+              novaSenha: novaSenha.trim(),
+            }
+          : {}),
+      });
 
-      if (senha.trim()) {
-        payload.senha = senha.trim();
-      }
-
-      const usuarioAtualizado = await editarPerfil(payload);
       await updateUser(usuarioAtualizado);
 
-      setSenha("");
+      setSenhaAtual("");
+      setNovaSenha("");
       setConfirmarSenha("");
 
       toastSuccess("Perfil atualizado com sucesso!");
@@ -105,7 +119,7 @@ export default function Perfil() {
 
     try {
       await signOut();
-      router.replace("/auth/login");
+      router.replace("/(tabs)/partidas");
     } catch {
       toastError("Erro ao encerrar sessão.");
     } finally {
@@ -121,7 +135,7 @@ export default function Perfil() {
       await excluirMinhaConta();
       await signOut();
       toastSuccess("Sua conta foi excluída.", "Conta removida");
-      router.replace("/auth/login");
+      router.replace("/(tabs)/partidas");
     } catch (error) {
       toastError(getApiErrorMessage(error, "Erro ao excluir conta."));
     } finally {
@@ -132,45 +146,14 @@ export default function Perfil() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Perfil</Text>
-        </View>
-
-        <View style={styles.centerContent}>
-          <Ionicons name="person-circle-outline" size={54} color={theme.textSecondary} />
-
-          <Text
-            style={[
-              styles.footerText,
-              {
-                color: theme.textSecondary,
-                textAlign: "center",
-                marginTop: 16,
-                marginHorizontal: 24,
-              },
-            ]}
-          >
-            Entre na sua conta para acessar seu perfil, editar seus dados e acompanhar sua pontuação.
-          </Text>
-
-          <TouchableOpacity
-            style={[
-              styles.menuItem,
-              {
-                borderColor: theme.primary,
-                marginTop: 24,
-                justifyContent: "center",
-              },
-            ]}
-            onPress={() => router.push("/auth/login")}
-          >
-            <Text style={[styles.menuText, { color: theme.primary }]}>
-              Entrar para acessar perfil
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      <GuestGate
+        title="Perfil"
+        icon="person-circle-outline"
+        message="Entre na sua conta para acessar seu perfil, editar seus dados e acompanhar sua pontuação."
+        primaryLabel="Entrar"
+        onPrimary={() => router.push("/auth/login")}
+        onSecondary={() => router.push("/auth/cadastro")}
+      />
     );
   }
 
@@ -183,6 +166,37 @@ export default function Perfil() {
       </SafeAreaView>
     );
   }
+
+  const renderPasswordField = (
+    label: string,
+    value: string,
+    onChange: (text: string) => void,
+    visible: boolean,
+    onToggle: () => void,
+    placeholder: string
+  ) => (
+    <View style={formStyles.inputGroup}>
+      <Text style={[formStyles.label, { color: theme.textSecondary }]}>{label}</Text>
+      <View style={[formStyles.glassInput, { borderColor: theme.border }]}>
+        <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} />
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor="rgba(189, 202, 185, 0.5)"
+          secureTextEntry={!visible}
+          style={[formStyles.textInput, { color: theme.text }]}
+        />
+        <TouchableOpacity onPress={onToggle}>
+          <Ionicons
+            name={visible ? "eye-off-outline" : "eye-outline"}
+            size={20}
+            color={theme.textSecondary}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -224,108 +238,89 @@ export default function Perfil() {
           </View>
         </View>
 
-        <View style={styles.menuContainer}>
-          <Text style={[styles.headerTitle, { color: theme.text, marginBottom: 12 }]}>
-            Editar Perfil
-          </Text>
+        <View style={[formStyles.formCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+          <Text style={[formStyles.sectionTitle, { color: theme.text }]}>Editar perfil</Text>
 
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Nome</Text>
-          <TextInput
-            value={nome}
-            onChangeText={setNome}
-            placeholder="Seu nome"
-            placeholderTextColor={theme.textSecondary}
-            style={[
-              styles.input,
-              {
-                color: theme.text,
-                borderColor: theme.border,
-                backgroundColor: theme.backgroundElement,
-                marginBottom: 12,
-              },
-            ]}
-          />
+          <View style={formStyles.inputGroup}>
+            <Text style={[formStyles.label, { color: theme.textSecondary }]}>Nome</Text>
+            <View style={[formStyles.glassInput, { borderColor: theme.border }]}>
+              <Ionicons name="person-outline" size={20} color={theme.textSecondary} />
+              <TextInput
+                value={nome}
+                onChangeText={setNome}
+                placeholder="Seu nome"
+                placeholderTextColor="rgba(189, 202, 185, 0.5)"
+                autoCapitalize="words"
+                style={[formStyles.textInput, { color: theme.text }]}
+              />
+            </View>
+          </View>
 
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Foto Perfil</Text>
-          <TextInput
-            value={avatarUrl}
-            onChangeText={setAvatarUrl}
-            placeholder="URL da foto de perfil"
-            placeholderTextColor={theme.textSecondary}
-            autoCapitalize="none"
-            style={[
-              styles.input,
-              {
-                color: theme.text,
-                borderColor: theme.border,
-                backgroundColor: theme.backgroundElement,
-                marginBottom: 12,
-              },
-            ]}
-          />
+          <View style={formStyles.inputGroup}>
+            <Text style={[formStyles.label, { color: theme.textSecondary }]}>E-mail</Text>
+            <View style={[formStyles.glassInput, { borderColor: theme.border }]}>
+              <Ionicons name="mail-outline" size={20} color={theme.textSecondary} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="seuemail@exemplo.com"
+                placeholderTextColor="rgba(189, 202, 185, 0.5)"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={[formStyles.textInput, { color: theme.text }]}
+              />
+            </View>
+          </View>
 
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Email</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="seuemail@exemplo.com"
-            placeholderTextColor={theme.textSecondary}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={[
-              styles.input,
-              {
-                color: theme.text,
-                borderColor: theme.border,
-                backgroundColor: theme.backgroundElement,
-                marginBottom: 12,
-              },
-            ]}
-          />
+          <View style={formStyles.inputGroup}>
+            <Text style={[formStyles.label, { color: theme.textSecondary }]}>
+              URL da foto (opcional)
+            </Text>
+            <View style={[formStyles.glassInput, { borderColor: theme.border }]}>
+              <Ionicons name="image-outline" size={20} color={theme.textSecondary} />
+              <TextInput
+                value={avatarUrl}
+                onChangeText={setAvatarUrl}
+                placeholder="https://..."
+                placeholderTextColor="rgba(189, 202, 185, 0.5)"
+                autoCapitalize="none"
+                style={[formStyles.textInput, { color: theme.text }]}
+              />
+            </View>
+          </View>
 
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Senha</Text>
-          <TextInput
-            value={senha}
-            onChangeText={setSenha}
-            placeholder="Nova senha"
-            placeholderTextColor={theme.textSecondary}
-            secureTextEntry
-            style={[
-              styles.input,
-              {
-                color: theme.text,
-                borderColor: theme.border,
-                backgroundColor: theme.backgroundElement,
-                marginBottom: 12,
-              },
-            ]}
-          />
+          {renderPasswordField(
+            "Senha atual",
+            senhaAtual,
+            setSenhaAtual,
+            mostrarSenhaAtual,
+            () => setMostrarSenhaAtual(!mostrarSenhaAtual),
+            "Preencha apenas se for trocar a senha"
+          )}
 
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Confirmar Senha</Text>
-          <TextInput
-            value={confirmarSenha}
-            onChangeText={setConfirmarSenha}
-            placeholder="Confirme a nova senha"
-            placeholderTextColor={theme.textSecondary}
-            secureTextEntry
-            style={[
-              styles.input,
-              {
-                color: theme.text,
-                borderColor: theme.border,
-                backgroundColor: theme.backgroundElement,
-                marginBottom: 16,
-              },
-            ]}
-          />
+          {renderPasswordField(
+            "Nova senha",
+            novaSenha,
+            setNovaSenha,
+            mostrarNovaSenha,
+            () => setMostrarNovaSenha(!mostrarNovaSenha),
+            "Mínimo 6 caracteres"
+          )}
+
+          {renderPasswordField(
+            "Confirmar nova senha",
+            confirmarSenha,
+            setConfirmarSenha,
+            mostrarNovaSenha,
+            () => setMostrarNovaSenha(!mostrarNovaSenha),
+            "Repita a nova senha"
+          )}
 
           <TouchableOpacity
             style={[
-              styles.menuItem,
+              formStyles.primaryButton,
               {
-                backgroundColor: theme.primary,
-                borderColor: theme.primary,
-                justifyContent: "center",
+                backgroundColor: theme.secondary,
                 opacity: saving ? 0.7 : 1,
               },
             ]}
@@ -335,8 +330,8 @@ export default function Perfil() {
             {saving ? (
               <ActivityIndicator color={theme.background} size="small" />
             ) : (
-              <Text style={[styles.menuText, { color: theme.background }]}>
-                Salvar alterações
+              <Text style={[formStyles.primaryButtonText, { color: theme.background }]}>
+                SALVAR ALTERAÇÕES
               </Text>
             )}
           </TouchableOpacity>
@@ -356,9 +351,7 @@ export default function Perfil() {
           >
             <View style={styles.menuLeft}>
               <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-              <Text style={[styles.menuText, { color: "#FF3B30" }]}>
-                Encerrar Sessão
-              </Text>
+              <Text style={[styles.menuText, { color: "#FF3B30" }]}>Encerrar Sessão</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
           </TouchableOpacity>
@@ -376,9 +369,7 @@ export default function Perfil() {
           >
             <View style={styles.menuLeft}>
               <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-              <Text style={[styles.menuText, { color: "#FF3B30" }]}>
-                Excluir Minha Conta
-              </Text>
+              <Text style={[styles.menuText, { color: "#FF3B30" }]}>Excluir Minha Conta</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
           </TouchableOpacity>
@@ -400,7 +391,7 @@ export default function Perfil() {
 
             <Text style={[styles.confirmMessage, { color: theme.textSecondary }]}>
               {confirmacao === "logout"
-                ? "Você precisará fazer login novamente."
+                ? "Você continuará podendo ver partidas e ranking como visitante."
                 : "Esta ação é permanente. Seus palpites serão removidos."}
             </Text>
 
