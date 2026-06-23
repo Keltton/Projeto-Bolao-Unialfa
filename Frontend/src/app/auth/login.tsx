@@ -63,140 +63,136 @@ export default function Login() {
       >
         <View style={[styles.overlay, { backgroundColor: "rgba(9, 20, 33, 0.85)" }]}>
           <SafeAreaView style={styles.safeArea}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
-              style={{ flex: 1 }}
-            >
-              <ScrollView
-                contentContainerStyle={styles.scroll}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              
+              <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                 keyboardVerticalOffset={20}
               >
-                {/* Header Brand */}
-                <View style={styles.brandContainer}>
-                      <Ionicons name="football" size={72} color={theme.secondary} style={styles.logoIcon} />
-                      <Text style={[styles.title, { color: theme.text }]}>
-                        BOLÃO{"\n"}
-                        <Text style={{ color: theme.secondary }}>COPA 2026</Text>
-                      </Text>
-                      <Text style={[styles.subtitle, { color: theme.textSecondary }]}>RUMO AO HEXA!</Text>
-                    </View>
-
-                    {/* Login Card */}
-                    <View style={styles.cardContainer}>
-                      <View style={styles.cardHeader}>
-                        <Text style={[styles.welcomeTitle, { color: theme.text }]}>Bem-vindo de volta</Text>
-                        <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>
-                          Entre na sua conta e faça seus palpites!
+                <ScrollView
+                  contentContainerStyle={styles.scroll}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {/* Header Brand */}
+                  <View style={styles.brandContainer}>
+                        <Ionicons name="football" size={72} color={theme.secondary} style={styles.logoIcon} />
+                        <Text style={[styles.title, { color: theme.text }]}>
+                          BOLÃO{"\n"}
+                          <Text style={{ color: theme.secondary }}>COPA 2026</Text>
+                        </Text>
+                        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>RUMO AO HEXA!</Text>
+                      </View>
+                      {/* Login Card */}
+                      <View style={styles.cardContainer}>
+                        <View style={styles.cardHeader}>
+                          <Text style={[styles.welcomeTitle, { color: theme.text }]}>Bem-vindo de volta</Text>
+                          <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>
+                            Entre na sua conta e faça seus palpites!
+                          </Text>
+                        </View>
+                        {/* Form Fields */}
+                        <View style={styles.form}>
+                          {/* Email Field */}
+                          <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: theme.textSecondary }]}>E-mail</Text>
+                            <View style={[styles.glassInput, { borderColor: theme.border }]}>
+                              <Ionicons name="mail-outline" size={20} color={theme.textSecondary} />
+                              <TextInput
+                                value={email}
+                                onChangeText={(text) => {
+                                  setEmail(text);
+                                  clearError();
+                                }}
+                                placeholder="nome@exemplo.com"
+                                placeholderTextColor="rgba(189, 202, 185, 0.5)"
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                style={[styles.textInput, { color: theme.text }]}
+                              />
+                            </View>
+                          </View>
+                          {/* Password Field */}
+                          <View style={styles.inputGroup}>
+                            <View style={styles.labelRow}>
+                              <Text style={[styles.label, { color: theme.textSecondary }]}>Senha</Text>
+                              <TouchableOpacity onPress={() => router.push("/auth/recuperar-senha")}>
+                                <Text style={[styles.forgotPassword, { color: theme.secondary }]}>
+                                  Esqueci minha senha
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                            <View style={[styles.glassInput, { borderColor: theme.border }]}>
+                              <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} />
+                              <TextInput
+                                value={senha}
+                                onChangeText={(text) => {
+                                  setSenha(text);
+                                  clearError();
+                                }}
+                                placeholder="••••••••"
+                                placeholderTextColor="rgba(189, 202, 185, 0.5)"
+                                secureTextEntry={!senhaVisivel}
+                                style={[styles.textInput, { color: theme.text }]}
+                              />
+                              <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
+                                <Ionicons
+                                  name={senhaVisivel ? "eye-off-outline" : "eye-outline"}
+                                  size={20}
+                                  color={theme.textSecondary}
+                                />
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                          {/* Actions */}
+                          <View style={styles.actionsContainer}>
+                            {errorMessage ? (
+                              <View style={styles.errorBox}>
+                                <Ionicons name="alert-circle-outline" size={18} color="#ff6b6b" />
+                                <Text style={styles.errorText}>{errorMessage}</Text>
+                              </View>
+                            ) : null}
+                            <TouchableOpacity
+                              style={[
+                                styles.loginBtn,
+                                { backgroundColor: theme.secondary, opacity: loading ? 0.7 : 1 },
+                              ]}
+                              onPress={handleLogin}
+                              disabled={loading}
+                            >
+                              {loading ? (
+                                <ActivityIndicator color={theme.background} />
+                              ) : (
+                                <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
+                              )}
+                            </TouchableOpacity>
+                            <View style={styles.dividerRow}>
+                              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+                              <Text style={[styles.dividerText, { color: theme.textSecondary }]}>OU</Text>
+                              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+                            </View>
+                            <TouchableOpacity
+                              style={[styles.registerBtn, { borderColor: theme.border }]}
+                              onPress={() => router.push("/auth/cadastro")}
+                              disabled={loading}
+                            >
+                              <Text style={[styles.registerBtnText, { color: theme.text }]}>CRIAR CONTA</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
+                      {/* Footer */}
+                      <View style={styles.footerContainer}>
+                        <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+                          © 2026 FIFA World Cup Predictor{"\n"}
+                          Todos os direitos reservados
                         </Text>
                       </View>
-
-                      {/* Form Fields */}
-                      <View style={styles.form}>
-                        {/* Email Field */}
-                        <View style={styles.inputGroup}>
-                          <Text style={[styles.label, { color: theme.textSecondary }]}>E-mail</Text>
-                          <View style={[styles.glassInput, { borderColor: theme.border }]}>
-                            <Ionicons name="mail-outline" size={20} color={theme.textSecondary} />
-                            <TextInput
-                              value={email}
-                              onChangeText={(text) => {
-                                setEmail(text);
-                                clearError();
-                              }}
-                              placeholder="nome@exemplo.com"
-                              placeholderTextColor="rgba(189, 202, 185, 0.5)"
-                              keyboardType="email-address"
-                              autoCapitalize="none"
-                              autoCorrect={false}
-                              style={[styles.textInput, { color: theme.text }]}
-                            />
-                          </View>
-                        </View>
-
-                        {/* Password Field */}
-                        <View style={styles.inputGroup}>
-                          <View style={styles.labelRow}>
-                            <Text style={[styles.label, { color: theme.textSecondary }]}>Senha</Text>
-                            <TouchableOpacity onPress={() => router.push("/auth/recuperar-senha")}>
-                              <Text style={[styles.forgotPassword, { color: theme.secondary }]}>
-                                Esqueci minha senha
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                          <View style={[styles.glassInput, { borderColor: theme.border }]}>
-                            <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} />
-                            <TextInput
-                              value={senha}
-                              onChangeText={(text) => {
-                                setSenha(text);
-                                clearError();
-                              }}
-                              placeholder="••••••••"
-                              placeholderTextColor="rgba(189, 202, 185, 0.5)"
-                              secureTextEntry={!senhaVisivel}
-                              style={[styles.textInput, { color: theme.text }]}
-                            />
-                            <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
-                              <Ionicons
-                                name={senhaVisivel ? "eye-off-outline" : "eye-outline"}
-                                size={20}
-                                color={theme.textSecondary}
-                              />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-
-                        {/* Actions */}
-                        <View style={styles.actionsContainer}>
-                          {errorMessage ? (
-                            <View style={styles.errorBox}>
-                              <Ionicons name="alert-circle-outline" size={18} color="#ff6b6b" />
-                              <Text style={styles.errorText}>{errorMessage}</Text>
-                            </View>
-                          ) : null}
-
-                          <TouchableOpacity
-                            style={[
-                              styles.loginBtn,
-                              { backgroundColor: theme.secondary, opacity: loading ? 0.7 : 1 },
-                            ]}
-                            onPress={handleLogin}
-                            disabled={loading}
-                          >
-                            {loading ? (
-                              <ActivityIndicator color={theme.background} />
-                            ) : (
-                              <Text style={[styles.loginBtnText, { color: theme.background }]}>ENTRAR</Text>
-                            )}
-                          </TouchableOpacity>
-
-                          <View style={styles.dividerRow}>
-                            <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-                            <Text style={[styles.dividerText, { color: theme.textSecondary }]}>OU</Text>
-                            <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-                          </View>
-
-                          <TouchableOpacity
-                            style={[styles.registerBtn, { borderColor: theme.border }]}
-                            onPress={() => router.push("/auth/cadastro")}
-                            disabled={loading}
-                          >
-                            <Text style={[styles.registerBtnText, { color: theme.text }]}>CRIAR CONTA</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Footer */}
-                    <View style={styles.footerContainer}>
-                      <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-                        © 2026 FIFA World Cup Predictor{"\n"}
-                        Todos os direitos reservados
-                      </Text>
-                    </View>
-                  </ScrollView>
-                </KeyboardAvoidingView>
+                    </ScrollView>
+                  </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
           </SafeAreaView>
         </View>
       </ImageBackground>
