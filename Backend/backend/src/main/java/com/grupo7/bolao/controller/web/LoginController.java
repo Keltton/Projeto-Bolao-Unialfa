@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class LoginController {
 
+    @GetMapping("/")
+    public String index() {
+        return "redirect:/admin";
+    }
+
     @GetMapping("/login")
     public String login(
             @RequestParam(value = "error", required = false) String error,
