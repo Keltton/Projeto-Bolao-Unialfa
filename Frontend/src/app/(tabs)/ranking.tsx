@@ -1,13 +1,13 @@
 import { Colors } from "@/constants/theme";
+import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { obterRanking } from "@/services/rankingService";
 import { UsuarioRanking } from "@/types/Usuario";
-import { resolveImageUrl } from "@/util/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, FlatList, Image, ImageStyle, SafeAreaView, StyleProp, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, ImageStyle, SafeAreaView, StyleProp, Text, View } from "react-native";
 import { styles } from "@/styles/tabs/rankingStyle";
 
 export default function Ranking() {
@@ -45,25 +45,11 @@ export default function Ranking() {
   const listaRestante = ranking.filter((r) => r.posicao > 3);
 
   const renderAvatar = (
+    nome: string,
     avatarUrl: string | null | undefined,
-    style: StyleProp<ImageStyle>,
-    iconSize = 20
-  ) => {
-    const uri = resolveImageUrl(avatarUrl);
-    if (!uri) {
-      return (
-        <View
-          style={[
-            style,
-            { backgroundColor: theme.border, justifyContent: "center", alignItems: "center" },
-          ]}
-        >
-          <Ionicons name="person" size={iconSize} color={theme.textSecondary} />
-        </View>
-      );
-    }
-    return <Image source={{ uri }} style={style} />;
-  };
+    size: number,
+    style?: StyleProp<ImageStyle>
+  ) => <UserAvatar nome={nome} avatarUrl={avatarUrl} size={size} style={style} />;
 
   const renderPodiumUser = (
     usuario: UsuarioRanking | undefined,
@@ -87,9 +73,10 @@ export default function Ranking() {
           ]}
         >
           {renderAvatar(
+            usuario.nome,
             usuario.avatarUrl,
-            isFirst ? [styles.podiumAvatar, styles.avatarImg1] : styles.podiumAvatar,
-            isFirst ? 28 : 22
+            isFirst ? 72 : 56,
+            isFirst ? [styles.podiumAvatar, styles.avatarImg1] : styles.podiumAvatar
           )}
           <View style={[styles.badgeMedal, { backgroundColor: medalColor }]}>
             <Text style={[styles.medalText, isFirst && { color: theme.background }]}>
@@ -137,7 +124,7 @@ export default function Ranking() {
         </Text>
 
         <View style={styles.userInfo}>
-          {renderAvatar(item.avatarUrl, styles.rowAvatar, 18)}
+          {renderAvatar(item.nome, item.avatarUrl, 40, styles.rowAvatar)}
           <View>
             <Text style={[styles.rowNome, { color: isLogado ? theme.background : theme.text }]}>
               {isLogado ? "Você" : item.nome}

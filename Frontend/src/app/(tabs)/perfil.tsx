@@ -1,9 +1,9 @@
 import { GuestGate } from "@/components/GuestGate";
+import { UserAvatar } from "@/components/UserAvatar";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { editarPerfil, excluirMinhaConta } from "@/services/usuarioService";
-import { resolveImageUrl } from "@/util/imageUrl";
 import { toastError, toastSuccess } from "@/util/toast";
 import { formStyles } from "@/styles/shared/formStyle";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,7 +11,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   SafeAreaView,
   ScrollView,
   Text,
@@ -39,8 +38,6 @@ export default function Perfil() {
   const [deleting, setDeleting] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [confirmacao, setConfirmacao] = useState<"logout" | "delete" | null>(null);
-
-  const avatarUri = resolveImageUrl(avatarUrl || user?.avatarUrl);
 
   useEffect(() => {
     if (user) {
@@ -207,22 +204,11 @@ export default function Perfil() {
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
           <View style={[styles.avatarBorder, { borderColor: theme.primary }]}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatar} />
-            ) : (
-              <View
-                style={[
-                  styles.avatar,
-                  {
-                    backgroundColor: theme.border,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  },
-                ]}
-              >
-                <Ionicons name="person" size={36} color={theme.textSecondary} />
-              </View>
-            )}
+            <UserAvatar
+              nome={nome.trim() || user.nome}
+              avatarUrl={avatarUrl || user.avatarUrl}
+              size={88}
+            />
           </View>
 
           <Text style={[styles.nameText, { color: theme.text }]}>{user.nome}</Text>

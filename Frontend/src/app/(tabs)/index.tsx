@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/theme";
+import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { listarMeusPalpites } from "@/services/palpiteService";
@@ -67,7 +68,6 @@ export default function Home() {
   const destaque = proximas[0] ?? null;
   const outras = proximas.slice(1, 3);
   const primeiroNome = user?.nome?.split(" ")[0] ?? "Jogador";
-  const avatarUri = resolveImageUrl(user?.avatarUrl);
 
   const buscarPalpite = (partidaId: number) =>
     palpites.find((p) => p.partida.id === partidaId);
@@ -85,18 +85,11 @@ export default function Home() {
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <View style={[styles.avatarBorder, { borderColor: theme.primary }]}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatar} />
-            ) : (
-              <View
-                style={[
-                  styles.avatar,
-                  { backgroundColor: theme.border, justifyContent: "center", alignItems: "center" },
-                ]}
-              >
-                <Ionicons name="person" size={20} color={theme.textSecondary} />
-              </View>
-            )}
+            <UserAvatar
+              nome={user?.nome ?? "Jogador"}
+              avatarUrl={user?.avatarUrl}
+              size={36}
+            />
           </View>
           <View>
             <Text style={[styles.welcomeText, { color: theme.text }]}>
