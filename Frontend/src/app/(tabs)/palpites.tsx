@@ -301,7 +301,7 @@ export default function Palpites() {
                 paddingHorizontal: 24,
               },
             ]}
-            onPress={pedirLoginParaOpinar}
+            onPress={() => router.push("/auth/login")}
           >
             <Text style={[styles.editButtonText, { color: theme.primary }]}>
               Entrar para palpitar
