@@ -16,7 +16,6 @@ export const styles = StyleSheet.create({
     },
     scroll: {
       flexGrow: 1,
-      justifyContent: "space-between",
       paddingHorizontal: 24,
       paddingVertical: 20,
     },
