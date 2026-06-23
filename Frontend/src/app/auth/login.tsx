@@ -63,7 +63,7 @@ export default function Login() {
       >
         <View style={[styles.overlay, { backgroundColor: "rgba(9, 20, 33, 0.85)" }]}>
           <SafeAreaView style={styles.safeArea}>
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <TouchableWithoutFeedback>
               
               <KeyboardAvoidingView
                 style={{ flex: 1 }}
