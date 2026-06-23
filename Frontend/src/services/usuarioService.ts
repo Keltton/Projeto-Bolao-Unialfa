@@ -14,6 +14,11 @@ export async function editarPerfil(payload: EditarPerfilPayload): Promise<Usuari
   return data;
 }
 
+export async function obterMeuPerfil(): Promise<Usuario> {
+  const { data } = await api.get<Usuario>('/api/usuarios/me');
+  return data;
+}
+
 export async function excluirMinhaConta(): Promise<void> {
   await api.delete('/api/usuarios/me');
 }

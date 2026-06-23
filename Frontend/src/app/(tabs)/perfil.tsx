@@ -3,12 +3,12 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
-import { editarPerfil, excluirMinhaConta } from "@/services/usuarioService";
+import { editarPerfil, excluirMinhaConta, obterMeuPerfil } from "@/services/usuarioService";
 import { toastError, toastSuccess } from "@/util/toast";
 import { formStyles } from "@/styles/shared/formStyle";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useEffect, useState, useCallback } from "react";
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -46,6 +46,22 @@ export default function Perfil() {
       setAvatarUrl(user.avatarUrl ?? "");
     }
   }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function carregarPerfilAtualizado() {
+        try {
+          const dados = await obterMeuPerfil();
+          await updateUser(dados);
+        } catch (error) {
+          console.error("Erro ao sincronizar dados do perfil:", error);
+        }
+      }
+      if (isAuthenticated) {
+        carregarPerfilAtualizado();
+      }
+    }, [isAuthenticated])
+  );
 
   const handleSalvarPerfil = async () => {
     if (!nome.trim()) {

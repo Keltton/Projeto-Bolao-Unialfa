@@ -19,6 +19,12 @@ public class UsuarioApiController {
         this.usuarioService = usuarioService;
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioResponse> obterPerfil(
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        return ResponseEntity.ok(usuarioService.obterDetalhesUsuario(usuarioLogado.getId()));
+    }
+
     @PutMapping("/me")
     public ResponseEntity<UsuarioResponse> editarPerfil(
             @AuthenticationPrincipal Usuario usuarioLogado,
