@@ -4,9 +4,10 @@ import { listarMeusPalpites } from "@/services/palpiteService";
 import { Palpite } from "@/types/Palpite";
 import { Partida } from "@/types/Partida";
 import { resolveImageUrl } from "@/util/imageUrl";
+import {Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { ActivityIndicator, FlatList, Image, SafeAreaView, Text, TouchableOpacity, View } from "react-native";
 import { styles } from "@/styles/tabs/palpiteStyle";
 
@@ -19,9 +20,15 @@ export default function Palpites() {
   const router = useRouter();
   const theme = Colors.dark;
 
+  const { isAuthenticated } = useAuth();
+
   const [palpites, setPalpites] = useState<Palpite[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  if (!isAuthenticated) {
+  return <Redirect href="/auth/login" />;
+}
 
   const carregarPalpites = useCallback(async () => {
     setLoading(true);
