@@ -58,7 +58,7 @@
                         </h3>
 
                         <p class="text-gray-400 text-sm leading-relaxed">
-                            Escolha uma senha forte com no mínimo 8 caracteres.
+                            Escolha uma senha forte com no mínimo 6 caracteres.
                         </p>
                     </div>
 
@@ -129,7 +129,7 @@
                                         placeholder="••••••••"
                                         class="input input-bordered w-full p-3 mt-2 rounded-md bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-green-500 focus:outline-none pr-12"
                                         required
-                                        minlength="8"
+                                        minlength="6"
                                     />
                                     <button
                                         type="button"
@@ -157,7 +157,7 @@
                                     placeholder="••••••••"
                                     class="input input-bordered w-full p-3 mt-2 rounded-md bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-green-500 focus:outline-none"
                                     required
-                                    minlength="8"
+                                    minlength="6"
                                 />
 
                             </div>
@@ -184,13 +184,13 @@
                         </form>
 
                         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 text-sm">
-                            <a href="recuperar-senha.html"
+                            <a th:href="@{/recuperar-senha}"
                                class="text-gray-400 hover:text-green-400 transition-colors inline-flex items-center gap-2">
                                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                                 Reenviar código
                             </a>
                             <span class="hidden sm:inline text-gray-600">|</span>
-                            <a href="login.html"
+                            <a th:href="@{/login}"
                                class="text-gray-400 hover:text-green-400 transition-colors inline-flex items-center gap-2">
                                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                                 Voltar ao login
@@ -223,6 +223,86 @@
 
     <script>
         lucide.createIcons();
+
+        const emailSalvo = sessionStorage.getItem('recuperarEmail');
+        if (emailSalvo) {
+            document.getElementById('emailExibido').textContent = emailSalvo;
+        } else {
+            document.getElementById('emailExibido').textContent = 'seu e-mail';
+        }
+
+        document.getElementById('toggleSenha')?.addEventListener('click', function () {
+            const input = document.getElementById('novaSenha');
+            const icone = document.getElementById('iconeSenha');
+            const visivel = input.type === 'text';
+            input.type = visivel ? 'password' : 'text';
+            icone.setAttribute('data-lucide', visivel ? 'eye' : 'eye-off');
+            lucide.createIcons();
+        });
+
+        document.getElementById('redefinirForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const codigo = document.getElementById('codigo').value.trim();
+            const novaSenha = document.getElementById('novaSenha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+            const mensagemErro = document.getElementById('mensagemErro');
+            const mensagemSucesso = document.getElementById('mensagemSucesso');
+            const textoErro = document.getElementById('textoErro');
+            const btnRedefinir = document.getElementById('btnRedefinir');
+
+            mensagemErro.classList.add('hidden');
+            mensagemSucesso.classList.add('hidden');
+
+            if (codigo.length !== 6) {
+                mensagemErro.classList.remove('hidden');
+                textoErro.textContent = 'Informe o código de 6 dígitos recebido por e-mail.';
+                return;
+            }
+
+            if (novaSenha.length < 6) {
+                mensagemErro.classList.remove('hidden');
+                textoErro.textContent = 'A nova senha deve ter no mínimo 6 caracteres.';
+                return;
+            }
+
+            if (novaSenha !== confirmarSenha) {
+                mensagemErro.classList.remove('hidden');
+                textoErro.textContent = 'As senhas não coincidem.';
+                return;
+            }
+
+            btnRedefinir.disabled = true;
+            btnRedefinir.innerHTML = 'REDEFININDO... <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
+            lucide.createIcons();
+
+            try {
+                const response = await fetch('/api/auth/redefinir-senha', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codigo, novaSenha })
+                });
+
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Não foi possível redefinir a senha.');
+                }
+
+                sessionStorage.removeItem('recuperarEmail');
+                mensagemSucesso.classList.remove('hidden');
+
+                setTimeout(function () {
+                    window.location.href = '/login';
+                }, 2000);
+            } catch (error) {
+                mensagemErro.classList.remove('hidden');
+                textoErro.textContent = error.message || 'Erro ao redefinir senha.';
+                btnRedefinir.disabled = false;
+                btnRedefinir.innerHTML = 'REDEFINIR SENHA <i data-lucide="check" class="w-5 h-5"></i>';
+                lucide.createIcons();
+            }
+        });
     </script>
 
 </body>

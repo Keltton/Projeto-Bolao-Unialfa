@@ -6,6 +6,7 @@ import com.grupo7.bolao.repository.TokenRecuperacaoSenhaRepository;
 import com.grupo7.bolao.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,8 +57,13 @@ public class RecuperacaoSenhaService {
             token.setExpiraEm(LocalDateTime.now().plusMinutes(expiracaoMinutos));
             tokenRepository.save(token);
 
-            //envia o codigo para o email do usuario
-            emailService.enviarRecuperacaoSenha(email, codigo);
+            try {
+                emailService.enviarRecuperacaoSenha(email, codigo);
+            } catch (MailException e) {
+                throw new IllegalArgumentException(
+                        "Nao foi possivel enviar o e-mail de recuperacao. Verifique a configuracao de SMTP."
+                );
+            }
         });
     }
 

@@ -35,3 +35,16 @@ export async function register(nome: string, email: string, senha: string): Prom
   });
   return data;
 }
+
+export async function solicitarRecuperacaoSenha(email: string): Promise<string> {
+  const { data } = await api.post<{ mensagem: string }>('/api/auth/recuperar-senha', { email });
+  return data.mensagem;
+}
+
+export async function redefinirSenha(codigo: string, novaSenha: string): Promise<string> {
+  const { data } = await api.post<{ mensagem: string }>('/api/auth/redefinir-senha', {
+    codigo,
+    novaSenha,
+  });
+  return data.mensagem;
+}

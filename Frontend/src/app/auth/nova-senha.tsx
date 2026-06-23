@@ -1,35 +1,56 @@
 import React, { useState } from "react";
-import {Text,TextInput, TouchableOpacity, ImageBackground, View, SafeAreaView, StatusBar, Alert, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
-import { useRouter } from "expo-router";
+import { Text, TextInput, TouchableOpacity, ImageBackground, View, SafeAreaView, StatusBar, Alert, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 import { styles } from "@/styles/auth/nova-senhaStyle";
-
+import { redefinirSenha } from "@/services/authService";
+import { getApiErrorMessage } from "@/services/api";
+import { toastError, toastSuccess } from "@/util/toast";
 
 export default function NovaSenha() {
   const router = useRouter();
-  const theme = Colors.dark; // Visual escuro premium da Copa
+  const { email } = useLocalSearchParams<{ email?: string }>();
+  const theme = Colors.dark;
 
+  const [codigo, setCodigo] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [confirmarSenhaVisivel, setConfirmarSenhaVisivel] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSalvarSenha = () => {
-    if (!senha.trim() || !confirmarSenha.trim()) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+  const handleSalvarSenha = async () => {
+    if (!codigo.trim() || !senha.trim() || !confirmarSenha.trim()) {
+      toastError("Erro", "Por favor, preencha todos os campos.");
       return;
     }
+
+    if (codigo.trim().length !== 6) {
+      toastError("Erro", "O código deve ter 6 dígitos.");
+      return;
+    }
+
+    if (senha.length < 6) {
+      toastError("Erro", "A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
+
     if (senha !== confirmarSenha) {
-      Alert.alert("Erro", "As senhas não coincidem.");
+      toastError("Erro", "As senhas não coincidem.");
       return;
     }
 
-    Alert.alert(
-      "Senha Salva",
-      "Sua nova senha foi registrada com sucesso! Faça login para continuar.",
-      [{ text: "OK", onPress: () => router.push("/auth/login") }]
-    );
+    setLoading(true);
+    try {
+      const mensagem = await redefinirSenha(codigo.trim(), senha);
+      toastSuccess("Sucesso", mensagem);
+      router.replace("/auth/login");
+    } catch (error) {
+      toastError(getApiErrorMessage(error, "Não foi possível redefinir a senha."));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,7 +72,6 @@ export default function NovaSenha() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-              {/* Header Brand */}
               <View style={styles.brandContainer}>
                 <Ionicons name="football" size={56} color={theme.secondary} style={styles.logoIcon} />
                 <Text style={[styles.title, { color: theme.text }]}>
@@ -60,18 +80,34 @@ export default function NovaSenha() {
                 </Text>
               </View>
 
-              {/* Card Nova Senha */}
               <View style={styles.cardContainer}>
                 <View style={styles.cardHeader}>
                   <Text style={[styles.welcomeTitle, { color: theme.text }]}>Nova Senha</Text>
                   <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>
-                    Defina sua nova senha de acesso ao Bolão.
+                    {email
+                      ? `Digite o código enviado para ${email} e defina sua nova senha.`
+                      : "Digite o código recebido por e-mail e defina sua nova senha."}
                   </Text>
                 </View>
 
-                {/* Form Fields */}
                 <View style={styles.form}>
-                  {/* Password Field */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.label, { color: theme.textSecondary }]}>Código de verificação</Text>
+                    <View style={[styles.glassInput, { borderColor: theme.border }]}>
+                      <Ionicons name="key-outline" size={20} color={theme.textSecondary} />
+                      <TextInput
+                        value={codigo}
+                        onChangeText={setCodigo}
+                        placeholder="000000"
+                        placeholderTextColor="rgba(189, 202, 185, 0.5)"
+                        keyboardType="number-pad"
+                        maxLength={6}
+                        editable={!loading}
+                        style={[styles.textInput, { color: theme.text, letterSpacing: 4 }]}
+                      />
+                    </View>
+                  </View>
+
                   <View style={styles.inputGroup}>
                     <Text style={[styles.label, { color: theme.textSecondary }]}>Nova Senha</Text>
                     <View style={[styles.glassInput, { borderColor: theme.border }]}>
@@ -82,6 +118,7 @@ export default function NovaSenha() {
                         placeholder="••••••••"
                         placeholderTextColor="rgba(189, 202, 185, 0.5)"
                         secureTextEntry={!senhaVisivel}
+                        editable={!loading}
                         style={[styles.textInput, { color: theme.text }]}
                       />
                       <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
@@ -94,7 +131,6 @@ export default function NovaSenha() {
                     </View>
                   </View>
 
-                  {/* Confirm Password Field */}
                   <View style={styles.inputGroup}>
                     <Text style={[styles.label, { color: theme.textSecondary }]}>Confirmar Nova Senha</Text>
                     <View style={[styles.glassInput, { borderColor: theme.border }]}>
@@ -105,6 +141,7 @@ export default function NovaSenha() {
                         placeholder="••••••••"
                         placeholderTextColor="rgba(189, 202, 185, 0.5)"
                         secureTextEntry={!confirmarSenhaVisivel}
+                        editable={!loading}
                         style={[styles.textInput, { color: theme.text }]}
                       />
                       <TouchableOpacity onPress={() => setConfirmarSenhaVisivel(!confirmarSenhaVisivel)}>
@@ -117,21 +154,26 @@ export default function NovaSenha() {
                     </View>
                   </View>
 
-                  {/* Actions */}
                   <View style={styles.actionsContainer}>
                     <TouchableOpacity
-                      style={[styles.saveBtn, { backgroundColor: theme.secondary }]}
+                      style={[styles.saveBtn, { backgroundColor: theme.secondary, opacity: loading ? 0.7 : 1 }]}
                       onPress={handleSalvarSenha}
+                      disabled={loading}
                     >
-                      <Text style={[styles.saveBtnText, { color: theme.background }]}>SALVAR SENHA</Text>
+                      {loading ? (
+                        <ActivityIndicator color={theme.background} />
+                      ) : (
+                        <Text style={[styles.saveBtnText, { color: theme.background }]}>SALVAR SENHA</Text>
+                      )}
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={styles.backToLoginBtn}
-                      onPress={() => router.push("/auth/login")}
+                      onPress={() => router.push("/auth/recuperar-senha")}
+                      disabled={loading}
                     >
                       <Text style={[styles.backText, { color: theme.secondary }]}>
-                        Voltar para o Login
+                        Solicitar novo código
                       </Text>
                     </TouchableOpacity>
                   </View>
