@@ -262,9 +262,12 @@
                                    name="codigoFifa"
                                    maxlength="3"
                                    minlength="3"
+                                   pattern="[A-Z]{3}"
                                    required
                                    placeholder="BRA"
-                                   class="input input-bordered w-full uppercase text-center font-bold tracking-wider focus:input-success"/>
+                                   class="input input-bordered w-full uppercase text-center font-bold tracking-wider focus:input-success"
+                                   oninput="this.value = this.value.replace(/[^a-zA-Z]/g, '').toUpperCase()"
+                            />
                         </div>
                         <div>
                             <label for="grupo" class="block text-sm font-semibold text-slate-700 mb-2">

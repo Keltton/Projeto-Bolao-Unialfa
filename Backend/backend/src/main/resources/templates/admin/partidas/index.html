@@ -383,6 +383,7 @@
                             Estádio
                         </label>
                         <input type="text" id="estadio" name="estadio" maxlength="150"
+                               required
                                placeholder="Maracanã"
                                class="input input-bordered w-full focus:input-success"/>
                     </div>
@@ -404,13 +405,16 @@
                             <label for="grupo" class="block text-sm font-semibold text-slate-700 mb-2">Grupo</label>
                             <input type="text" id="grupo" name="grupo" maxlength="10"
                                    placeholder="A"
-                                   class="input input-bordered w-full text-center font-semibold focus:input-success"/>
+                                   pattern="[A-Z]"
+                                   required
+                                   class="input input-bordered w-full text-center font-semibold focus:input-success"
+                                   oninput="this.value = this.value.replace(/[^A-Z]/g, '').toUpperCase()"
+                            />
                         </div>
                         <div>
                             <label for="status" class="block text-sm font-semibold text-slate-700 mb-2">Status</label>
-                            <select id="status" name="status"
+                            <select id="status" required name="status"
                                     class="select select-bordered w-full focus:select-success">
-                                <option value="">Padrão (Agendada)</option>
                                 <option th:each="s : ${statusList}" th:value="${s.name()}"
                                         th:text="${s.name() == 'AGENDADA' ? 'Agendada' :
                                             (s.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Encerrada')}">Agendada</option>
