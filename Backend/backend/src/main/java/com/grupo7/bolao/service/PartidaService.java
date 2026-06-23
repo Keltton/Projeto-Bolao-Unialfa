@@ -46,11 +46,11 @@ public class PartidaService {
     }
 
     /**
-     * Cadastra uma nova partida, validando se as seleções são diferentes e se partidas passadas estão sendo cadastradas como encerradas.
+     * Cadastra uma nova partida, validando seleções, horário, status e duplicidade.
      *
      * @param request DTO com as informações da partida.
      * @return DTO com as informações da partida criada.
-     * @throws IllegalArgumentException Se as seleções forem iguais ou se uma partida no passado não estiver com status ENCERRADA.
+     * @throws IllegalArgumentException Se as validações de negócio falharem.
      */
     public PartidaResponse cadastrarPartida(PartidaRequest request) {
         validarSelecoesDiferentes(request.selecaoAId(), request.selecaoBId());
@@ -178,7 +178,7 @@ public class PartidaService {
      * @param id ID da partida.
      * @param request DTO com as alterações desejadas.
      * @return DTO com os dados da partida atualizada.
-     * @throws IllegalArgumentException Se as seleções forem iguais ou se o jogo no passado não estiver com status ENCERRADA.
+     * @throws IllegalArgumentException Se as validações de negócio falharem.
      */
     public PartidaResponse atualizarPartida(Long id, PartidaRequest request) {
         validarSelecoesDiferentes(request.selecaoAId(), request.selecaoBId());
@@ -270,38 +270,64 @@ public class PartidaService {
     }
 
     /**
-     * Valida que partidas salvas com data passada necessitam obrigatoriamente do status ENCERRADA.
+     * Valida a combinação de data/hora e status da partida.
      */
     private void validarDataEStatus(PartidaRequest request) {
-        if (request.dataHora().isBefore(LocalDateTime.now())) {
-            if (request.status() != StatusPartida.ENCERRADA) {
-                throw new IllegalArgumentException("Partidas no passado devem ser cadastradas com o status ENCERRADA.");
+        StatusPartida status = request.status() != null ? request.status() : StatusPartida.AGENDADA;
+        LocalDateTime agora = LocalDateTime.now();
+
+        if (request.dataHora().isBefore(agora)) {
+            if (status != StatusPartida.ENCERRADA && status != StatusPartida.EM_ANDAMENTO) {
+                throw new IllegalArgumentException(
+                        "Partidas no passado devem ser cadastradas com status Em andamento ou Encerrada."
+                );
             }
+            return;
+        }
+
+        if (request.dataHora().isAfter(agora)
+                && (status == StatusPartida.ENCERRADA || status == StatusPartida.EM_ANDAMENTO)) {
+            throw new IllegalArgumentException("Partidas futuras devem ser cadastradas com status Agendada.");
         }
     }
 
     /**
-     * Garante que uma seleção não participe de duas partidas no mesmo horário.
+     * Impede cadastro duplicado do mesmo confronto no mesmo horário.
      */
     private void validarConflitoHorarioCadastro(PartidaRequest request) {
+        if (partidaRepository.existsMesmoConfrontoNoHorario(
+                request.selecaoAId(),
+                request.selecaoBId(),
+                request.dataHora())) {
+            throw new IllegalArgumentException("Ja existe uma partida entre estas selecoes neste horario.");
+        }
+
         if (partidaRepository.existsConflitoHorario(
                 request.selecaoAId(),
                 request.selecaoBId(),
                 request.dataHora())) {
-            throw new IllegalArgumentException("Uma das selecoes ja possui partida cadastrada neste mesmo horario.");
+            throw new IllegalArgumentException("Uma das selecoes ja possui outra partida neste horario.");
         }
     }
 
     /**
-     * Garante que uma atualização não gere conflito de horário com outra partida.
+     * Impede atualização que gere confronto duplicado ou conflito de horário.
      */
     private void validarConflitoHorarioAtualizacao(Long partidaId, PartidaRequest request) {
+        if (partidaRepository.existsMesmoConfrontoNoHorarioIgnorandoPartida(
+                partidaId,
+                request.selecaoAId(),
+                request.selecaoBId(),
+                request.dataHora())) {
+            throw new IllegalArgumentException("Ja existe uma partida entre estas selecoes neste horario.");
+        }
+
         if (partidaRepository.existsConflitoHorarioIgnorandoPartida(
                 partidaId,
                 request.selecaoAId(),
                 request.selecaoBId(),
                 request.dataHora())) {
-            throw new IllegalArgumentException("Uma das selecoes ja possui partida cadastrada neste mesmo horario.");
+            throw new IllegalArgumentException("Uma das selecoes ja possui outra partida neste horario.");
         }
     }
 

@@ -59,8 +59,22 @@ Considerando o palpite **P** (gols mandante: `pm`, visitante: `pv`) e o resultad
 ### Pré-requisitos
 *   Node.js (LTS recomendado)
 *   Java Development Kit (JDK) 21+
-*   Banco de dados MySQL 8.x
+*   Banco de dados MySQL / MariaDB (ex: XAMPP) rodando na porta `3306`
 *   Expo Go instalado no celular físico ou emulador (iOS/Android) configurado
+
+---
+
+### Configuração e Execução do Banco de Dados
+
+1. Certifique-se de que o MySQL está em execução (por exemplo, iniciando o módulo MySQL no **XAMPP Control Panel**).
+2. Crie uma base de dados vazia para o bolão:
+   ```sql
+   CREATE DATABASE bolao_grupo7;
+   ```
+3. O projeto já está pré-configurado no arquivo `src/main/resources/application.properties` para acessar o banco `bolao_grupo7` na porta `3306` com usuário `root` e senha em branco.
+4. **Administrador Pré-registrado**: Para testes e login inicial no painel admin ou no app, utilize a conta:
+   - **E-mail:** `daniel@admin.com`
+   - **Senha:** `admin123`
 
 ---
 
@@ -70,8 +84,7 @@ Considerando o palpite **P** (gols mandante: `pm`, visitante: `pv`) e o resultad
    ```bash
    cd Backend/backend
    ```
-2. Configure o banco de dados MySQL e o segredo de segurança do JWT no seu arquivo de configurações `src/main/resources/application.properties` ou como variáveis de ambiente.
-3. Inicie o backend:
+2. Inicie o backend:
    *   **Windows (PowerShell/CMD):**
        ```bash
        ./mvnw.cmd spring-boot:run
