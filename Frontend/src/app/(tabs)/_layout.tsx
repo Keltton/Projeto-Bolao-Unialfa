@@ -13,12 +13,14 @@ export default function TabsLayout() {
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: themeColors.background }}>
         <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
+
+      
     );
+    
+    <ActivityIndicator size="large" color={themeColors.primary} />
   }
 
-  if (!isAuthenticated) {
-    return <Redirect href="/auth/login" />;
-  }
+  
 
   return (
     <Tabs
@@ -38,7 +40,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Início",
+          href: isAuthenticated ? "/(tabs)" : null,
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "home" : "home-outline"} color={color} size={size} />
           ),
@@ -65,6 +67,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="ranking"
         options={{
+          href: isAuthenticated ? "/(tabs)/ranking" : null,
           title: "Ranking",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "trophy" : "trophy-outline"} color={color} size={size} />
@@ -74,7 +77,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="perfil"
         options={{
-          title: "Perfil",
+          title: isAuthenticated ? "Perfil" : "Entrar",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "person" : "person-outline"} color={color} size={size} />
           ),

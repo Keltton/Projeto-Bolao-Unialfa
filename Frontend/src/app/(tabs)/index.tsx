@@ -9,7 +9,7 @@ import { Partida } from "@/types/Partida";
 import { formatarDataPartida } from "@/util/formatDate";
 import { resolveImageUrl } from "@/util/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
+import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Image, ImageStyle, SafeAreaView, ScrollView, StyleProp, Text, TouchableOpacity, View } from "react-native";
 import { styles } from "@/styles/tabs/indexStyle";
@@ -17,7 +17,7 @@ import { styles } from "@/styles/tabs/indexStyle";
 export default function Home() {
   const router = useRouter();
   const theme = Colors.dark;
-  const { user } = useAuth();
+  const { user, isAuthenticated  } = useAuth();
 
   const [proximas, setProximas] = useState<Partida[]>([]);
   const [palpites, setPalpites] = useState<Palpite[]>([]);
@@ -25,6 +25,10 @@ export default function Home() {
   const [totalParticipantes, setTotalParticipantes] = useState(0);
   const [pontuacao, setPontuacao] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  if (!isAuthenticated) {
+  return <Redirect href="/(tabs)/ranking" />;
+} 
 
   const carregarHome = useCallback(async () => {
     setLoading(true);

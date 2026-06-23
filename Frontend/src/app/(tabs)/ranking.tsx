@@ -12,7 +12,7 @@ import { styles } from "@/styles/tabs/rankingStyle";
 
 export default function Ranking() {
   const theme = Colors.dark;
-  const { user } = useAuth();
+  const { user, isAuthenticated  } = useAuth();
 
   const [ranking, setRanking] = useState<UsuarioRanking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +101,7 @@ export default function Ranking() {
           style={[styles.podiumName, isFirst && styles.name1, { color: theme.text }]}
           numberOfLines={1}
         >
-          {usuario.id === user?.id ? "Você" : usuario.nome}
+          {isAuthenticated && usuario.id === user?.id ? "Você" : usuario.nome}
         </Text>
         <Text style={[styles.podiumPoints, { color: theme.textSecondary }]}>
           <Text
@@ -120,7 +120,7 @@ export default function Ranking() {
   };
 
   const renderUsuario = ({ item }: { item: UsuarioRanking }) => {
-    const isLogado = item.id === user?.id;
+    const isLogado = isAuthenticated && item.id === user?.id;
 
     return (
       <View
