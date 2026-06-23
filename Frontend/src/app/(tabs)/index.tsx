@@ -12,8 +12,10 @@ import { resolveImageUrl } from "@/util/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Image, ImageStyle, SafeAreaView, ScrollView, StyleProp, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, ImageStyle, SafeAreaView, ScrollView, StyleProp, Text, TouchableOpacity, View, Alert, Platform, Modal } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { styles } from "@/styles/tabs/indexStyle";
+import { listarNotificacoes, Notificacao } from "@/services/notificacaoService";
 
 export default function Home() {
   const router = useRouter();
@@ -25,7 +27,11 @@ export default function Home() {
   const [posicao, setPosicao] = useState<number | null>(null);
   const [totalParticipantes, setTotalParticipantes] = useState(0);
   const [pontuacao, setPontuacao] = useState(0);
+  const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
+  const [mostrarBadge, setMostrarBadge] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [modalVisivel, setModalVisivel] = useState(false);
+  const [idsExcluidos, setIdsExcluidos] = useState<string[]>([]);
 
   const carregarHome = useCallback(async () => {
     if (!isAuthenticated) {
@@ -35,16 +41,26 @@ export default function Home() {
 
     setLoading(true);
     try {
-      const [partidasData, palpitesData, rankingData] = await Promise.all([
+      const excluidosJson = await AsyncStorage.getItem("notificacoes_excluidas");
+      const excluidos: string[] = excluidosJson ? JSON.parse(excluidosJson) : [];
+      setIdsExcluidos(excluidos);
+
+      const [partidasData, palpitesData, rankingData, notificacoesData] = await Promise.all([
         listarProximasPartidas(),
         listarMeusPalpites(),
         obterRanking(0, 50),
+        listarNotificacoes(),
       ]);
 
       setProximas(partidasData);
       setPalpites(palpitesData);
       setPosicao(rankingData.posicaoUsuarioAutenticado);
       setTotalParticipantes(rankingData.totalElementos);
+
+      // Filtra as notificacoes que foram excluidas localmente
+      const ativas = notificacoesData.filter((n) => !excluidos.includes(n.id));
+      setNotificacoes(ativas);
+      setMostrarBadge(ativas.length > 0);
 
       const euNoRanking = rankingData.ranking.find((r) => r.id === user?.id);
       setPontuacao(euNoRanking?.pontuacaoTotal ?? user?.pontuacaoTotal ?? 0);
@@ -54,6 +70,36 @@ export default function Home() {
       setLoading(false);
     }
   }, [isAuthenticated, user?.id, user?.pontuacaoTotal]);
+
+  const handleExibirNotificacoes = () => {
+    setModalVisivel(true);
+    setMostrarBadge(false);
+  };
+
+  const handleExcluirNotificacao = async (id: string) => {
+    try {
+      const novosExcluidos = [...idsExcluidos, id];
+      setIdsExcluidos(novosExcluidos);
+      await AsyncStorage.setItem("notificacoes_excluidas", JSON.stringify(novosExcluidos));
+      const ativas = notificacoes.filter((n) => n.id !== id);
+      setNotificacoes(ativas);
+      setMostrarBadge(ativas.length > 0);
+    } catch (error) {
+      console.error("Erro ao excluir notificação:", error);
+    }
+  };
+
+  const handleLimparTudo = async () => {
+    try {
+      const novosExcluidos = [...idsExcluidos, ...notificacoes.map((n) => n.id)];
+      setIdsExcluidos(novosExcluidos);
+      await AsyncStorage.setItem("notificacoes_excluidas", JSON.stringify(novosExcluidos));
+      setNotificacoes([]);
+      setMostrarBadge(false);
+    } catch (error) {
+      console.error("Erro ao limpar notificações:", error);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -100,9 +146,11 @@ export default function Home() {
             </Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.notificationButton}>
+        <TouchableOpacity style={styles.notificationButton} onPress={handleExibirNotificacoes}>
           <Ionicons name="notifications-outline" size={24} color={theme.textSecondary} />
-          <View style={[styles.notificationBadge, { backgroundColor: theme.secondary }]} />
+          {mostrarBadge && (
+            <View style={[styles.notificationBadge, { backgroundColor: theme.secondary }]} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -141,7 +189,7 @@ export default function Home() {
         ) : destaque ? (
           <View style={[styles.featuredCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
             <View style={styles.badgeContainer}>
-              <Text style={[styles.featuredBadge, { backgroundColor: theme.secondary, color: theme.text }]}>
+              <Text style={[styles.featuredBadge, { backgroundColor: theme.secondary, color: theme.background }]}>
                 EM DESTAQUE
               </Text>
             </View>
@@ -250,6 +298,70 @@ export default function Home() {
           ))}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={modalVisivel}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalVisivel(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Notificações</Text>
+              <TouchableOpacity onPress={() => setModalVisivel(false)}>
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={true}>
+              {notificacoes.length === 0 ? (
+                <Text style={[styles.modalEmptyText, { color: theme.textSecondary }]}>
+                  Você não possui novas notificações.
+                </Text>
+              ) : (
+                notificacoes.map((n) => (
+                  <View key={n.id} style={[styles.notificationCard, { borderBottomColor: theme.border }]}>
+                    <View style={styles.notificationHeaderRow}>
+                      <Text style={[styles.notificationTitle, { color: theme.text }]}>
+                        {n.titulo}
+                      </Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <Text style={[styles.notificationDate, { color: theme.textSecondary }]}>
+                          {n.data}
+                        </Text>
+                        <TouchableOpacity onPress={() => handleExcluirNotificacao(n.id)}>
+                          <Ionicons name="trash-outline" size={16} color="#FF4D4D" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <Text style={[styles.notificationMsg, { color: theme.textSecondary }]}>
+                      {n.mensagem}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              {notificacoes.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: "#FF4D4D", marginRight: 8 }]}
+                  onPress={handleLimparTudo}
+                >
+                  <Text style={styles.modalButtonText}>Limpar Tudo</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+                onPress={() => setModalVisivel(false)}
+              >
+                <Text style={styles.modalButtonText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

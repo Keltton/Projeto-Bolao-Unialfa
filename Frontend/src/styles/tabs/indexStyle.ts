@@ -252,4 +252,77 @@ export const styles = StyleSheet.create({
     chevron: {
       marginLeft: 6,
     },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    },
+    modalContent: {
+      width: "100%",
+      maxWidth: 440,
+      borderRadius: 24,
+      borderWidth: 1,
+      padding: 24,
+      maxHeight: "80%",
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "800",
+    },
+    modalScroll: {
+      maxHeight: 350,
+      marginVertical: 10,
+    },
+    modalEmptyText: {
+      textAlign: "center",
+      fontSize: 14,
+      marginVertical: 24,
+    },
+    notificationCard: {
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      gap: 6,
+    },
+    notificationHeaderRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    notificationTitle: {
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    notificationDate: {
+      fontSize: 10,
+      fontWeight: "500",
+    },
+    notificationMsg: {
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    modalFooter: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      marginTop: 16,
+    },
+    modalButton: {
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalButtonText: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: "#FFF",
+    },
   });
