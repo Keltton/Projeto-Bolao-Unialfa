@@ -41,7 +41,7 @@ export const styles = StyleSheet.create({
     height: 78,
     borderRadius: 39,
     borderWidth: 1.5,
-    borderColor: "#9DFF00",
+    borderColor: "#ffe243",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 18,
@@ -58,7 +58,7 @@ export const styles = StyleSheet.create({
   },
 
   titleHighlight: {
-    color: "#9DFF00",
+    color: "#ffe243",
   },
 
   subtitle: {
@@ -76,7 +76,7 @@ export const styles = StyleSheet.create({
   primaryButton: {
     height: 54,
     borderRadius: 8,
-    backgroundColor: "#9DFF00",
+    backgroundColor: "#ffe243",
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
@@ -94,7 +94,7 @@ export const styles = StyleSheet.create({
     height: 48,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: "#9DFF00",
+    borderColor: "#ffe243",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
@@ -102,7 +102,7 @@ export const styles = StyleSheet.create({
   },
 
   secondaryButtonText: {
-    color: "#9DFF00",
+    color: "#ffe243",
     fontSize: 16,
     fontWeight: "800",
   },
@@ -120,7 +120,7 @@ export const styles = StyleSheet.create({
   },
 
   dividerText: {
-    color: "#D6E3C4",
+    color: "#ffe243",
     fontSize: 11,
     fontWeight: "700",
     marginHorizontal: 14,
@@ -133,7 +133,7 @@ export const styles = StyleSheet.create({
   },
 
   visitorButtonText: {
-    color: "#D6E3C4",
+    color: "#ffe243",
     fontSize: 12,
     fontWeight: "800",
   },
