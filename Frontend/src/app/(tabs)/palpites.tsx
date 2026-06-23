@@ -1,14 +1,23 @@
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/AuthContext";
 import { getApiErrorMessage } from "@/services/api";
 import { listarMeusPalpites } from "@/services/palpiteService";
 import { Palpite } from "@/types/Palpite";
 import { Partida } from "@/types/Partida";
 import { resolveImageUrl } from "@/util/imageUrl";
-import {Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { ActivityIndicator, FlatList, Image, SafeAreaView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  SafeAreaView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { styles } from "@/styles/tabs/palpiteStyle";
 
 function podeEditarPalpite(partida: Partida): boolean {
@@ -19,18 +28,34 @@ function podeEditarPalpite(partida: Partida): boolean {
 export default function Palpites() {
   const router = useRouter();
   const theme = Colors.dark;
-
   const { isAuthenticated } = useAuth();
 
   const [palpites, setPalpites] = useState<Palpite[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (!isAuthenticated) {
-  return <Redirect href="/auth/login" />;
-}
+  const pedirLoginParaOpinar = () => {
+    Alert.alert(
+      "Login necessário",
+      "Para fazer ou editar um palpite, você precisa entrar na sua conta.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Entrar",
+          onPress: () => router.push("/auth/login"),
+        },
+      ]
+    );
+  };
 
   const carregarPalpites = useCallback(async () => {
+    if (!isAuthenticated) {
+      setPalpites([]);
+      setLoading(false);
+      setErrorMessage(null);
+      return;
+    }
+
     setLoading(true);
     setErrorMessage(null);
 
@@ -38,7 +63,8 @@ export default function Palpites() {
       const data = await listarMeusPalpites();
       setPalpites(
         data.sort(
-          (a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime()
+          (a, b) =>
+            new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime()
         )
       );
     } catch (error) {
@@ -47,7 +73,7 @@ export default function Palpites() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useFocusEffect(
     useCallback(() => {
@@ -57,9 +83,11 @@ export default function Palpites() {
 
   const renderBandeira = (bandeiraUrl?: string | null) => {
     const uri = resolveImageUrl(bandeiraUrl);
+
     if (!uri) {
       return <View style={[styles.flag, { backgroundColor: theme.border }]} />;
     }
+
     return <Image source={{ uri }} style={styles.flag} resizeMode="cover" />;
   };
 
@@ -91,12 +119,21 @@ export default function Palpites() {
     const temPontos = isEncerrada && (item.pontos ?? 0) > 0;
 
     return (
-      <View style={[styles.card, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: theme.backgroundElement,
+            borderColor: theme.border,
+          },
+        ]}
+      >
         <View style={styles.cardHeader}>
           <Text style={[styles.phaseText, { color: theme.textSecondary }]}>
             FASE DE {partida.fase}
             {partida.grupo ? ` • GRUPO ${partida.grupo}` : ""}
           </Text>
+
           <View
             style={[
               styles.pointsBadge,
@@ -117,7 +154,10 @@ export default function Palpites() {
         <View style={styles.matchRow}>
           <View style={styles.team}>
             {renderBandeira(partida.selecaoA.bandeiraUrl)}
-            <Text style={[styles.teamName, { color: theme.text }]} numberOfLines={1}>
+            <Text
+              style={[styles.teamName, { color: theme.text }]}
+              numberOfLines={1}
+            >
               {partida.selecaoA.nome}
             </Text>
           </View>
@@ -127,9 +167,16 @@ export default function Palpites() {
               <Text style={[styles.scoreNumber, { color: theme.secondary }]}>
                 {item.golsSelecaoA}
               </Text>
-              <Text style={[styles.labelPrediction, { color: theme.textSecondary }]}>
+
+              <Text
+                style={[
+                  styles.labelPrediction,
+                  { color: theme.textSecondary },
+                ]}
+              >
                 Meu palpite
               </Text>
+
               <Text style={[styles.scoreNumber, { color: theme.secondary }]}>
                 {item.golsSelecaoB}
               </Text>
@@ -138,14 +185,18 @@ export default function Palpites() {
             {isEncerrada && (
               <View style={styles.realBox}>
                 <Text style={[styles.realScore, { color: theme.text }]}>
-                  Res: {partida.golsSelecaoA ?? 0} x {partida.golsSelecaoB ?? 0}
+                  Res: {partida.golsSelecaoA ?? 0} x{" "}
+                  {partida.golsSelecaoB ?? 0}
                 </Text>
               </View>
             )}
           </View>
 
           <View style={[styles.team, styles.alignRight]}>
-            <Text style={[styles.teamName, { color: theme.text }]} numberOfLines={1}>
+            <Text
+              style={[styles.teamName, { color: theme.text }]}
+              numberOfLines={1}
+            >
               {partida.selecaoB.nome}
             </Text>
             {renderBandeira(partida.selecaoB.bandeiraUrl)}
@@ -159,6 +210,7 @@ export default function Palpites() {
               size={16}
               color={isEncerrada ? theme.primary : theme.textSecondary}
             />
+
             <Text
               style={[
                 styles.criterioText,
@@ -172,9 +224,18 @@ export default function Palpites() {
           {editavel && (
             <TouchableOpacity
               style={[styles.editButton, { borderColor: theme.primary }]}
-              onPress={() => router.push(`/partidas/${partida.id}`)}
+              onPress={() => {
+                if (!isAuthenticated) {
+                  pedirLoginParaOpinar();
+                  return;
+                }
+
+                router.push(`/partidas/${partida.id}`);
+              }}
             >
-              <Text style={[styles.editButtonText, { color: theme.primary }]}>Editar</Text>
+              <Text style={[styles.editButtonText, { color: theme.primary }]}>
+                Editar
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -184,12 +245,68 @@ export default function Palpites() {
 
   if (loading && palpites.length === 0) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Meus Palpites</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Meus Palpites
+          </Text>
         </View>
+
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Palpites
+          </Text>
+        </View>
+
+        <View style={styles.centerContent}>
+          <Ionicons
+            name="lock-closed-outline"
+            size={44}
+            color={theme.textSecondary}
+          />
+
+          <Text
+            style={[
+              styles.emptyText,
+              {
+                color: theme.textSecondary,
+                textAlign: "center",
+                marginTop: 16,
+              },
+            ]}
+          >
+            Entre na sua conta para fazer e acompanhar seus palpites.
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.editButton,
+              {
+                borderColor: theme.primary,
+                marginTop: 20,
+                paddingHorizontal: 24,
+              },
+            ]}
+            onPress={pedirLoginParaOpinar}
+          >
+            <Text style={[styles.editButtonText, { color: theme.primary }]}>
+              Entrar para palpitar
+            </Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -198,7 +315,9 @@ export default function Palpites() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Meus Palpites</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          Meus Palpites
+        </Text>
       </View>
 
       {errorMessage && (

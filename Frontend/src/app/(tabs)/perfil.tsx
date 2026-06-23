@@ -5,7 +5,7 @@ import { editarPerfil, excluirMinhaConta } from "@/services/usuarioService";
 import { resolveImageUrl } from "@/util/imageUrl";
 import { toastError, toastSuccess } from "@/util/toast";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { styles } from "@/styles/tabs/perfilStyle";
@@ -13,7 +13,7 @@ import { styles } from "@/styles/tabs/perfilStyle";
 export default function Perfil() {
   const router = useRouter();
   const theme = Colors.dark;
-  const { user, signOut, updateUser } = useAuth();
+  const { user, isAuthenticated, signOut, updateUser } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editNome, setEditNome] = useState(user?.nome ?? "");
@@ -76,6 +76,10 @@ export default function Perfil() {
       setConfirmacao(null);
     }
   };
+
+  if (!isAuthenticated) {
+  return <Redirect href="/auth/login" />;
+}
 
   if (!user) {
     return (

@@ -58,7 +58,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="palpites"
         options={{
-          href: isAuthenticated ? "/(tabs)/palpites" : null,
+          title: "Palpites",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "calendar" : "calendar-outline"} color={color} size={size} />
           ),
