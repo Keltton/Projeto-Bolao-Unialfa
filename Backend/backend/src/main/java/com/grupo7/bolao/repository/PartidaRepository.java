@@ -76,6 +76,38 @@ public interface PartidaRepository extends JpaRepository<Partida, Long> {
             FROM Partida p
             WHERE p.dataHora = :dataHora
               AND (
+                  (p.selecaoA.id = :selecaoAId AND p.selecaoB.id = :selecaoBId)
+                  OR (p.selecaoA.id = :selecaoBId AND p.selecaoB.id = :selecaoAId)
+              )
+            """)
+    boolean existsMesmoConfrontoNoHorario(
+            @Param("selecaoAId") Long selecaoAId,
+            @Param("selecaoBId") Long selecaoBId,
+            @Param("dataHora") LocalDateTime dataHora
+    );
+
+    @Query("""
+            SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END
+            FROM Partida p
+            WHERE p.id <> :partidaId
+              AND p.dataHora = :dataHora
+              AND (
+                  (p.selecaoA.id = :selecaoAId AND p.selecaoB.id = :selecaoBId)
+                  OR (p.selecaoA.id = :selecaoBId AND p.selecaoB.id = :selecaoAId)
+              )
+            """)
+    boolean existsMesmoConfrontoNoHorarioIgnorandoPartida(
+            @Param("partidaId") Long partidaId,
+            @Param("selecaoAId") Long selecaoAId,
+            @Param("selecaoBId") Long selecaoBId,
+            @Param("dataHora") LocalDateTime dataHora
+    );
+
+    @Query("""
+            SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END
+            FROM Partida p
+            WHERE p.dataHora = :dataHora
+              AND (
                   p.selecaoA.id = :selecaoAId
                   OR p.selecaoB.id = :selecaoAId
                   OR p.selecaoA.id = :selecaoBId
