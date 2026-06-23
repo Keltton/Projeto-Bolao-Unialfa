@@ -26,11 +26,12 @@ export default function Home() {
   const [pontuacao, setPontuacao] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  if (!isAuthenticated) {
-    return <Redirect href="/(tabs)/partidas" />;
-  }
-
   const carregarHome = useCallback(async () => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const [partidasData, palpitesData, rankingData] = await Promise.all([
@@ -51,13 +52,17 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, user?.pontuacaoTotal]);
+  }, [isAuthenticated, user?.id, user?.pontuacaoTotal]);
 
   useFocusEffect(
     useCallback(() => {
       carregarHome();
     }, [carregarHome])
   );
+
+  if (!isAuthenticated) {
+    return <Redirect href="/(tabs)/partidas" />;
+  }
 
   const destaque = proximas[0] ?? null;
   const outras = proximas.slice(1, 3);

@@ -8,36 +8,22 @@ export default function TabsLayout() {
   const themeColors = Colors.dark;
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: themeColors.background,
+  return (
+    <>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: themeColors.secondary,
+          tabBarInactiveTintColor: themeColors.textSecondary,
+          tabBarStyle: {
+            backgroundColor: themeColors.backgroundElement,
+            borderTopColor: themeColors.border,
+            height: Platform.OS === "ios" ? 88 : 68,
+            paddingBottom: Platform.OS === "ios" ? 30 : 10,
+            paddingTop: 10,
+          },
         }}
       >
-        <ActivityIndicator size="large" color={themeColors.primary} />
-      </View>
-    );
-  }
-
-  return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: themeColors.secondary,
-        tabBarInactiveTintColor: themeColors.textSecondary,
-        tabBarStyle: {
-          backgroundColor: themeColors.backgroundElement,
-          borderTopColor: themeColors.border,
-          height: Platform.OS === "ios" ? 88 : 68,
-          paddingBottom: Platform.OS === "ios" ? 30 : 10,
-          paddingTop: 10,
-        },
-      }}
-    >
       <Tabs.Screen
         name="index"
         options={{
@@ -86,5 +72,22 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+      {isLoading ? (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: themeColors.background,
+          }}
+        >
+          <ActivityIndicator size="large" color={themeColors.primary} />
+        </View>
+      ) : null}
+    </>
   );
 }

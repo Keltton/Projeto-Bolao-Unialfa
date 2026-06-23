@@ -44,7 +44,7 @@ export default function RecuperarSenha() {
         style={styles.container}
         resizeMode="cover"
       >
-        <View style={[styles.overlay, { backgroundColor: "rgba(9, 20, 33, 0.85)" }]}>
+        <View style={styles.overlay}>
           <SafeAreaView style={styles.safeArea}>
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : undefined}

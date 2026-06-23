@@ -3,12 +3,16 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
     outerContainer: {
       flex: 1,
+      backgroundColor: "#091421",
     },
     container: {
       flex: 1,
+      width: "100%",
+      height: "100%",
     },
     overlay: {
       flex: 1,
+      backgroundColor: "rgba(9, 20, 33, 0.85)",
     },
     safeArea: {
       flex: 1,
